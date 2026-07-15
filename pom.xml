@@ -1,61 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.2.0.M6</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>2.2.0.RELEASE</version>
+        <relativePath/>
     </parent>
+
     <groupId>io.pillopl</groupId>
     <artifactId>library</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+
     <name>library</name>
     <description>Domain-Driven Design example</description>
 
     <properties>
         <java.version>11</java.version>
-        <spring-hateoas.version>1.0.0.BUILD-SNAPSHOT</spring-hateoas.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>spring-libs-snapshot</id>
-            <url>https://repo.spring.io/snapshot</url>
-        </repository>
-        <repository>
-            <id>repository.spring.milestone</id>
-            <name>Spring Milestone Repository</name>
-            <url>https://repo.spring.io/milestone</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2/</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>spring-libs-snapshot</id>
-            <url>https://repo.spring.io/snapshot</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>repository.spring.release</id>
-            <name>Spring GA Repository</name>
-            <url>https://repo.spring.io/plugins-release/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
     <dependencies>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -85,7 +61,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -93,6 +68,7 @@
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit4</artifactId>
             <version>0.9.3</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -127,11 +103,11 @@
             <version>1.4.197</version>
         </dependency>
 
-
     </dependencies>
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -142,10 +118,12 @@
                     </includes>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -159,10 +137,12 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.codehaus.gmavenplus</groupId>
                 <artifactId>gmavenplus-plugin</artifactId>
                 <version>1.6.2</version>
+
                 <executions>
                     <execution>
                         <goals>
@@ -171,34 +151,42 @@
                         </goals>
                     </execution>
                 </executions>
+
                 <configuration>
                     <testSources>
+
                         <testSource>
                             <directory>src/test/groovy</directory>
                             <includes>
                                 <include>**/*.groovy</include>
                             </includes>
                         </testSource>
+
                         <testSource>
                             <directory>src/integration-test/groovy</directory>
                             <includes>
                                 <include>**/*.groovy</include>
                             </includes>
                         </testSource>
+
                     </testSources>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
                 <version>1.12</version>
+
                 <executions>
                     <execution>
                         <id>add-integration-test-resources</id>
                         <phase>generate-test-resources</phase>
+
                         <goals>
                             <goal>add-test-resource</goal>
                         </goals>
+
                         <configuration>
                             <resources>
                                 <resource>
@@ -210,29 +198,36 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.3</version>
+
                 <executions>
+
                     <execution>
                         <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+
                     <execution>
                         <id>prepare-agent-integration</id>
                         <goals>
                             <goal>prepare-agent-integration</goal>
                         </goals>
                     </execution>
+
                     <execution>
                         <id>merge-results</id>
                         <phase>verify</phase>
+
                         <goals>
                             <goal>merge</goal>
                         </goals>
+
                         <configuration>
                             <fileSets>
                                 <fileSet>
@@ -242,21 +237,27 @@
                                     </includes>
                                 </fileSet>
                             </fileSets>
+
                             <destFile>target/jacoco-all.exec</destFile>
                         </configuration>
                     </execution>
+
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
+
                         <goals>
                             <goal>report</goal>
                         </goals>
+
                         <configuration>
                             <dataFile>target/jacoco-all.exec</dataFile>
                         </configuration>
                     </execution>
+
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 

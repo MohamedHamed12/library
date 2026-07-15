@@ -12,6 +12,7 @@ import io.pillopl.library.lending.patron.application.hold.PlaceOnHoldCommand;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
+import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.vavr.Predicates;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
 
 import static io.vavr.API.$;
 import static io.vavr.API.Case;
@@ -53,8 +53,36 @@ class PatronProfileController {
     private final CancelingHold cancelingHold;
 
     @GetMapping("/profiles/{patronId}")
-    ResponseEntity<ProfileResource> patronProfile(@PathVariable UUID patronId) {
-        return ok(new ProfileResource(patronId));
+    ResponseEntity<PatronProfileSummaryResource> patronProfile(
+        @PathVariable UUID patronId) {
+
+        PatronProfile profile =
+                patronProfiles.fetchFor(new PatronId(patronId));
+
+        Instant now = Instant.now();
+
+        int currentHoldsCount = profile
+                .getHoldsView()
+                .getCurrentHolds()
+                .size();
+
+        int currentCheckoutsCount = profile
+                .getCurrentCheckouts()
+                .getCurrentCheckouts()
+                .size();
+
+        int overdueCheckoutsCount = profile
+                .getCurrentCheckouts()
+                .getCurrentCheckouts()
+                .filter(checkout -> checkout.getTill().isBefore(now))
+                .size();
+
+        return ok(new PatronProfileSummaryResource(
+                patronId,
+                currentHoldsCount,
+                currentCheckoutsCount,
+                overdueCheckoutsCount
+        ));
     }
 
     @GetMapping("/profiles/{patronId}/holds/")
@@ -140,18 +168,36 @@ class PatronProfileController {
 }
 
 @Value
-class ProfileResource extends RepresentationModel {
+class PatronProfileSummaryResource
+        extends RepresentationModel<PatronProfileSummaryResource> {
 
     UUID patronId;
+    int currentHoldsCount;
+    int currentCheckoutsCount;
+    int overdueCheckoutsCount;
 
-    ProfileResource(UUID patronId) {
+    PatronProfileSummaryResource(
+            UUID patronId,
+            int currentHoldsCount,
+            int currentCheckoutsCount,
+            int overdueCheckoutsCount) {
+
         this.patronId = patronId;
-        add(linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withRel("holds"));
-        add(linkTo(methodOn(PatronProfileController.class).findCheckouts(patronId)).withRel("checkouts"));
-        add(linkTo(methodOn(PatronProfileController.class).patronProfile(patronId)).withSelfRel());
+        this.currentHoldsCount = currentHoldsCount;
+        this.currentCheckoutsCount = currentCheckoutsCount;
+        this.overdueCheckoutsCount = overdueCheckoutsCount;
+        add(linkTo(methodOn(PatronProfileController.class)
+                .findHolds(patronId))
+                .withRel("holds"));
 
+        add(linkTo(methodOn(PatronProfileController.class)
+                .findCheckouts(patronId))
+                .withRel("checkouts"));
+
+        add(linkTo(methodOn(PatronProfileController.class)
+                .patronProfile(patronId))
+                .withSelfRel());
     }
-
 }
 
 @Value
