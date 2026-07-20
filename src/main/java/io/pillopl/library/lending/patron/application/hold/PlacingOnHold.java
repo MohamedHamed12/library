@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-
 import static io.pillopl.library.commons.commands.Result.Success;
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$Left;
@@ -29,11 +28,11 @@ public class PlacingOnHold {
         return Try.of(() -> {
             AvailableBook availableBook = find(command.getBookId());
             Patron patron = find(command.getPatronId());
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> result = patron.placeOnHold(availableBook, command.getHoldDuration());
+            Either<BookHoldFailed, BookPlacedOnHoldEvents> result = patron.placeOnHold(availableBook,
+                    command.getHoldDuration());
             return Match(result).of(
                     Case($Left($()), this::publishEvents),
-                    Case($Right($()), this::publishEvents)
-            );
+                    Case($Right($()), this::publishEvents));
         }).onFailure(t -> log.error("Failed to place a hold", t));
     }
 
@@ -50,12 +49,12 @@ public class PlacingOnHold {
     private AvailableBook find(BookId id) {
         return findAvailableBook
                 .findAvailableBookBy(id)
-                .getOrElseThrow(() -> new IllegalArgumentException("Cannot find available book with Id: " + id.getBookId()));
+                .getOrElseThrow(() -> new BookNotFoundException(id));
     }
 
     private Patron find(PatronId patronId) {
         return patronRepository
                 .findBy(patronId)
-                .getOrElseThrow(() -> new IllegalArgumentException("Patron with given Id does not exists: " + patronId.getPatronId()));
+                .getOrElseThrow(() -> new PatronNotFoundException(patronId));
     }
 }

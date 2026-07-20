@@ -32,8 +32,7 @@ public class CancelingHold {
             Either<BookHoldCancelingFailed, BookHoldCanceled> result = patron.cancelHold(bookOnHold);
             return Match(result).of(
                     Case($Left($()), this::publishEvents),
-                    Case($Right($()), this::publishEvents)
-            );
+                    Case($Right($()), this::publishEvents));
         });
     }
 
@@ -47,16 +46,17 @@ public class CancelingHold {
         return Rejection;
     }
 
-    private BookOnHold find(BookId bookId, PatronId patronId) {
+    private BookOnHold find(
+            BookId bookId,
+            PatronId patronId) {
         return findBookOnHold
                 .findBookOnHold(bookId, patronId)
-                .getOrElseThrow(() -> new IllegalArgumentException("Cannot find book on hold with Id: " + bookId.getBookId()));
+                .getOrElseThrow(() -> new HoldNotFoundException(bookId));
     }
 
     private Patron find(PatronId patronId) {
         return patronRepository
                 .findBy(patronId)
-                .getOrElseThrow(() -> new IllegalArgumentException("Patron with given Id does not exists: " + patronId.getPatronId()));
+                .getOrElseThrow(() -> new PatronNotFoundException(patronId));
     }
 }
-

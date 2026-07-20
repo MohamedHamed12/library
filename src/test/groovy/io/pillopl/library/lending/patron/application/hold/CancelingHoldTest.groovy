@@ -57,6 +57,7 @@ class CancelingHoldTest extends Specification {
             Try<Result> result = canceling.cancelHold(cmd())
         then:
             result.isFailure()
+            result.cause instanceof PatronNotFoundException
 
     }
 
@@ -69,6 +70,7 @@ class CancelingHoldTest extends Specification {
             Try<Result> result = canceling.cancelHold(cmd())
         then:
             result.isFailure()
+            result.cause instanceof HoldNotFoundException
     }
 
     def 'should fail if saving patron fails'() {
@@ -108,7 +110,8 @@ class CancelingHoldTest extends Specification {
     }
 
     PatronId unknownPatron() {
-        return anyPatronId()
+        repository.findBy(patronId) >> Option.none()
+        return patronId
     }
 
 }

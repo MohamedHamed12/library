@@ -59,6 +59,7 @@ class PlacingBookOnHoldTest extends Specification {
             Try<Result> result = holding.placeOnHold(for3days(patron))
         then:
             result.isFailure()
+            result.cause instanceof PatronNotFoundException
 
     }
 
@@ -72,6 +73,7 @@ class PlacingBookOnHoldTest extends Specification {
             Try<Result> result = holding.placeOnHold(for3days(patron))
         then:
             result.isFailure()
+            result.cause instanceof BookNotFoundException
     }
 
     def 'should fail if saving patron fails'() {
@@ -116,7 +118,9 @@ class PlacingBookOnHoldTest extends Specification {
     }
 
     PatronId unknownPatron() {
-        return anyPatronId()
+        PatronId patronId = anyPatronId()
+        repository.findBy(patronId) >> Option.none()
+        return patronId
     }
 
 }
