@@ -4,8 +4,11 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.book.model.BookFixture;
+import io.pillopl.library.lending.patron.application.hold.BookNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
+import io.pillopl.library.lending.patron.application.hold.HoldNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
+import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
 import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patronprofile.model.Checkout;
@@ -275,13 +278,23 @@ public class PatronProfileControllerIT {
                 given(patronProfiles.fetchFor(patronId))
                                 .willReturn(profileWithCurrentActivity());
 
-                mvc.perform(get(
-                                "/profiles/"
-                                                + patronId.getPatronId()
-                                                + "/holds/"
-                                                + UUID.randomUUID())
+                String path = "/profiles/"
+                                + patronId.getPatronId()
+                                + "/holds/"
+                                + UUID.randomUUID();
+
+                mvc.perform(get(path)
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("HOLD_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested hold was not found.")))
+                                .andExpect(jsonPath("$.path", is(path)))
+                                .andExpect(jsonPath("$.timestamp").exists())
+                                .andExpect(jsonPath("$.details").isArray());
         }
 
         @Test
@@ -291,13 +304,23 @@ public class PatronProfileControllerIT {
                 given(patronProfiles.fetchFor(patronId))
                                 .willReturn(profileWithCurrentActivity());
 
-                mvc.perform(get(
-                                "/profiles/"
-                                                + patronId.getPatronId()
-                                                + "/checkouts/"
-                                                + UUID.randomUUID())
+                String path = "/profiles/"
+                                + patronId.getPatronId()
+                                + "/checkouts/"
+                                + UUID.randomUUID();
+
+                mvc.perform(get(path)
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("CHECKOUT_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested checkout was not found.")))
+                                .andExpect(jsonPath("$.path", is(path)))
+                                .andExpect(jsonPath("$.timestamp").exists())
+                                .andExpect(jsonPath("$.details").isArray());
         }
 
         @Test
@@ -416,15 +439,17 @@ public class PatronProfileControllerIT {
 
                 given(cancelingHold.cancelHold(any()))
                                 .willReturn(Try.failure(
-                                                new IllegalArgumentException()));
+                                                new HoldNotFoundException(bookId)));
 
-                mvc.perform(delete(
-                                "/profiles/"
-                                                + patronId.getPatronId()
-                                                + "/holds/"
-                                                + bookId.getBookId())
+                mvc.perform(delete(holdPath())
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("HOLD_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested hold was not found.")));
         }
 
         @Test
@@ -444,7 +469,112 @@ public class PatronProfileControllerIT {
                                                 + "/holds/"
                                                 + bookId.getBookId())
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE))
-                                .andExpect(status().isInternalServerError());
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("INTERNAL_ERROR")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("An unexpected error occurred.")))
+                                .andExpect(jsonPath("$.exception").doesNotExist())
+                                .andExpect(jsonPath("$.trace").doesNotExist());
+        }
+
+        @Test
+        public void shouldReturn404WhenBookDoesNotExist()
+                        throws Exception {
+
+                given(placingOnHold.placeOnHold(any()))
+                                .willReturn(Try.failure(
+                                                new BookNotFoundException(bookId)));
+
+                mvc.perform(post(placeHoldPath())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(validPlaceHoldRequest()))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("BOOK_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested book was not found.")))
+                                .andExpect(jsonPath("$.details").isArray());
+        }
+
+        @Test
+        public void shouldReturn404WhenPatronDoesNotExist()
+                        throws Exception {
+
+                given(placingOnHold.placeOnHold(any()))
+                                .willReturn(Try.failure(
+                                                new PatronNotFoundException(patronId)));
+
+                mvc.perform(post(placeHoldPath())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(validPlaceHoldRequest()))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("PATRON_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested patron was not found.")));
+        }
+
+        @Test
+        public void shouldReturn404WhenCancelingUnknownHold()
+                        throws Exception {
+
+                given(cancelingHold.cancelHold(any()))
+                                .willReturn(Try.failure(
+                                                new HoldNotFoundException(bookId)));
+
+                mvc.perform(delete(holdPath()))
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("HOLD_NOT_FOUND")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The requested hold was not found.")));
+        }
+
+        @Test
+        public void shouldReturn409WhenHoldCancellationIsRejected()
+                        throws Exception {
+
+                given(cancelingHold.cancelHold(any()))
+                                .willReturn(Try.success(Rejection));
+
+                mvc.perform(delete(holdPath()))
+                                .andExpect(status().isConflict())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("HOLD_CANCELLATION_NOT_ALLOWED")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("The hold cannot be canceled in its current state.")));
+        }
+
+        @Test
+        public void shouldReturnGeneric500WhenCancelingUnexpectedlyFails()
+                        throws Exception {
+
+                given(cancelingHold.cancelHold(any()))
+                                .willReturn(Try.failure(
+                                                new IllegalStateException(
+                                                                "Internal implementation detail")));
+
+                mvc.perform(delete(holdPath()))
+                                .andExpect(status().isInternalServerError())
+                                .andExpect(jsonPath(
+                                                "$.code",
+                                                is("INTERNAL_ERROR")))
+                                .andExpect(jsonPath(
+                                                "$.message",
+                                                is("An unexpected error occurred.")))
+                                .andExpect(jsonPath("$.exception").doesNotExist())
+                                .andExpect(jsonPath("$.trace").doesNotExist());
         }
 
         private PatronProfile profileWithCurrentActivity() {
@@ -463,6 +593,10 @@ public class PatronProfileControllerIT {
 
         private String placeHoldPath() {
                 return "/profiles/" + patronId.getPatronId() + "/holds";
+        }
+
+        private String holdPath() {
+                return "/profiles/" + patronId.getPatronId() + "/holds/" + bookId.getBookId();
         }
 
         private String validPlaceHoldRequest() {
