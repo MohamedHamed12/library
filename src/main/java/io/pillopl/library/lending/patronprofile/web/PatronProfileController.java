@@ -1,6 +1,5 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micrometer.core.annotation.Timed;
 import io.pillopl.library.catalogue.BookId;
@@ -13,9 +12,7 @@ import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
-import io.vavr.Predicates;
 import io.vavr.control.Option;
-import io.vavr.control.Try;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -37,16 +34,13 @@ import io.pillopl.library.lending.patronprofile.web.error.ApiException;
 import javax.validation.Valid;
 
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.HOLD_NOT_ALLOWED;
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.afford;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
+import io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode;
+import io.pillopl.library.lending.patronprofile.web.error.ApiException;
 
 @Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
 @RestController
@@ -106,7 +100,9 @@ class PatronProfileController {
                 return patronProfiles.fetchFor(new PatronId(patronId))
                                 .findHold(new BookId(bookId))
                                 .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
-                                .getOrElse(notFound().build());
+                                .getOrElseThrow(() -> ApiException.notFound(
+                                                ApiErrorCode.HOLD_NOT_FOUND,
+                                                "The requested hold was not found."));
 
         }
 
@@ -124,41 +120,74 @@ class PatronProfileController {
 
         @GetMapping("/profiles/{patronId}/checkouts/{bookId}")
         ResponseEntity<EntityModel<Checkout>> findCheckout(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-                return patronProfiles.fetchFor(new PatronId(patronId))
+                return patronProfiles
+                                .fetchFor(new PatronId(patronId))
                                 .findCheckout(new BookId(bookId))
-                                .map(hold -> ok(resourceWithLinkToCheckoutSelf(patronId, hold)))
-                                .getOrElse(notFound().build());
+                                .map(checkout -> ok(resourceWithLinkToCheckoutSelf(
+                                                patronId,
+                                                checkout)))
+                                .getOrElseThrow(() -> ApiException.notFound(
+                                                ApiErrorCode.CHECKOUT_NOT_FOUND,
+                                                "The requested checkout was not found."));
         }
 
+        // @PostMapping("/profiles/{patronId}/holds")
+        // ResponseEntity<Void> placeHold(@PathVariable UUID patronId, @Valid
+        // @RequestBody PlaceHoldRequest request) {
+        // Result result = placingOnHold.placeOnHold(new PlaceOnHoldCommand(
+        // Instant.now(),
+        // new PatronId(patronId),
+        // new LibraryBranchId(
+        // request.getLibraryBranchId()),
+        // new BookId(request.getBookId()),
+        // Option.of(request.getNumberOfDays())))
+        // .get();
+
+        // if (result == Result.Rejection) {
+        // throw ApiException.conflict(
+        // HOLD_NOT_ALLOWED,
+        // "The patron cannot place this book on hold.");
+        // }
+
+        // return ResponseEntity.ok().build();
+        // }
         @PostMapping("/profiles/{patronId}/holds")
         ResponseEntity<Void> placeHold(@PathVariable UUID patronId, @Valid @RequestBody PlaceHoldRequest request) {
-                Result result = placingOnHold.placeOnHold(new PlaceOnHoldCommand(
-                                Instant.now(),
-                                new PatronId(patronId),
-                                new LibraryBranchId(
-                                                request.getLibraryBranchId()),
-                                new BookId(request.getBookId()),
-                                Option.of(request.getNumberOfDays())))
+                Result result = placingOnHold
+                                .placeOnHold(
+                                                new PlaceOnHoldCommand(
+                                                                Instant.now(),
+                                                                new PatronId(patronId),
+                                                                new LibraryBranchId(
+                                                                                request.getLibraryBranchId()),
+                                                                new BookId(request.getBookId()),
+                                                                Option.of(request.getNumberOfDays())))
                                 .get();
 
-                if (result == Result.Rejection) {
-                        throw ApiException.conflict(
-                                        HOLD_NOT_ALLOWED,
-                                        "The patron cannot place this book on hold.");
-                }
+                rejectIfNeeded(
+                                result,
+                                ApiErrorCode.HOLD_NOT_ALLOWED,
+                                "The patron cannot place this book on hold.");
 
                 return ResponseEntity.ok().build();
         }
 
         @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
-        ResponseEntity cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-                Try<Result> result = cancelingHold.cancelHold(
-                                new CancelHoldCommand(Instant.now(), new PatronId(patronId), new BookId(bookId)));
-                return result
-                                .map(success -> ResponseEntity.noContent().build())
-                                .recover(r -> Match(r).of(Case($(Predicates.instanceOf(IllegalArgumentException.class)),
-                                                ResponseEntity.notFound().build())))
-                                .getOrElse(ResponseEntity.status(INTERNAL_SERVER_ERROR).build());
+        ResponseEntity<Void> cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+                Result result = cancelingHold
+                                .cancelHold(
+                                                new CancelHoldCommand(
+                                                                Instant.now(),
+                                                                new PatronId(patronId),
+                                                                new BookId(bookId)))
+                                .get();
+
+                rejectIfNeeded(
+                                result,
+                                ApiErrorCode.HOLD_CANCELLATION_NOT_ALLOWED,
+                                "The hold cannot be canceled in its current state.");
+
+                return ResponseEntity.noContent().build();
         }
 
         private EntityModel<Hold> resourceWithLinkToHoldSelf(UUID patronId,
@@ -179,6 +208,12 @@ class PatronProfileController {
                                 linkTo(methodOn(PatronProfileController.class).findCheckout(patronId,
                                                 checkout.getBook().getBookId()))
                                                 .withSelfRel());
+        }
+
+        private void rejectIfNeeded(Result result, ApiErrorCode code, String message) {
+                if (result == Result.Rejection) {
+                        throw ApiException.conflict(code, message);
+                }
         }
 }
 
@@ -237,5 +272,4 @@ class Checkout {
                 this.bookId = hold.getBook().getBookId();
                 this.till = hold.getTill();
         }
-
 }
