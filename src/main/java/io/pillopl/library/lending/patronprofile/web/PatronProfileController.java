@@ -31,7 +31,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import io.pillopl.library.lending.patronprofile.web.error.ApiException;
+import javax.validation.Valid;
+import io.pillopl.library.lending.patronprofile.web.error.ApiException;
+import javax.validation.Valid;
 
+import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.HOLD_NOT_ALLOWED;
 import static io.vavr.API.$;
 import static io.vavr.API.Case;
 import static io.vavr.API.Match;
@@ -43,192 +48,194 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.ResponseEntity.notFound;
 import static org.springframework.http.ResponseEntity.ok;
 
-@Timed(percentiles = {0.5, 0.75, 0.95, 0.99})
+@Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
 @RestController
 @AllArgsConstructor
 class PatronProfileController {
 
-    private final PatronProfiles patronProfiles;
-    private final PlacingOnHold placingOnHold;
-    private final CancelingHold cancelingHold;
+        private final PatronProfiles patronProfiles;
+        private final PlacingOnHold placingOnHold;
+        private final CancelingHold cancelingHold;
 
-    @GetMapping("/profiles/{patronId}")
-    ResponseEntity<PatronProfileSummaryResource> patronProfile(
-        @PathVariable UUID patronId) {
+        @GetMapping("/profiles/{patronId}")
+        ResponseEntity<PatronProfileSummaryResource> patronProfile(
+                        @PathVariable UUID patronId) {
 
-        PatronProfile profile =
-                patronProfiles.fetchFor(new PatronId(patronId));
+                PatronProfile profile = patronProfiles.fetchFor(new PatronId(patronId));
 
-        Instant now = Instant.now();
+                Instant now = Instant.now();
 
-        int currentHoldsCount = profile
-                .getHoldsView()
-                .getCurrentHolds()
-                .size();
+                int currentHoldsCount = profile
+                                .getHoldsView()
+                                .getCurrentHolds()
+                                .size();
 
-        int currentCheckoutsCount = profile
-                .getCurrentCheckouts()
-                .getCurrentCheckouts()
-                .size();
+                int currentCheckoutsCount = profile
+                                .getCurrentCheckouts()
+                                .getCurrentCheckouts()
+                                .size();
 
-        int overdueCheckoutsCount = profile
-                .getCurrentCheckouts()
-                .getCurrentCheckouts()
-                .filter(checkout -> checkout.getTill().isBefore(now))
-                .size();
+                int overdueCheckoutsCount = profile
+                                .getCurrentCheckouts()
+                                .getCurrentCheckouts()
+                                .filter(checkout -> checkout.getTill().isBefore(now))
+                                .size();
 
-        return ok(new PatronProfileSummaryResource(
-                patronId,
-                currentHoldsCount,
-                currentCheckoutsCount,
-                overdueCheckoutsCount
-        ));
-    }
+                return ok(new PatronProfileSummaryResource(
+                                patronId,
+                                currentHoldsCount,
+                                currentCheckoutsCount,
+                                overdueCheckoutsCount));
+        }
 
-    @GetMapping("/profiles/{patronId}/holds/")
-    ResponseEntity<CollectionModel<EntityModel<Hold>>> findHolds(@PathVariable UUID patronId) {
-        List<EntityModel<Hold>> holds = patronProfiles.fetchFor(new PatronId(patronId))
-                .getHoldsView()
-                .getCurrentHolds()
-                .toStream()
-                .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
-                .collect(toList());
-        return ResponseEntity.ok(new CollectionModel<>(holds, linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
+        @GetMapping("/profiles/{patronId}/holds/")
+        ResponseEntity<CollectionModel<EntityModel<Hold>>> findHolds(@PathVariable UUID patronId) {
+                List<EntityModel<Hold>> holds = patronProfiles.fetchFor(new PatronId(patronId))
+                                .getHoldsView()
+                                .getCurrentHolds()
+                                .toStream()
+                                .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
+                                .collect(toList());
+                return ResponseEntity.ok(new CollectionModel<>(holds,
+                                linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
 
-    }
+        }
 
-    @GetMapping("/profiles/{patronId}/holds/{bookId}")
-    ResponseEntity<EntityModel<Hold>> findHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-        return patronProfiles.fetchFor(new PatronId(patronId))
-                .findHold(new BookId(bookId))
-                .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
-                .getOrElse(notFound().build());
+        @GetMapping("/profiles/{patronId}/holds/{bookId}")
+        ResponseEntity<EntityModel<Hold>> findHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+                return patronProfiles.fetchFor(new PatronId(patronId))
+                                .findHold(new BookId(bookId))
+                                .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
+                                .getOrElse(notFound().build());
 
-    }
+        }
 
-    @GetMapping("/profiles/{patronId}/checkouts/")
-    ResponseEntity<CollectionModel<EntityModel<Checkout>>> findCheckouts(@PathVariable UUID patronId) {
-        List<EntityModel<Checkout>> checkouts = patronProfiles.fetchFor(new PatronId(patronId))
-                .getCurrentCheckouts()
-                .getCurrentCheckouts()
-                .toStream()
-                .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
-                .collect(toList());
-        return ResponseEntity.ok(new CollectionModel<>(checkouts, linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
-    }
+        @GetMapping("/profiles/{patronId}/checkouts/")
+        ResponseEntity<CollectionModel<EntityModel<Checkout>>> findCheckouts(@PathVariable UUID patronId) {
+                List<EntityModel<Checkout>> checkouts = patronProfiles.fetchFor(new PatronId(patronId))
+                                .getCurrentCheckouts()
+                                .getCurrentCheckouts()
+                                .toStream()
+                                .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
+                                .collect(toList());
+                return ResponseEntity.ok(new CollectionModel<>(checkouts,
+                                linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
+        }
 
-    @GetMapping("/profiles/{patronId}/checkouts/{bookId}")
-    ResponseEntity<EntityModel<Checkout>> findCheckout(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-        return patronProfiles.fetchFor(new PatronId(patronId))
-                .findCheckout(new BookId(bookId))
-                .map(hold -> ok(resourceWithLinkToCheckoutSelf(patronId, hold)))
-                .getOrElse(notFound().build());
-    }
+        @GetMapping("/profiles/{patronId}/checkouts/{bookId}")
+        ResponseEntity<EntityModel<Checkout>> findCheckout(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+                return patronProfiles.fetchFor(new PatronId(patronId))
+                                .findCheckout(new BookId(bookId))
+                                .map(hold -> ok(resourceWithLinkToCheckoutSelf(patronId, hold)))
+                                .getOrElse(notFound().build());
+        }
 
-    @PostMapping("/profiles/{patronId}/holds")
-    ResponseEntity placeHold(@PathVariable UUID patronId, @RequestBody PlaceHoldRequest request) {
-        Try<Result> result = placingOnHold.placeOnHold(
-                new PlaceOnHoldCommand(
-                        Instant.now(),
-                        new PatronId(patronId),
-                        new LibraryBranchId(request.getLibraryBranchId()),
-                        new BookId(request.getBookId()),
-                        Option.of(request.getNumberOfDays())
-                )
-        );
-        return result
-                .map(success -> ResponseEntity.ok().build())
-                .getOrElse(ResponseEntity.status(INTERNAL_SERVER_ERROR).build());
-    }
+        @PostMapping("/profiles/{patronId}/holds")
+        ResponseEntity<Void> placeHold(@PathVariable UUID patronId, @Valid @RequestBody PlaceHoldRequest request) {
+                Result result = placingOnHold.placeOnHold(new PlaceOnHoldCommand(
+                                Instant.now(),
+                                new PatronId(patronId),
+                                new LibraryBranchId(
+                                                request.getLibraryBranchId()),
+                                new BookId(request.getBookId()),
+                                Option.of(request.getNumberOfDays())))
+                                .get();
 
-    @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
-    ResponseEntity cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-        Try<Result> result = cancelingHold.cancelHold(new CancelHoldCommand(Instant.now(), new PatronId(patronId), new BookId(bookId)));
-        return result
-                .map(success -> ResponseEntity.noContent().build())
-                .recover(r -> Match(r).of(Case($(Predicates.instanceOf(IllegalArgumentException.class)), ResponseEntity.notFound().build())))
-                .getOrElse(ResponseEntity.status(INTERNAL_SERVER_ERROR).build());
-    }
+                if (result == Result.Rejection) {
+                        throw ApiException.conflict(
+                                        HOLD_NOT_ALLOWED,
+                                        "The patron cannot place this book on hold.");
+                }
 
-    private EntityModel<Hold> resourceWithLinkToHoldSelf(UUID patronId, io.pillopl.library.lending.patronprofile.model.Hold hold) {
-        return new EntityModel<>(
-                new Hold(hold),
-                linkTo(methodOn(PatronProfileController.class).findHold(patronId, hold.getBook().getBookId()))
-                        .withSelfRel()
-                        .andAffordance(afford(methodOn(PatronProfileController.class)
-                                .cancelHold(patronId, hold.getBook().getBookId()))));
-    }
+                return ResponseEntity.ok().build();
+        }
 
-    private EntityModel<Checkout> resourceWithLinkToCheckoutSelf(UUID patronId, io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
-        return new EntityModel<>(
-                new Checkout(checkout),
-                linkTo(methodOn(PatronProfileController.class).findCheckout(patronId, checkout.getBook().getBookId()))
-                        .withSelfRel());
-    }
+        @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
+        ResponseEntity cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+                Try<Result> result = cancelingHold.cancelHold(
+                                new CancelHoldCommand(Instant.now(), new PatronId(patronId), new BookId(bookId)));
+                return result
+                                .map(success -> ResponseEntity.noContent().build())
+                                .recover(r -> Match(r).of(Case($(Predicates.instanceOf(IllegalArgumentException.class)),
+                                                ResponseEntity.notFound().build())))
+                                .getOrElse(ResponseEntity.status(INTERNAL_SERVER_ERROR).build());
+        }
+
+        private EntityModel<Hold> resourceWithLinkToHoldSelf(UUID patronId,
+                        io.pillopl.library.lending.patronprofile.model.Hold hold) {
+                return new EntityModel<>(
+                                new Hold(hold),
+                                linkTo(methodOn(PatronProfileController.class).findHold(patronId,
+                                                hold.getBook().getBookId()))
+                                                .withSelfRel()
+                                                .andAffordance(afford(methodOn(PatronProfileController.class)
+                                                                .cancelHold(patronId, hold.getBook().getBookId()))));
+        }
+
+        private EntityModel<Checkout> resourceWithLinkToCheckoutSelf(UUID patronId,
+                        io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
+                return new EntityModel<>(
+                                new Checkout(checkout),
+                                linkTo(methodOn(PatronProfileController.class).findCheckout(patronId,
+                                                checkout.getBook().getBookId()))
+                                                .withSelfRel());
+        }
 }
 
 @Value
 class PatronProfileSummaryResource
-        extends RepresentationModel<PatronProfileSummaryResource> {
+                extends RepresentationModel<PatronProfileSummaryResource> {
 
-    UUID patronId;
-    int currentHoldsCount;
-    int currentCheckoutsCount;
-    int overdueCheckoutsCount;
+        UUID patronId;
+        int currentHoldsCount;
+        int currentCheckoutsCount;
+        int overdueCheckoutsCount;
 
-    PatronProfileSummaryResource(
-            UUID patronId,
-            int currentHoldsCount,
-            int currentCheckoutsCount,
-            int overdueCheckoutsCount) {
+        PatronProfileSummaryResource(
+                        UUID patronId,
+                        int currentHoldsCount,
+                        int currentCheckoutsCount,
+                        int overdueCheckoutsCount) {
 
-        this.patronId = patronId;
-        this.currentHoldsCount = currentHoldsCount;
-        this.currentCheckoutsCount = currentCheckoutsCount;
-        this.overdueCheckoutsCount = overdueCheckoutsCount;
-        add(linkTo(methodOn(PatronProfileController.class)
-                .findHolds(patronId))
-                .withRel("holds"));
+                this.patronId = patronId;
+                this.currentHoldsCount = currentHoldsCount;
+                this.currentCheckoutsCount = currentCheckoutsCount;
+                this.overdueCheckoutsCount = overdueCheckoutsCount;
+                add(linkTo(methodOn(PatronProfileController.class)
+                                .findHolds(patronId))
+                                .withRel("holds"));
 
-        add(linkTo(methodOn(PatronProfileController.class)
-                .findCheckouts(patronId))
-                .withRel("checkouts"));
+                add(linkTo(methodOn(PatronProfileController.class)
+                                .findCheckouts(patronId))
+                                .withRel("checkouts"));
 
-        add(linkTo(methodOn(PatronProfileController.class)
-                .patronProfile(patronId))
-                .withSelfRel());
-    }
+                add(linkTo(methodOn(PatronProfileController.class)
+                                .patronProfile(patronId))
+                                .withSelfRel());
+        }
 }
 
 @Value
 class Hold {
 
-    UUID bookId;
-    Instant till;
+        UUID bookId;
+        Instant till;
 
-    Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
-        this.bookId = hold.getBook().getBookId();
-        this.till = hold.getTill();
-    }
+        Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
+                this.bookId = hold.getBook().getBookId();
+                this.till = hold.getTill();
+        }
 }
 
 @Value
 class Checkout {
 
-    UUID bookId;
-    Instant till;
+        UUID bookId;
+        Instant till;
 
-    Checkout(io.pillopl.library.lending.patronprofile.model.Checkout hold) {
-        this.bookId = hold.getBook().getBookId();
-        this.till = hold.getTill();
-    }
+        Checkout(io.pillopl.library.lending.patronprofile.model.Checkout hold) {
+                this.bookId = hold.getBook().getBookId();
+                this.till = hold.getTill();
+        }
 
-}
-
-@Value
-@AllArgsConstructor(onConstructor = @__(@JsonCreator))
-class PlaceHoldRequest {
-    UUID bookId;
-    UUID libraryBranchId;
-    Integer numberOfDays;
 }
