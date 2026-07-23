@@ -25,7 +25,7 @@ class PatronRequestingCloseEndedHoldTest extends Specification {
         given:
             AvailableBook aBook = circulatingAvailableBook()
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(3)))
+            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(3)), from)
         then:
             hold.isRight()
             hold.get().with {
@@ -48,7 +48,7 @@ class PatronRequestingCloseEndedHoldTest extends Specification {
         and:
             Patron patron = regularPatron()
         when:
-            patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(days)))
+            patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(days)), from)
         then:
            thrown(IllegalArgumentException)
 

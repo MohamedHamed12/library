@@ -19,9 +19,12 @@ import static PatronFixture.onHold
 
 class PatronCheckingOutBookTest extends Specification {
 
+    private static final Instant CHECKOUT_TIME =
+            Instant.parse('2026-07-21T12:00:00Z')
+
     def 'patron cannot check out book which is not placed on hold'() {
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = regularPatron().checkOut(bookOnHold(), maxDuration())
+            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = regularPatron().checkOut(bookOnHold(), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
         then:
 		checkOut.isLeft()
             BookCheckingOutFailed e = checkOut.getLeft()
@@ -35,7 +38,7 @@ class PatronCheckingOutBookTest extends Specification {
         and:
             Patron patron = regularPatronWith(onHold)
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), maxDuration())
+            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
         then:
 		checkOut.isRight()
     }
@@ -44,19 +47,17 @@ class PatronCheckingOutBookTest extends Specification {
         given:
             Hold onHold = onHold()
         and:
-            Instant checkoutTime = Instant.now()
-        and:
             Patron patron = regularPatronWith(onHold)
         and:
             BookOnHold bookOnHold = bookOnHold(onHold.bookId, onHold.libraryBranchId)
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold, forNoOfDays(checkoutTime, checkoutDays))
+            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold, forNoOfDays(CHECKOUT_TIME, checkoutDays), CHECKOUT_TIME)
         then:
 		checkOut.isRight()
 		checkOut.get().with {
                 assert it.libraryBranchId == bookOnHold.holdPlacedAt.libraryBranchId
                 assert it.bookId == bookOnHold.bookInformation.bookId.bookId
-                assert it.till == checkoutTime.plus(Duration.ofDays(checkoutDays))
+                assert it.till == CHECKOUT_TIME.plus(Duration.ofDays(checkoutDays))
 
             }
         where:
@@ -69,7 +70,7 @@ class PatronCheckingOutBookTest extends Specification {
         and:
             Patron patron = regularPatronWith(onHold)
         when:
-            patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), forNoOfDays(checkoutDays))
+            patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), forNoOfDays(CHECKOUT_TIME, checkoutDays), CHECKOUT_TIME)
         then:
             thrown(IllegalArgumentException)
         where:

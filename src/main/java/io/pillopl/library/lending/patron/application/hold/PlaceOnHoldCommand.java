@@ -6,30 +6,63 @@ import io.pillopl.library.lending.patron.model.HoldDuration;
 import io.pillopl.library.lending.patron.model.NumberOfDays;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.vavr.control.Option;
-import java.time.Instant;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.time.Instant;
+
 @Value
 public class PlaceOnHoldCommand {
-    @NonNull Instant timestamp;
-    @NonNull PatronId patronId;
-    @NonNull LibraryBranchId libraryId;
-    @NonNull BookId bookId;
+
+    @NonNull
+    Instant timestamp;
+
+    @NonNull
+    PatronId patronId;
+
+    @NonNull
+    LibraryBranchId libraryId;
+
+    @NonNull
+    BookId bookId;
+
     Option<Integer> noOfDays;
 
-    static PlaceOnHoldCommand closeEnded(PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId, int forDays) {
-        return new PlaceOnHoldCommand(Instant.now(), patronId, libraryBranchId, bookId, Option.of(forDays));
+    static PlaceOnHoldCommand closeEnded(
+            Instant timestamp,
+            PatronId patronId,
+            LibraryBranchId libraryBranchId,
+            BookId bookId,
+            int forDays
+    ) {
+        return new PlaceOnHoldCommand(
+                timestamp,
+                patronId,
+                libraryBranchId,
+                bookId,
+                Option.of(forDays)
+        );
     }
 
-    static PlaceOnHoldCommand openEnded(PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId) {
-        return new PlaceOnHoldCommand(Instant.now(), patronId, libraryBranchId, bookId, Option.none());
+    static PlaceOnHoldCommand openEnded(
+            Instant timestamp,
+            PatronId patronId,
+            LibraryBranchId libraryBranchId,
+            BookId bookId
+    ) {
+        return new PlaceOnHoldCommand(
+                timestamp,
+                patronId,
+                libraryBranchId,
+                bookId,
+                Option.none()
+        );
     }
 
     HoldDuration getHoldDuration() {
         return noOfDays
                 .map(NumberOfDays::of)
-                .map(HoldDuration::closeEnded)
-                .getOrElse(HoldDuration.openEnded());
+                .map(days -> HoldDuration.closeEnded(timestamp, days))
+                .getOrElse(() -> HoldDuration.openEnded(timestamp));
     }
 }

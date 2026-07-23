@@ -6,14 +6,22 @@ import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
 import static io.pillopl.library.catalogue.BookFixture.DDD_ISBN_STR
 import static io.pillopl.library.catalogue.BookType.Restricted
 
 class AddBookToCatalogueTest extends Specification {
 
+    private static final Instant EVENT_TIME =
+            Instant.parse('2026-07-21T16:00:00Z')
+
     CatalogueDatabase catalogueDatabase = Stub()
     DomainEvents domainEvents = Mock()
-    Catalogue catalogue = new Catalogue(catalogueDatabase, domainEvents)
+    Clock clock = Clock.fixed(EVENT_TIME, ZoneOffset.UTC)
+    Catalogue catalogue = new Catalogue(catalogueDatabase, domainEvents, clock)
 
     def 'should add a new book to catalogue'() {
         given:

@@ -5,7 +5,8 @@ import io.vavr.collection.List;
 import io.vavr.collection.Stream;
 import lombok.NonNull;
 import lombok.Value;
-import org.springframework.context.event.EventListener;
+
+import java.time.Instant;
 
 @Value
 public class HoldsToExpireSheet {
@@ -13,11 +14,10 @@ public class HoldsToExpireSheet {
     @NonNull
     List<ExpiredHold> expiredHolds;
 
-    @EventListener
-    public Stream<PatronEvent.BookHoldExpired> toStreamOfEvents() {
+    public Stream<PatronEvent.BookHoldExpired> toStreamOfEvents(Instant processingTime) {
         return expiredHolds
                 .toStream()
-                .map(ExpiredHold::toEvent);
+                .map(expiredHold -> expiredHold.toEvent(processingTime));
     }
 
     public int count() {

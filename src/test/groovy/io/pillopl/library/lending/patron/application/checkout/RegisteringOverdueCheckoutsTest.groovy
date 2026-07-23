@@ -10,6 +10,10 @@ import io.pillopl.library.lending.patron.model.Patrons
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
@@ -20,14 +24,15 @@ class RegisteringOverdueCheckoutsTest extends Specification {
 
     Patrons repository = Stub()
     DailySheet dailySheet = Stub()
+    Clock clock = Clock.fixed(Instant.parse('2026-07-21T10:15:30Z'), ZoneOffset.UTC)
     PatronId patronWithOverdueCheckouts = anyPatronId()
     PatronId anotherPatronWithOverdueCheckouts = anyPatronId()
 
     RegisteringOverdueCheckout registeringOverdueCheckout =
-            new RegisteringOverdueCheckout(dailySheet, repository)
+            new RegisteringOverdueCheckout(dailySheet, repository, clock)
 
     def setup() {
-        dailySheet.queryForCheckoutsToOverdue() >> overdueCheckoutsBy(patronWithOverdueCheckouts, anotherPatronWithOverdueCheckouts)
+        dailySheet.queryForCheckoutsToOverdue(_ as Instant) >> overdueCheckoutsBy(patronWithOverdueCheckouts, anotherPatronWithOverdueCheckouts)
     }
 
 

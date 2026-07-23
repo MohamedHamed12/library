@@ -10,14 +10,16 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.Clock;
+
 @Configuration
 @EnableAutoConfiguration
 @Import({CatalogueDatabaseConfig.class, DomainEventsConfig.class})
 public class CatalogueConfiguration {
 
     @Bean
-    Catalogue catalogue(CatalogueDatabase catalogueDatabase, DomainEvents domainEvents) {
-        return new Catalogue(catalogueDatabase, domainEvents);
+    Catalogue catalogue(CatalogueDatabase catalogueDatabase, DomainEvents domainEvents, Clock clock) {
+        return new Catalogue(catalogueDatabase, domainEvents, clock);
     }
 
     @Bean

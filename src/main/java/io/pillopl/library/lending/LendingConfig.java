@@ -12,12 +12,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableScheduling
-@Import({LendingDatabaseConfig.class,
+@Import({
+        LendingDatabaseConfig.class,
         WebConfiguration.class,
         PatronProfileConfiguration.class,
         PatronConfiguration.class,
         DailySheetConfiguration.class,
         BookConfiguration.class,
-        DomainEventsConfig.class})
+        DomainEventsConfig.class
+})
 public class LendingConfig {
 }

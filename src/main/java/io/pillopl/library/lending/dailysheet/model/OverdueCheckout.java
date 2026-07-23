@@ -6,13 +6,15 @@ import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegist
 import io.pillopl.library.lending.patron.model.PatronId;
 import lombok.Value;
 
+import java.time.Instant;
+
 @Value
 public class OverdueCheckout {
     private final BookId checkedOutBook;
     private final PatronId patron;
     private final LibraryBranchId library;
 
-    OverdueCheckoutRegistered toEvent() {
-        return OverdueCheckoutRegistered.now(this.patron, this.checkedOutBook, this.library);
+    OverdueCheckoutRegistered toEvent(Instant processingTime) {
+        return OverdueCheckoutRegistered.registeredAt(processingTime, this.patron, this.checkedOutBook, this.library);
     }
 }

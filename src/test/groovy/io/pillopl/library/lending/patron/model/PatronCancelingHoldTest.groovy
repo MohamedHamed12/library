@@ -5,6 +5,8 @@ import io.pillopl.library.lending.book.model.BookOnHold
 import io.vavr.control.Either
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static PatronFixture.regularPatron
 import static PatronFixture.regularPatronWithHold
 import static PatronEvent.BookHoldCanceled
@@ -13,13 +15,15 @@ import static PatronEvent.BookHoldCancelingFailed
 
 class PatronCancelingHoldTest extends Specification {
 
+    private static final Instant CANCEL_TIME = Instant.parse('2026-07-21T10:15:30Z')
+
     def 'patron should be able to cancel his holds'() {
         given:
             BookOnHold forBook = BookFixture.bookOnHold()
         and:
             Patron patron = regularPatronWithHold(forBook)
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook)
+            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
             cancelHold.isRight()
             cancelHold.get().with {
@@ -35,7 +39,7 @@ class PatronCancelingHoldTest extends Specification {
         and:
             Patron patron = regularPatron()
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook)
+            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
             cancelHold.isLeft()
 
@@ -49,7 +53,7 @@ class PatronCancelingHoldTest extends Specification {
         and:
             Patron differentPatron = regularPatronWithHold(forBook)
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook)
+            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
             cancelHold.isLeft()
 

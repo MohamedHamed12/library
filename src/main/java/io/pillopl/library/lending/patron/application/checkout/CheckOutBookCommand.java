@@ -16,11 +16,11 @@ public class CheckOutBookCommand {
     @NonNull BookId bookId;
     @NonNull Integer noOfDays;
 
-    public static CheckOutBookCommand create(PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId, int noOfDays) {
-        return new CheckOutBookCommand(Instant.now(), patronId, libraryBranchId, bookId, noOfDays);
+    public static CheckOutBookCommand create(Instant timestamp, PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId, int noOfDays) {
+        return new CheckOutBookCommand(timestamp, patronId, libraryBranchId, bookId, noOfDays);
     }
 
     CheckoutDuration getCheckoutDuration() {
-        return CheckoutDuration.forNoOfDays(noOfDays);
+        return CheckoutDuration.forNoOfDays(timestamp, noOfDays);
     }
 }

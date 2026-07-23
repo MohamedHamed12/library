@@ -27,7 +27,7 @@ class BookEntityToDomainModelMappingTest extends Specification {
     PatronId patronId = anyPatronId()
     PatronId anotherPatronId = anyPatronId()
     BookId bookId = anyBookId()
-    Instant holdTill = Instant.now()
+    Instant holdTill = Instant.parse('2026-07-21T10:15:30Z')
 
 
     def 'should map to available book'() {

@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 
+import java.time.Clock;
+
 @Configuration
 @EnableJdbcRepositories
 public class PatronConfiguration {
@@ -26,8 +28,8 @@ public class PatronConfiguration {
     }
 
     @Bean
-    RegisteringOverdueCheckout registeringOverdueCheckout(DailySheet dailySheet, Patrons patronRepository) {
-        return new RegisteringOverdueCheckout(dailySheet, patronRepository);
+    RegisteringOverdueCheckout registeringOverdueCheckout(DailySheet dailySheet, Patrons patronRepository, Clock clock) {
+        return new RegisteringOverdueCheckout(dailySheet, patronRepository, clock);
     }
 
     @Bean
@@ -36,13 +38,13 @@ public class PatronConfiguration {
     }
 
     @Bean
-    ExpiringHolds expiringHolds(DailySheet dailySheet, Patrons patronRepository) {
-        return new ExpiringHolds(dailySheet, patronRepository);
+    ExpiringHolds expiringHolds(DailySheet dailySheet, Patrons patronRepository, Clock clock) {
+        return new ExpiringHolds(dailySheet, patronRepository, clock);
     }
 
     @Bean
-    HandleDuplicateHold handleDuplicateHold(CancelingHold cancelingHold) {
-        return new HandleDuplicateHold(cancelingHold);
+    HandleDuplicateHold handleDuplicateHold(CancelingHold cancelingHold, Clock clock) {
+        return new HandleDuplicateHold(cancelingHold, clock);
     }
 
     @Bean

@@ -4,28 +4,42 @@ import io.pillopl.library.lending.book.model.AvailableBook
 import io.vavr.control.Either
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.lending.book.model.BookFixture.circulatingBook
 import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
-import static PatronEvent.*
-import static PatronFixture.regularPatronWithHolds
+import static io.pillopl.library.lending.patron.model.PatronEvent.*
+import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatronWithHolds
 
-class PatronRequestingLastPossibleHoldTest extends Specification {
+class PatronRequestingLastPossibleHoldTest
+        extends Specification {
 
+    private static final Instant HOLD_TIME =
+            Instant.parse('2026-07-21T10:15:30Z')
 
-    def 'should announce that a regular patron places his last possible hold (4th)'() {
+    def 'should announce that a regular patron places his last possible hold'() {
         given:
             AvailableBook book = circulatingBook()
+
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = regularPatronWithHolds(4).placeOnHold(book, closeEnded(3))
+            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+                    regularPatronWithHolds(4)
+                            .placeOnHold(
+                                    book,
+                                    closeEnded(HOLD_TIME, 3),
+                                    HOLD_TIME
+                            )
+
         then:
             hold.isRight()
+
             hold.get().with {
-                assert it.maximumNumberOhHoldsReached.isDefined()
-                MaximumNumberOhHoldsReached maximumNumberOhHoldsReached = it.maximumNumberOhHoldsReached.get()
-                assert maximumNumberOhHoldsReached.numberOfHolds == 5
+                assert maximumNumberOhHoldsReached.isDefined()
+
+                MaximumNumberOhHoldsReached event =
+                        maximumNumberOhHoldsReached.get()
+
+                assert event.numberOfHolds == 5
             }
-
     }
-
-
 }

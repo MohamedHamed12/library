@@ -6,15 +6,17 @@ import io.vavr.collection.Stream;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.time.Instant;
+
 @Value
 public class CheckoutsToOverdueSheet {
 
     @NonNull
     List<OverdueCheckout> checkouts;
 
-    public Stream<OverdueCheckoutRegistered> toStreamOfEvents() {
+    public Stream<OverdueCheckoutRegistered> toStreamOfEvents(Instant processingTime) {
         return checkouts.toStream()
-                .map(OverdueCheckout::toEvent);
+                .map(checkout -> checkout.toEvent(processingTime));
     }
 
     public int count() {

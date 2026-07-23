@@ -7,6 +7,8 @@ import io.pillopl.library.lending.patron.model.PatronId
 import io.vavr.collection.List
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
@@ -22,11 +24,13 @@ class CheckoutsToOverdueSheetTest extends Specification {
     LibraryBranchId libraryBranchId = anyBranch()
     LibraryBranchId anotherLibraryBranchId = anyBranch()
 
+    private static final Instant PROCESSING_TIME = Instant.parse('2026-07-21T10:15:30Z')
+
     def 'should transform sheet into stream of OverdueCheckoutRegistered events'() {
         given:
             CheckoutsToOverdueSheet sheet = sheet(patronId, anotherPatronId, bookId, anotherBookId, libraryBranchId, anotherLibraryBranchId)
         expect:
-            sheet.toStreamOfEvents().with {
+            sheet.toStreamOfEvents(PROCESSING_TIME).with {
 
                 PatronEvent.OverdueCheckoutRegistered first = it.get(0) as PatronEvent.OverdueCheckoutRegistered
                 first.patronId == patronId.patronId

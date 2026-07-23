@@ -23,7 +23,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -37,21 +36,20 @@ import static java.util.stream.Collectors.toList;
 class SheetsReadModel implements DailySheet {
 
     private final JdbcTemplate sheets;
-    private final Clock clock;
 
     @Override
-    public HoldsToExpireSheet queryForHoldsToExpireSheet() {
+    public HoldsToExpireSheet queryForHoldsToExpireSheet(Instant processingTime) {
         return new HoldsToExpireSheet(ofAll(
-                findHoldsToExpire()
+                findHoldsToExpire(processingTime)
                         .stream()
                         .map(this::toExpiredHold)
                         .collect(toList())));
     }
 
-    private List<Map<String, Object>> findHoldsToExpire() {
+    private List<Map<String, Object>> findHoldsToExpire(Instant processingTime) {
         return sheets.query(
                 "SELECT h.book_id, h.hold_by_patron_id, h.hold_at_branch FROM holds_sheet h WHERE h.status = 'ACTIVE' and h.hold_till <= ?",
-                new Object[]{from(Instant.now(clock))},
+                new Object[]{from(processingTime)},
                 new ColumnMapRowMapper());
     }
 
@@ -63,18 +61,18 @@ class SheetsReadModel implements DailySheet {
     }
 
     @Override
-    public CheckoutsToOverdueSheet queryForCheckoutsToOverdue() {
+    public CheckoutsToOverdueSheet queryForCheckoutsToOverdue(Instant processingTime) {
         return new CheckoutsToOverdueSheet(ofAll(
-                findCheckoutsToOverdue()
+                findCheckoutsToOverdue(processingTime)
                         .stream()
                         .map(this::toOverdueCheckout)
                         .collect(toList())));
     }
 
-    private List<Map<String, Object>> findCheckoutsToOverdue() {
+    private List<Map<String, Object>> findCheckoutsToOverdue(Instant processingTime) {
         return sheets.query(
                 "SELECT c.book_id, c.checked_out_by_patron_id, c.checked_out_at_branch FROM checkouts_sheet c WHERE c.status = 'CHECKEDOUT' and c.checkout_till <= ?",
-                new Object[]{from(Instant.now(clock))},
+                new Object[]{from(processingTime)},
                 new ColumnMapRowMapper());
     }
 

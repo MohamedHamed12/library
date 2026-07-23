@@ -16,10 +16,14 @@ public class BookInstanceAddedToCatalogue implements DomainEvent {
     String isbn;
     BookType type;
     UUID bookId;
-    Instant when = Instant.now();
+    Instant when;
 
-    BookInstanceAddedToCatalogue(BookInstance bookInstance) {
-        this(bookInstance.getBookIsbn().getIsbn(), bookInstance.getBookType(), bookInstance.getBookId().getBookId());
+    static BookInstanceAddedToCatalogue addedAt(Instant timestamp, BookInstance bookInstance) {
+        return new BookInstanceAddedToCatalogue(
+                bookInstance.getBookIsbn().getIsbn(),
+                bookInstance.getBookType(),
+                bookInstance.getBookId().getBookId(),
+                timestamp);
     }
 
     @Override

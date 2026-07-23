@@ -9,6 +9,7 @@ import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
+import java.time.Clock;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ class LendingDatabaseConfig extends AbstractJdbcConfiguration {
 
     @Profile("local")
     @Bean
-    CommandLineRunner init(BookRepository bookRepository, Patrons patrons) {
+    CommandLineRunner init(BookRepository bookRepository, Patrons patrons, Clock clock) {
         return args -> {
             UUID bookId = UUID.randomUUID();
             UUID libraryBranchId = UUID.randomUUID();
@@ -69,7 +70,7 @@ class LendingDatabaseConfig extends AbstractJdbcConfiguration {
 
             AvailableBook availableBook = new AvailableBook(new BookInformation(new BookId(bookId), Circulating), new LibraryBranchId(libraryBranchId), new Version(0));
             bookRepository.save(availableBook);
-            patrons.publish(PatronCreated.now(new PatronId(patronId), Regular));
+            patrons.publish(PatronCreated.createdAt(clock.instant(), new PatronId(patronId), Regular));
 
             log.info("Created bookId: {}", bookId);
             log.info("Created libraryBranchId: {}", libraryBranchId);
