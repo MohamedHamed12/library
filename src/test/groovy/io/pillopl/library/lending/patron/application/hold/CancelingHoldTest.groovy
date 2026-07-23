@@ -16,6 +16,9 @@ import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 
 class CancelingHoldTest extends Specification {
 
+    private static final Instant COMMAND_TIME =
+        Instant.parse('2026-07-21T11:30:00Z')
+
     BookOnHold bookOnHold = bookOnHold()
     PatronId patronId = anyPatronId()
 
@@ -86,7 +89,7 @@ class CancelingHoldTest extends Specification {
     }
 
     CancelHoldCommand cmd() {
-        return new CancelHoldCommand(Instant.now(), patronId, anyBookId())
+        return new CancelHoldCommand(COMMAND_TIME, patronId, anyBookId())
     }
 
     PatronId persistedRegularPatronWithBookOnHold() {

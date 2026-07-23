@@ -12,17 +12,23 @@ import io.pillopl.library.lending.patron.model.PatronId
 import io.vavr.control.Option
 import spock.lang.Specification
 
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 
 class DuplicateHoldFoundTest extends Specification {
 
+    private static final Instant DETECTION_TIME =
+            Instant.parse('2026-07-21T10:00:01Z')
+
     BookOnHold bookOnHold = BookFixture.bookOnHold()
     BookRepository bookRepository = Stub()
     DomainEvents domainEvents = Mock()
-    PatronEventsHandler patronEventsHandler = new PatronEventsHandler(bookRepository, domainEvents)
+    Clock clock = Clock.fixed(DETECTION_TIME, ZoneOffset.UTC)
+    PatronEventsHandler patronEventsHandler = new PatronEventsHandler(bookRepository, domainEvents, clock)
 
     PatronId patronId = anyPatronId()
     LibraryBranchId libraryBranchId = anyBranch()
@@ -51,7 +57,7 @@ class DuplicateHoldFoundTest extends Specification {
     }
 
     PatronEvent.BookPlacedOnHold placedOnHoldBy(PatronId patronId) {
-        return new PatronEvent.BookPlacedOnHold(Instant.now(), patronId.patronId, bookOnHold.bookId.bookId, bookOnHold.bookInformation.bookType, libraryBranchId.libraryBranchId, Instant.now(), Instant.now())
+        return new PatronEvent.BookPlacedOnHold(DETECTION_TIME, patronId.patronId, bookOnHold.bookId.bookId, bookOnHold.bookInformation.bookType, libraryBranchId.libraryBranchId, DETECTION_TIME, DETECTION_TIME.plusSeconds(300))
     }
 
     void bookIsAlreadyOnHold() {

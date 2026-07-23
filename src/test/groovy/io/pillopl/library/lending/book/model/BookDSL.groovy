@@ -13,6 +13,8 @@ import static io.pillopl.library.lending.book.model.BookFixture.version0
 import static io.pillopl.library.catalogue.BookType.Circulating
 
 class BookDSL {
+    private static final Instant FIXED_TIME = Instant.parse('2026-07-21T14:00:00Z')
+
     BookType bookType
     BookId bookId
     LibraryBranchId libraryBranchId
@@ -54,7 +56,7 @@ class BookDSL {
     BookDSL placedOnHoldBy(PatronId aPatron) {
         this.patronId = aPatron
         this.bookProvider = { ->
-            new BookOnHold(new BookInformation(bookId, bookType), libraryBranchId, patronId, Instant.now(), version0())
+            new BookOnHold(new BookInformation(bookId, bookType), libraryBranchId, patronId, FIXED_TIME, version0())
         }
         return this
     }
@@ -88,7 +90,7 @@ class BookDSL {
 
             {
                 onHoldPatronId = aPatron
-                onHoldFrom = Instant.now()
+                onHoldFrom = FIXED_TIME
             }
 
             def at(LibraryBranchId branchId) {
@@ -129,7 +131,7 @@ class BookDSL {
 
 
     private static PatronEvent.BookReturned bookReturned(Book bookCheckedOut, PatronId patronId, LibraryBranchId libraryBranchId) {
-        return new PatronEvent.BookReturned(Instant.now(),
+        return new PatronEvent.BookReturned(FIXED_TIME,
                 patronId.patronId,
                 bookCheckedOut.getBookId().bookId,
                 bookCheckedOut.bookInformation.bookType,
@@ -137,16 +139,16 @@ class BookDSL {
     }
 
     private static PatronEvent.BookCheckedOut bookCheckedOut(Book bookOnHold, PatronId patronId, LibraryBranchId libraryBranchId) {
-        return new PatronEvent.BookCheckedOut(Instant.now(),
+        return new PatronEvent.BookCheckedOut(FIXED_TIME,
                 patronId.patronId,
                 bookOnHold.getBookId().bookId,
                 bookOnHold.bookInformation.bookType,
                 libraryBranchId.libraryBranchId,
-                Instant.now())
+                FIXED_TIME)
     }
 
     private static PatronEvent.BookPlacedOnHold bookPlacedOnHold(Book availableBook, PatronId byPatron, LibraryBranchId libraryBranchId, Instant from, Instant till) {
-        return new PatronEvent.BookPlacedOnHold(Instant.now(),
+        return new PatronEvent.BookPlacedOnHold(FIXED_TIME,
                 byPatron.patronId,
                 availableBook.getBookId().bookId,
                 availableBook.bookInformation.bookType,
@@ -157,14 +159,14 @@ class BookDSL {
 
 
     private static PatronEvent.BookHoldExpired bookHoldExpired(Book bookOnHold, PatronId patronId, LibraryBranchId libraryBranchId) {
-        return new PatronEvent.BookHoldExpired(Instant.now(),
+        return new PatronEvent.BookHoldExpired(FIXED_TIME,
                 bookOnHold.getBookId().bookId,
                 patronId.patronId,
                 libraryBranchId.libraryBranchId)
     }
 
     private static PatronEvent.BookHoldCanceled bookHoldCanceled(Book bookOnHold, PatronId patronId, LibraryBranchId libraryBranchId) {
-        return new PatronEvent.BookHoldCanceled(Instant.now(),
+        return new PatronEvent.BookHoldCanceled(FIXED_TIME,
                 bookOnHold.getBookId().bookId,
                 patronId.patronId,
                 libraryBranchId.libraryBranchId)

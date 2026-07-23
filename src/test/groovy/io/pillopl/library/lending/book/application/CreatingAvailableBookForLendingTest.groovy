@@ -10,7 +10,12 @@ import io.pillopl.library.lending.book.model.BookRepository
 import io.vavr.control.Option
 import spock.lang.Specification
 
+import java.time.Instant
+
 class CreatingAvailableBookForLendingTest extends Specification {
+
+    private static final Instant EVENT_TIME =
+            Instant.parse('2026-07-21T16:00:00Z')
 
     static final BookId bookId = BookFixture.anyBookId()
 
@@ -20,7 +25,7 @@ class CreatingAvailableBookForLendingTest extends Specification {
 
     def 'should create new available book for lending when book instance was added to catalogue'() {
         when:
-            handler.handle(new BookInstanceAddedToCatalogue("isbn", BookType.Restricted, bookId.getBookId()))
+            handler.handle(new BookInstanceAddedToCatalogue("isbn", BookType.Restricted, bookId.getBookId(), EVENT_TIME))
             Option<Book> book = bookRepository.findBy(bookId)
         then:
             book.isDefined()

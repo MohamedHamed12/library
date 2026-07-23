@@ -28,8 +28,10 @@ public class PlacingOnHold {
         return Try.of(() -> {
             AvailableBook availableBook = find(command.getBookId());
             Patron patron = find(command.getPatronId());
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> result = patron.placeOnHold(availableBook,
-                    command.getHoldDuration());
+            Either<BookHoldFailed, BookPlacedOnHoldEvents> result = patron.placeOnHold(
+                    availableBook,
+                    command.getHoldDuration(),
+                    command.getTimestamp());
             return Match(result).of(
                     Case($Left($()), this::publishEvents),
                     Case($Right($()), this::publishEvents));

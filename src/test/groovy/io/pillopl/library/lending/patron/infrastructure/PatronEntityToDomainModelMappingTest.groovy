@@ -24,7 +24,7 @@ class PatronEntityToDomainModelMappingTest extends Specification {
     PatronId patronId = anyPatronId()
     BookId bookId = anyBookId()
     BookId anotherBookId = anyBookId()
-    Instant anyDate = Instant.now()
+    Instant anyDate = Instant.parse('2026-07-21T10:15:30Z')
 
     def 'should map patron holds'() {
         given:

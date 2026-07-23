@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.Clock;
+
 @Configuration
 public class BookConfiguration {
 
@@ -17,8 +19,8 @@ public class BookConfiguration {
     }
 
     @Bean
-    PatronEventsHandler bookEventsHandler(BookRepository bookRepository, DomainEvents domainEvents) {
-        return new PatronEventsHandler(bookRepository, domainEvents);
+    PatronEventsHandler bookEventsHandler(BookRepository bookRepository, DomainEvents domainEvents, Clock clock) {
+        return new PatronEventsHandler(bookRepository, domainEvents, clock);
     }
 
     @Bean

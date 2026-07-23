@@ -8,17 +8,12 @@ import io.vavr.control.Try;
 import org.springframework.context.event.EventListener;
 
 import java.time.Clock;
-
-import static java.time.Instant.now;
+import java.time.Instant;
 
 public class HandleDuplicateHold {
 
     private final CancelingHold cancelingHold;
     private final Clock clock;
-
-    public HandleDuplicateHold(CancelingHold cancelingHold) {
-        this(cancelingHold, Clock.systemUTC());
-    }
 
     public HandleDuplicateHold(CancelingHold cancelingHold, Clock clock) {
         this.cancelingHold = cancelingHold;
@@ -31,8 +26,9 @@ public class HandleDuplicateHold {
     }
 
     private CancelHoldCommand cancelHoldCommandFrom(BookDuplicateHoldFound event) {
+        Instant cancellationTime = clock.instant();
         return new CancelHoldCommand(
-                now(clock),
+                cancellationTime,
                 new PatronId(event.getSecondPatronId()),
                 new BookId(event.getBookId()));
     }

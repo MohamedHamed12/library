@@ -12,12 +12,16 @@ import io.vavr.control.Option
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.book.model.BookFixture.bookOnHold
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.*
 
 class CheckingOutBookOnHoldTest extends Specification {
+
+    private static final Instant CHECKOUT_TIME = Instant.parse('2026-07-21T10:15:30Z')
 
     BookOnHold bookOnHold = bookOnHold()
     PatronId patronId = anyPatronId()
@@ -89,7 +93,7 @@ class CheckingOutBookOnHoldTest extends Specification {
     }
 
     CheckOutBookCommand for3days(PatronId patron) {
-        return CheckOutBookCommand.create(patron, anyBranch(), anyBookId(), 4)
+        return CheckOutBookCommand.create(CHECKOUT_TIME, patron, anyBranch(), anyBookId(), 4)
     }
 
     PatronId persisted(Patron patron) {

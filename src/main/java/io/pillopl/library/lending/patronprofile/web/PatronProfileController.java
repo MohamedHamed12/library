@@ -13,6 +13,7 @@ import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.vavr.control.Option;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -50,6 +51,7 @@ class PatronProfileController {
         private final PatronProfiles patronProfiles;
         private final PlacingOnHold placingOnHold;
         private final CancelingHold cancelingHold;
+        private final Clock clock;
 
         @GetMapping("/profiles/{patronId}")
         ResponseEntity<PatronProfileSummaryResource> patronProfile(
@@ -57,8 +59,7 @@ class PatronProfileController {
 
                 PatronProfile profile = patronProfiles.fetchFor(new PatronId(patronId));
 
-                Instant now = Instant.now();
-
+                Instant now = clock.instant();
                 int currentHoldsCount = profile
                                 .getHoldsView()
                                 .getCurrentHolds()
@@ -131,37 +132,21 @@ class PatronProfileController {
                                                 "The requested checkout was not found."));
         }
 
-        // @PostMapping("/profiles/{patronId}/holds")
-        // ResponseEntity<Void> placeHold(@PathVariable UUID patronId, @Valid
-        // @RequestBody PlaceHoldRequest request) {
-        // Result result = placingOnHold.placeOnHold(new PlaceOnHoldCommand(
-        // Instant.now(),
-        // new PatronId(patronId),
-        // new LibraryBranchId(
-        // request.getLibraryBranchId()),
-        // new BookId(request.getBookId()),
-        // Option.of(request.getNumberOfDays())))
-        // .get();
-
-        // if (result == Result.Rejection) {
-        // throw ApiException.conflict(
-        // HOLD_NOT_ALLOWED,
-        // "The patron cannot place this book on hold.");
-        // }
-
-        // return ResponseEntity.ok().build();
-        // }
         @PostMapping("/profiles/{patronId}/holds")
-        ResponseEntity<Void> placeHold(@PathVariable UUID patronId, @Valid @RequestBody PlaceHoldRequest request) {
+        ResponseEntity<Void> placeHold(
+                        @PathVariable UUID patronId,
+                        @Valid @RequestBody PlaceHoldRequest request) {
+                Instant now = clock.instant();
+
+                PlaceOnHoldCommand command = new PlaceOnHoldCommand(
+                                now,
+                                new PatronId(patronId),
+                                new LibraryBranchId(request.getLibraryBranchId()),
+                                new BookId(request.getBookId()),
+                                Option.of(request.getNumberOfDays()));
+
                 Result result = placingOnHold
-                                .placeOnHold(
-                                                new PlaceOnHoldCommand(
-                                                                Instant.now(),
-                                                                new PatronId(patronId),
-                                                                new LibraryBranchId(
-                                                                                request.getLibraryBranchId()),
-                                                                new BookId(request.getBookId()),
-                                                                Option.of(request.getNumberOfDays())))
+                                .placeOnHold(command)
                                 .get();
 
                 rejectIfNeeded(
@@ -173,13 +158,18 @@ class PatronProfileController {
         }
 
         @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
-        ResponseEntity<Void> cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+        ResponseEntity<Void> cancelHold(
+                        @PathVariable UUID patronId,
+                        @PathVariable UUID bookId) {
+                Instant now = clock.instant();
+
+                CancelHoldCommand command = new CancelHoldCommand(
+                                now,
+                                new PatronId(patronId),
+                                new BookId(bookId));
+
                 Result result = cancelingHold
-                                .cancelHold(
-                                                new CancelHoldCommand(
-                                                                Instant.now(),
-                                                                new PatronId(patronId),
-                                                                new BookId(bookId)))
+                                .cancelHold(command)
                                 .get();
 
                 rejectIfNeeded(

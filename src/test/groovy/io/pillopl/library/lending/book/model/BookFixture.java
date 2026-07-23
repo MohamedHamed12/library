@@ -14,8 +14,10 @@ import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixtur
 
 public class BookFixture {
 
+    private static final Instant FIXED_TIME = Instant.parse("2026-07-21T10:15:30Z");
+
     public static BookOnHold bookOnHold(BookId bookId, LibraryBranchId libraryBranchId) {
-        return new BookOnHold(new BookInformation(bookId, Circulating), libraryBranchId, anyPatronId(), Instant.now(), version0());
+        return new BookOnHold(new BookInformation(bookId, Circulating), libraryBranchId, anyPatronId(), FIXED_TIME, version0());
     }
 
     public static AvailableBook circulatingBook() {
@@ -23,7 +25,7 @@ public class BookFixture {
     }
 
     public static BookOnHold bookOnHold() {
-        return new BookOnHold(new BookInformation(anyBookId(), Circulating), anyBranch(), anyPatronId(), Instant.now(), version0());
+        return new BookOnHold(new BookInformation(anyBookId(), Circulating), anyBranch(), anyPatronId(), FIXED_TIME, version0());
     }
 
     public static AvailableBook circulatingAvailableBookAt(LibraryBranchId libraryBranchId) {

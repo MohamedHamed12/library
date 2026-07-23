@@ -15,29 +15,32 @@ import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixtur
 import static io.pillopl.library.lending.patron.model.CheckoutDuration.forNoOfDays
 import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
 import static io.pillopl.library.lending.patron.model.HoldDuration.openEnded
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled.holdCanceledNow
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.bookPlacedOnHoldNow
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled.canceledAt
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 
 class CreatingDataModelFromPatronEventsTest extends Specification {
 
+    private static final Instant HOLD_FROM =
+        Instant.parse('2026-07-21T10:15:30Z')
+    private static final Instant RETURN_TIME =
+        Instant.parse('2026-07-22T09:00:00Z')
     PatronId patronId = anyPatronId()
     PatronType regular = Regular
     LibraryBranchId libraryBranchId = anyBranch()
     BookType type = Restricted
     BookId bookId = anyBookId()
-    Instant holdFrom = Instant.now()
 
     def 'should add hold on placedOnHold event with close ended duration'() {
         given:
             PatronDatabaseEntity entity = createPatron()
         when:
-            entity.handle(placedOnHold(closeEnded(holdFrom, NumberOfDays.of(1))))
+            entity.handle(placedOnHold(closeEnded(HOLD_FROM, NumberOfDays.of(1))))
         then:
             entity.booksOnHold.size() == 1
-            entity.booksOnHold.iterator().next().till == holdFrom.plus(Duration.ofDays(1))
+            entity.booksOnHold.iterator().next().till == HOLD_FROM.plus(Duration.ofDays(1))
 
     }
 
@@ -45,7 +48,7 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
         given:
             PatronDatabaseEntity entity = createPatron()
         when:
-            entity.handle(placedOnHold(openEnded()))
+            entity.handle(placedOnHold(openEnded(HOLD_FROM)))
         then:
             entity.booksOnHold.size() == 1
             entity.booksOnHold.iterator().next().till == null
@@ -122,32 +125,35 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
     }
 
 	PatronEvent.BookCheckedOut bookCheckedOut() {
-        return PatronEvent.BookCheckedOut.bookCheckedOutNow(
+        return PatronEvent.BookCheckedOut.checkedOutAt(
+                HOLD_FROM,
                 bookId,
                 type,
                 libraryBranchId,
                 patronId,
-                forNoOfDays(1))
+                forNoOfDays(HOLD_FROM, 1))
     }
 
     PatronEvent.BookReturned bookReturned() {
         return new PatronEvent.BookReturned(
-                Instant.now(),
+                RETURN_TIME,
                 patronId.patronId,
                 bookId.bookId,
                 type,
                 libraryBranchId.libraryBranchId)
     }
-
+    
     PatronEvent.BookHoldCanceled holdCanceled() {
-        return holdCanceledNow(
+        return canceledAt(
+                HOLD_FROM,
                 bookId,
                 libraryBranchId,
                 patronId)
     }
 
-    PatronEvent.BookPlacedOnHoldEvents placedOnHold(HoldDuration duration = closeEnded(5)) {
-        return events(bookPlacedOnHoldNow(
+    PatronEvent.BookPlacedOnHoldEvents placedOnHold(HoldDuration duration = closeEnded(HOLD_FROM,5)) {
+        return events(placedOnHoldAt(
+                HOLD_FROM,
                 bookId,
                 type,
                 libraryBranchId,
@@ -156,7 +162,8 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
     }
 
     PatronEvent.BookHoldExpired bookHoldExpired() {
-        return PatronEvent.BookHoldExpired.now(
+        return PatronEvent.BookHoldExpired.expiredAt(
+                HOLD_FROM,
                 bookId,
                 patronId,
                 libraryBranchId
@@ -164,7 +171,7 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
     }
 
     PatronEvent.OverdueCheckoutRegistered overdueCheckoutRegistered() {
-        return PatronEvent.OverdueCheckoutRegistered.now(patronId, bookId, libraryBranchId)
+        return PatronEvent.OverdueCheckoutRegistered.registeredAt(HOLD_FROM, patronId, bookId, libraryBranchId)
     }
 
 }

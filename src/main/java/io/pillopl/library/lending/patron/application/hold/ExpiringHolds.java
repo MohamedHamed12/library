@@ -7,20 +7,26 @@ import io.pillopl.library.lending.patron.model.Patrons;
 import io.vavr.control.Try;
 import lombok.AllArgsConstructor;
 
+import java.time.Clock;
+import java.time.Instant;
+
 @AllArgsConstructor
 public class ExpiringHolds {
 
     private final DailySheet find;
     private final Patrons patronRepository;
+    private final Clock clock;
 
     public Try<BatchResult> expireHolds() {
-        return Try.of(() ->
-                find.queryForHoldsToExpireSheet()
-                .toStreamOfEvents()
+        return Try.of(() -> {
+            Instant processingTime = clock.instant();
+            return find.queryForHoldsToExpireSheet(processingTime)
+                .toStreamOfEvents(processingTime)
                 .map(this::publish)
                 .find(Try::isFailure)
                 .map(handleEventError -> BatchResult.SomeFailed)
-                .getOrElse(BatchResult.FullSuccess));
+                .getOrElse(BatchResult.FullSuccess);
+        });
     }
 
     private Try<Void> publish(PatronEvent.BookHoldExpired event) {

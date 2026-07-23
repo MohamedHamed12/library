@@ -2,11 +2,13 @@ package io.pillopl.library.lending.dailysheet.model;
 
 import io.pillopl.library.lending.patron.model.PatronEvent.*;
 
+import java.time.Instant;
+
 public interface DailySheet {
 
-    CheckoutsToOverdueSheet queryForCheckoutsToOverdue();
+    CheckoutsToOverdueSheet queryForCheckoutsToOverdue(Instant processingTime);
 
-    HoldsToExpireSheet queryForHoldsToExpireSheet();
+    HoldsToExpireSheet queryForHoldsToExpireSheet(Instant processingTime);
 
     void handle(BookPlacedOnHold event);
 

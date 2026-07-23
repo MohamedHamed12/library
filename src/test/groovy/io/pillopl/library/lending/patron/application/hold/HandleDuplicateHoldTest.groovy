@@ -12,15 +12,20 @@ import java.time.ZoneOffset
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
-import static java.time.Instant.now
 
 class HandleDuplicateHoldTest extends Specification {
+
+    private static final Instant DETECTION_TIME =
+            Instant.parse('2026-07-21T10:00:00Z')
+
+    private static final Instant CANCELLATION_TIME =
+            Instant.parse('2026-07-21T10:00:01Z')
 
     CancelingHold cancelingHold = Mock()
 
     def "should start cancelling hold if book was already hold by other patron"() {
         given:
-            Clock clock = Clock.fixed(Instant.parse('2020-02-27T12:21:00Z'), ZoneOffset.UTC)
+            Clock clock = Clock.fixed(CANCELLATION_TIME, ZoneOffset.UTC)
         and:
             HandleDuplicateHold duplicateHold = new HandleDuplicateHold(cancelingHold, clock)
         and:
@@ -35,7 +40,7 @@ class HandleDuplicateHoldTest extends Specification {
 
     BookDuplicateHoldFound duplicateHoldFoundBy() {
         return new BookDuplicateHoldFound(
-                now(),
+                DETECTION_TIME,
                 anyPatronId().patronId,
                 anyPatronId().patronId,
                 anyBranch().libraryBranchId,

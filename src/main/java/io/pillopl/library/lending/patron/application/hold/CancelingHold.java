@@ -29,7 +29,9 @@ public class CancelingHold {
         return Try.of(() -> {
             BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());
             Patron patron = find(command.getPatronId());
-            Either<BookHoldCancelingFailed, BookHoldCanceled> result = patron.cancelHold(bookOnHold);
+            Either<BookHoldCancelingFailed, BookHoldCanceled> result = patron.cancelHold(
+                    bookOnHold,
+                    command.getTimestamp());
             return Match(result).of(
                     Case($Left($()), this::publishEvents),
                     Case($Right($()), this::publishEvents));

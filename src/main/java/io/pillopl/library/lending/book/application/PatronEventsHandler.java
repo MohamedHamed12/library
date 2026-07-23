@@ -9,6 +9,7 @@ import io.vavr.API;
 import lombok.AllArgsConstructor;
 import org.springframework.context.event.EventListener;
 
+import java.time.Clock;
 import java.time.Instant;
 
 import static io.vavr.API.$;
@@ -20,6 +21,7 @@ public class PatronEventsHandler {
 
     private final BookRepository bookRepository;
     private final DomainEvents domainEvents;
+    private final Clock clock;
 
     @EventListener
     void handle(BookPlacedOnHold bookPlacedOnHold) {
@@ -71,7 +73,7 @@ public class PatronEventsHandler {
         }
         domainEvents.publish(
                 new BookDuplicateHoldFound(
-                        Instant.now(),
+                        clock.instant(),
                         onHold.getByPatron().getPatronId(),
                         bookPlacedOnHold.getPatronId(),
                         bookPlacedOnHold.getLibraryBranchId(),

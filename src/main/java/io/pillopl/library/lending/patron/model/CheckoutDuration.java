@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static io.pillopl.library.lending.patron.model.NumberOfDays.of;
-import static java.time.Instant.now;
 
 @Value
 public class CheckoutDuration {
@@ -25,16 +24,12 @@ public class CheckoutDuration {
         this.from = from;
     }
 
-    public static CheckoutDuration forNoOfDays(int noOfDays) {
-        return forNoOfDays(now(), noOfDays);
-    }
-
-    static CheckoutDuration forNoOfDays(Instant from, int noOfDays) {
+    public static CheckoutDuration forNoOfDays(Instant from, int noOfDays) {
         return new CheckoutDuration(from, of(noOfDays));
     }
 
-    public static CheckoutDuration maxDuration() {
-        return forNoOfDays(MAX_CHECKOUT_DURATION);
+    public static CheckoutDuration maxDuration(Instant from) {
+        return forNoOfDays(from, MAX_CHECKOUT_DURATION);
     }
 
     Instant to() {

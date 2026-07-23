@@ -1,10 +1,12 @@
 package io.pillopl.library.lending.patronprofile.web.error;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +30,10 @@ import io.pillopl.library.lending.patron.application.hold.PatronNotFoundExceptio
 
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class RestExceptionHandler {
+
+        private final Clock clock;
 
         @ExceptionHandler(ApiException.class)
         public ResponseEntity<ApiErrorResponse> handleApiException(ApiException exception, HttpServletRequest request) {
@@ -116,11 +121,12 @@ public class RestExceptionHandler {
 
         private ResponseEntity<ApiErrorResponse> response(HttpStatus status, ApiErrorCode code, String message,
                         HttpServletRequest request, List<ApiErrorDetail> details) {
+                Instant timestamp = clock.instant();
                 ApiErrorResponse body = new ApiErrorResponse(
                                 code,
                                 message,
                                 request.getRequestURI(),
-                                Instant.now(),
+                                timestamp,
                                 details);
 
                 return ResponseEntity

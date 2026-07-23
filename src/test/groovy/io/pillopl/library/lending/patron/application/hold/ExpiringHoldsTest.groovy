@@ -10,6 +10,10 @@ import io.pillopl.library.lending.patron.model.Patrons
 import io.vavr.control.Try
 import spock.lang.Specification
 
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
@@ -19,14 +23,15 @@ class ExpiringHoldsTest extends Specification {
 
     Patrons repository = Stub()
     DailySheet dailySheet = Stub()
+    Clock clock = Clock.fixed(Instant.parse('2026-07-21T10:15:30Z'), ZoneOffset.UTC)
 
     PatronId patronWithExpiringHolds = anyPatronId()
     PatronId anotherPatronWithExpiringHolds = anyPatronId()
 
-    ExpiringHolds expiring = new ExpiringHolds(dailySheet, repository)
+    ExpiringHolds expiring = new ExpiringHolds(dailySheet, repository, clock)
 
     def setup() {
-        dailySheet.queryForHoldsToExpireSheet() >> expiredHoldsBy(patronWithExpiringHolds, anotherPatronWithExpiringHolds)
+        dailySheet.queryForHoldsToExpireSheet(_ as Instant) >> expiredHoldsBy(patronWithExpiringHolds, anotherPatronWithExpiringHolds)
     }
 
     def 'should return success if all holds were marked as expired'() {
