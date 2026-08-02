@@ -10,8 +10,11 @@ import io.pillopl.library.lending.patron.application.hold.FindAvailableBook;
 import io.pillopl.library.lending.patron.application.hold.FindBookOnHold;
 import io.pillopl.library.lending.patron.application.hold.HandleDuplicateHold;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
+import io.pillopl.library.lending.patron.application.patron.PatronIdGenerator;
+import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
 import io.pillopl.library.lending.patron.model.PatronFactory;
 import io.pillopl.library.lending.patron.model.Patrons;
+import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
@@ -50,6 +53,21 @@ public class PatronConfiguration {
     @Bean
     PlacingOnHold placingOnHold(FindAvailableBook findAvailableBook, Patrons patronRepository) {
         return new PlacingOnHold(findAvailableBook, patronRepository);
+    }
+
+    @Bean
+    RegisteringPatron registeringPatron(PatronIdGenerator patronIdGenerator, Patrons patronRepository) {
+        return new RegisteringPatron(patronIdGenerator, patronRepository);
+    }
+
+    @Bean
+    PatronIdGenerator patronIdGenerator() {
+        return new RandomPatronIdGenerator();
+    }
+
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
     }
 
     @Bean
