@@ -17,4 +17,4 @@ sequenceDiagram
     Controller-->>Client: 201 Created + Location /profiles/{patronId}
 ```
 
-The controller owns HTTP concerns, the application service generates the identifier and timestamped registration command, and the repository persists the new aggregate by handling `PatronCreated`.
+The controller owns HTTP concerns and builds the timestamped registration command, the application service generates the identifier and publishes `PatronCreated`, and the repository persists the new aggregate by handling `PatronCreated`.

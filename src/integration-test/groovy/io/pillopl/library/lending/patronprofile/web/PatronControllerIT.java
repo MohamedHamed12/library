@@ -58,7 +58,6 @@ public class PatronControllerIT {
                                 .willReturn(Try.success(patronId));
 
                 String request = "{" +
-                                "\"name\":\"Ada Lovelace\"," +
                                 "\"type\":\"Regular\"" +
                                 "}";
 
@@ -75,7 +74,6 @@ public class PatronControllerIT {
                                 .willReturn(Try.success(patronId));
 
                 String request = "{" +
-                                "\"name\":\"Alan Turing\"," +
                                 "\"type\":\"Researcher\"" +
                                 "}";
 
@@ -87,24 +85,8 @@ public class PatronControllerIT {
         }
 
         @Test
-        public void shouldReturn400WhenNameIsMissing() throws Exception {
-                String request = "{" +
-                                "\"type\":\"Regular\"" +
-                                "}";
-
-                mvc.perform(post("/patrons")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(request))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")))
-                                .andExpect(jsonPath("$.details[0].field", is("name")));
-        }
-
-        @Test
         public void shouldReturn400WhenTypeIsMissing() throws Exception {
-                String request = "{" +
-                                "\"name\":\"Ada Lovelace\"" +
-                                "}";
+                String request = "{}";
 
                 mvc.perform(post("/patrons")
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -117,7 +99,6 @@ public class PatronControllerIT {
         @Test
         public void shouldReturn400WhenTypeIsInvalid() throws Exception {
                 String request = "{" +
-                                "\"name\":\"Ada Lovelace\"," +
                                 "\"type\":\"INVALID\"" +
                                 "}";
 
