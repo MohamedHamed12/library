@@ -12,6 +12,8 @@ class PatronInformation {
 
     @NonNull PatronType type;
 
+    @NonNull EmailAddress emailAddress;
+
     boolean isRegular() {
         return type.equals(Regular);
     }

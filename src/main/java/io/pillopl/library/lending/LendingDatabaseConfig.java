@@ -6,6 +6,7 @@ import io.pillopl.library.lending.book.model.AvailableBook;
 import io.pillopl.library.lending.book.model.BookInformation;
 import io.pillopl.library.lending.book.model.BookRepository;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
+import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
@@ -70,7 +71,7 @@ class LendingDatabaseConfig extends AbstractJdbcConfiguration {
 
             AvailableBook availableBook = new AvailableBook(new BookInformation(new BookId(bookId), Circulating), new LibraryBranchId(libraryBranchId), new Version(0));
             bookRepository.save(availableBook);
-            patrons.publish(PatronCreated.createdAt(clock.instant(), new PatronId(patronId), Regular));
+            patrons.publish(PatronCreated.createdAt(clock.instant(), new PatronId(patronId), Regular ,EmailAddress.of("local-patron@example.test")));
 
             log.info("Created bookId: {}", bookId);
             log.info("Created libraryBranchId: {}", libraryBranchId);

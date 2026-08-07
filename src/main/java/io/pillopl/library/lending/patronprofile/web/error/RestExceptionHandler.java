@@ -19,7 +19,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.INTERNAL_ERROR;
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.BOOK_NOT_FOUND;
+import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.EMAIL_ADDRESS_ALREADY_REGISTERED;
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.HOLD_NOT_FOUND;
+import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.INVALID_EMAIL_ADDRESS;
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.INVALID_PATH_PARAMETER;
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.MALFORMED_REQUEST;
 import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.PATRON_NOT_FOUND;
@@ -27,6 +29,8 @@ import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.VA
 import io.pillopl.library.lending.patron.application.hold.BookNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.HoldNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
+import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
+import io.pillopl.library.lending.patron.model.InvalidEmailAddress;
 
 @Slf4j
 @RestControllerAdvice
@@ -34,6 +38,36 @@ import io.pillopl.library.lending.patron.application.hold.PatronNotFoundExceptio
 public class RestExceptionHandler {
 
         private final Clock clock;
+
+        @ExceptionHandler(InvalidEmailAddress.class)
+        public ResponseEntity<ApiErrorResponse> handleInvalidEmailAddress(
+                        InvalidEmailAddress exception,
+                        HttpServletRequest request) {
+                ApiErrorDetail detail = new ApiErrorDetail("email", exception.getMessage());
+
+                return response(
+                                HttpStatus.BAD_REQUEST,
+                                INVALID_EMAIL_ADDRESS,
+                                "The supplied email address is invalid.",
+                                request,
+                                Collections.singletonList(detail));
+        }
+
+        @ExceptionHandler(EmailAddressAlreadyRegistered.class)
+        public ResponseEntity<ApiErrorResponse> handleEmailAddressAlreadyRegistered(
+                        EmailAddressAlreadyRegistered exception,
+                        HttpServletRequest request) {
+                ApiErrorDetail detail = new ApiErrorDetail(
+                                "email",
+                                "Email address is already registered.");
+
+                return response(
+                                HttpStatus.CONFLICT,
+                                EMAIL_ADDRESS_ALREADY_REGISTERED,
+                                "A patron with this email address already exists.",
+                                request,
+                                Collections.singletonList(detail));
+        }
 
         @ExceptionHandler(ApiException.class)
         public ResponseEntity<ApiErrorResponse> handleApiException(ApiException exception, HttpServletRequest request) {

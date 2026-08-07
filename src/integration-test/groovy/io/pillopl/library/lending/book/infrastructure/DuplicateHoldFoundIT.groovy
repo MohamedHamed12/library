@@ -16,6 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
+import java.time.Instant
+
 import javax.sql.DataSource
 
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
@@ -24,6 +26,7 @@ import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHo
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
+import static io.pillopl.library.lending.patron.model.PatronFixture.emailAddressFor
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 
 @SpringBootTest(classes = [LendingTestContext.class, DomainEventsTestConfig.class])
@@ -34,6 +37,7 @@ class DuplicateHoldFoundIT extends Specification {
 
     LibraryBranchId libraryBranchId = anyBranch()
     AvailableBook book = BookFixture.circulatingBook()
+    static final Instant NOW = Instant.parse("2999-01-01T00:00:00Z")
 
     @Autowired
     Patrons patronRepo
@@ -72,7 +76,7 @@ class DuplicateHoldFoundIT extends Specification {
     }
 
     PatronCreated patronCreated(PatronId patronId) {
-        return PatronCreated.now(patronId, Regular)
+        return PatronCreated.createdAt(NOW, patronId, Regular, emailAddressFor(patronId))
     }
 
     void patronShouldBeFoundInDatabaseWithZeroBookOnHold(PatronId patronId) {

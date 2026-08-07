@@ -3,6 +3,7 @@ package io.pillopl.library.lending.patronprofile.web;
 import io.micrometer.core.annotation.Timed;
 import io.pillopl.library.lending.patron.application.patron.RegisterPatronCommand;
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
+import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronId;
 import java.time.Clock;
 import java.time.Instant;
@@ -28,7 +29,7 @@ public class PatronController {
             UriComponentsBuilder uriComponentsBuilder
     ) {
         PatronId patronId = registeringPatron.register(
-                new RegisterPatronCommand(Instant.now(clock), request.getType())
+                new RegisterPatronCommand(Instant.now(clock), request.getType(), EmailAddress.of(request.getEmail()))
         ).get();
 
         return ResponseEntity

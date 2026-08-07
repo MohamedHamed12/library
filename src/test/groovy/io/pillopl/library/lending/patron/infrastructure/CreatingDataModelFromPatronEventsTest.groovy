@@ -121,7 +121,7 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
     }
 
     PatronDatabaseEntity createPatron() {
-        return new PatronDatabaseEntity(patronId, Regular)
+        return new PatronDatabaseEntity(patronId, Regular, EmailAddress.of("events@example.test"))
     }
 
 	PatronEvent.BookCheckedOut bookCheckedOut() {

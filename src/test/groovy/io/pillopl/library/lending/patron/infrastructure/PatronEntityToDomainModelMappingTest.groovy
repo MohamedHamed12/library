@@ -2,6 +2,7 @@ package io.pillopl.library.lending.patron.infrastructure
 
 import io.pillopl.library.catalogue.BookId
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
+import io.pillopl.library.lending.patron.model.EmailAddress
 import io.pillopl.library.lending.patron.model.PatronFactory
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.PatronType
@@ -56,7 +57,7 @@ class PatronEntityToDomainModelMappingTest extends Specification {
                                       PatronType type,
                                       List<HoldDatabaseEntity> holds = emptyList(),
                                       List<OverdueCheckoutDatabaseEntity> overdueCheckouts = emptyList()) {
-        PatronDatabaseEntity entity = new PatronDatabaseEntity(patronId, type)
+        PatronDatabaseEntity entity = new PatronDatabaseEntity(patronId, type, EmailAddress.of("mapped@example.test"))
         entity.booksOnHold = holds as Set
         entity.checkouts = overdueCheckouts as Set
         return entity

@@ -1,6 +1,6 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-
+import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronEvent;
 import io.pillopl.library.lending.patron.model.PatronEvent.*;
 import io.pillopl.library.lending.patron.model.PatronId;
@@ -25,12 +25,14 @@ class PatronDatabaseEntity {
     Long id;
     UUID patronId;
     PatronType patronType;
+    String emailAddress;
     Set<HoldDatabaseEntity> booksOnHold;
     Set<OverdueCheckoutDatabaseEntity> checkouts;
 
-     PatronDatabaseEntity(PatronId patronId, PatronType patronType) {
+     PatronDatabaseEntity(PatronId patronId, PatronType patronType,EmailAddress emailAddress) {
         this.patronId = patronId.getPatronId();
         this.patronType = patronType;
+        this.emailAddress = emailAddress.value();
         this.booksOnHold = new HashSet<>();
         this.checkouts = new HashSet<>();
     }

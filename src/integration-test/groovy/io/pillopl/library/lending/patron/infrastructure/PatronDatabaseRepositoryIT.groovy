@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.catalogue.BookType.Circulating
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
@@ -21,6 +23,7 @@ import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHo
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
+import static io.pillopl.library.lending.patron.model.PatronFixture.emailAddressFor
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 
@@ -30,6 +33,7 @@ class PatronDatabaseRepositoryIT extends Specification {
     PatronId patronId = anyPatronId()
     PatronType regular = Regular
     LibraryBranchId libraryBranchId = anyBranch()
+    static final Instant NOW = Instant.parse("2999-01-01T00:00:00Z")
 
     @Autowired
     Patrons patronRepo
@@ -55,7 +59,7 @@ class PatronDatabaseRepositoryIT extends Specification {
     }
 
     PatronCreated patronCreated() {
-        return PatronCreated.now(patronId, Regular)
+        return PatronCreated.createdAt(NOW, patronId, Regular, emailAddressFor(patronId))
     }
 
     void patronShouldBeFoundInDatabaseWithOneBookOnHold(PatronId patronId) {

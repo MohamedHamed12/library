@@ -61,7 +61,15 @@ public class PatronFixture {
     }
 
     static PatronInformation patronInformation(PatronId id, PatronType type) {
-        return new PatronInformation(id, type);
+        return new PatronInformation(id, type, emailAddressFor(id));
+    }
+
+    public static EmailAddress emailAddressFor(PatronId patronId) {
+        return EmailAddress.of("patron-" + patronId.getPatronId() + "@example.test");
+    }
+
+    public static EmailAddress anyEmailAddress() {
+        return EmailAddress.of("patron-" + UUID.randomUUID() + "@example.test");
     }
 
     public static Patron regularPatronWithHolds(int numberOfHolds) {
