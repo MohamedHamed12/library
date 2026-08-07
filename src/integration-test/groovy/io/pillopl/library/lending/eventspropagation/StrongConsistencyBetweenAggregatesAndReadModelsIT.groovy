@@ -17,6 +17,8 @@ import org.springframework.jdbc.core.ColumnMapRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 
+import java.time.Instant
+
 import javax.sql.DataSource
 
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
@@ -25,6 +27,7 @@ import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHo
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
+import static io.pillopl.library.lending.patron.model.PatronFixture.emailAddressFor
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 
@@ -34,6 +37,7 @@ class StrongConsistencyBetweenAggregatesAndReadModelsIT extends Specification {
     PatronId patronId = anyPatronId()
     LibraryBranchId libraryBranchId = anyBranch()
     AvailableBook book = BookFixture.circulatingBook()
+    static final Instant NOW = Instant.parse("2999-01-01T00:00:00Z")
 
     @Autowired
     Patrons patronRepo
@@ -80,7 +84,7 @@ class StrongConsistencyBetweenAggregatesAndReadModelsIT extends Specification {
     }
 
     PatronCreated patronCreated() {
-        return PatronCreated.now(patronId, Regular)
+        return PatronCreated.createdAt(NOW, patronId, Regular, emailAddressFor(patronId))
     }
 
     void patronShouldBeFoundInDatabaseWithOneBookOnHold(PatronId patronId) {

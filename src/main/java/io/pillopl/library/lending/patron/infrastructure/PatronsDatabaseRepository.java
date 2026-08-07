@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,6 +39,11 @@ class PatronsDatabaseRepository implements Patrons {
     }
 
     @Override
+    public boolean existsBy(EmailAddress emailAddress){
+        return patronEntityRepository.existsByEmailAddress(emailAddress.value());
+    }
+
+    @Override
     public Patron publish(PatronEvent domainEvent) {
         Patron result = Match(domainEvent).of(
                 Case($(instanceOf(PatronCreated.class)), this::createNewPatron),
@@ -47,11 +53,18 @@ class PatronsDatabaseRepository implements Patrons {
     }
 
     private Patron createNewPatron(PatronCreated domainEvent) {
-        PatronDatabaseEntity entity = patronEntityRepository
-                .save(new PatronDatabaseEntity(domainEvent.patronId(), domainEvent.getPatronType()));
-        return domainModelMapper.map(entity);
-    }
-
+        try {
+            PatronDatabaseEntity entity = patronEntityRepository
+                    .save(new PatronDatabaseEntity(
+                            domainEvent.patronId(),
+                            domainEvent.getPatronType(),
+                            domainEvent.getEmailAddress()));
+            return domainModelMapper.map(entity);
+        } catch (DuplicateKeyException exception) {
+            throw new EmailAddressAlreadyRegistered(domainEvent.getEmailAddress());
+        }
+    }                      
+        
     private Patron handleNextEvent(PatronEvent domainEvent) {
         PatronDatabaseEntity entity = patronEntityRepository.findByPatronId(domainEvent.patronId().getPatronId());
         entity = entity.handle(domainEvent);
@@ -66,6 +79,9 @@ interface PatronEntityRepository extends CrudRepository<PatronDatabaseEntity, Lo
     @Query("SELECT p.* FROM patron_database_entity p where p.patron_id = :patronId")
     PatronDatabaseEntity findByPatronId(@Param("patronId") UUID patronId);
 
+    @Query("SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END " +
+        "FROM patron_database_entity WHERE email_address = :emailAddress")
+    boolean existsByEmailAddress(@Param("emailAddress") String emailAddress);
 }
 
 @AllArgsConstructor
@@ -77,6 +93,7 @@ class DomainModelMapper {
         return patronFactory.create(
                 entity.patronType,
                 new PatronId(entity.patronId),
+                EmailAddress.of(entity.emailAddress),
                 mapPatronHolds(entity),
                 mapPatronOverdueCheckouts(entity)
         );

@@ -38,9 +38,19 @@ public interface PatronEvent extends DomainEvent {
         UUID patronId;
         @NonNull
         PatronType patronType;
+        @NonNull
+        EmailAddress emailAddress;
 
-        public static PatronCreated createdAt(Instant timestamp, PatronId patronId, PatronType type) {
-            return new PatronCreated(timestamp, patronId.getPatronId(), type);
+        public static PatronCreated createdAt(
+                Instant timestamp,
+                PatronId patronId,
+                PatronType type,
+                EmailAddress emailAddress) {
+            return new PatronCreated(
+                    timestamp,
+                    patronId.getPatronId(),
+                    type,
+                    emailAddress);
         }
     }
 

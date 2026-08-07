@@ -3,6 +3,8 @@ package io.pillopl.library.lending.patron.infrastructure
 import io.pillopl.library.lending.LendingTestContext
 import io.pillopl.library.lending.patron.application.patron.RegisterPatronCommand
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron
+import io.pillopl.library.lending.patron.model.EmailAddress
+import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered
 import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
@@ -34,7 +36,7 @@ class PatronRegistrationIT extends Specification {
 
     def 'should register regular patron and load from repository and profile read model'() {
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular))
+            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("regular@example.test")))
         then:
             result.isSuccess()
             PatronId patronId = result.get()
@@ -49,7 +51,7 @@ class PatronRegistrationIT extends Specification {
 
     def 'should register researcher patron and load from repository'() {
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher))
+            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("researcher@example.test")))
         then:
             result.isSuccess()
             PatronId patronId = result.get()
@@ -57,5 +59,27 @@ class PatronRegistrationIT extends Specification {
         and:
             Patron loaded = patrons.findBy(patronId).get()
             loaded != null
+    }
+
+    def 'should reject registration with already registered email as case-insensitive duplicate'() {
+        given:
+            registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("duplicate@example.test")))
+        when:
+            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("Duplicate@Example.Test")))
+        then:
+            result.isFailure()
+            result.getCause() instanceof EmailAddressAlreadyRegistered
+    }
+
+    def 'should round-trip normalized email through persistence'() {
+        when:
+            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("  Patron.White.Space@Example.test  ")))
+        then:
+            result.isSuccess()
+            PatronId patronId = result.get()
+            Patron loaded = patrons.findBy(patronId).get()
+            loaded != null
+        and:
+            patrons.existsBy(EmailAddress.of("patron.white.space@example.test"))
     }
 }

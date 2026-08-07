@@ -6,5 +6,7 @@ public interface Patrons {
 
     Option<Patron> findBy(PatronId patronId);
 
+    boolean existsBy(EmailAddress emailAddress);
+
     Patron publish(PatronEvent event);
 }

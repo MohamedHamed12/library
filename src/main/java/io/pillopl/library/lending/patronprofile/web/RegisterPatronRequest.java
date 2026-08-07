@@ -12,10 +12,15 @@ public class RegisterPatronRequest {
     @NotNull(message = "type is required")
     PatronType type;
 
+    @NotNull(message = "email is required")
+    String email;
+
     @JsonCreator
     public RegisterPatronRequest(
-            @JsonProperty("type") PatronType type
+            @JsonProperty("type") PatronType type,
+            @JsonProperty("email") String email
     ) {
         this.type = type;
+        this.email = email;
     }
 }
