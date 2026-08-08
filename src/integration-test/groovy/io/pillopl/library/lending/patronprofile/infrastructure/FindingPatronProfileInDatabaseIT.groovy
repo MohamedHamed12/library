@@ -7,7 +7,9 @@ import io.pillopl.library.lending.dailysheet.model.DailySheet
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
+import io.pillopl.library.lending.patron.model.PatronStatus
 import io.pillopl.library.lending.patron.model.PatronType
+import io.pillopl.library.lending.patron.model.Patrons
 import io.pillopl.library.lending.patronprofile.model.Checkout
 import io.pillopl.library.lending.patronprofile.model.Hold
 import io.pillopl.library.lending.patronprofile.model.PatronProfile
@@ -24,7 +26,11 @@ import java.time.Instant
 import static io.pillopl.library.catalogue.BookType.Restricted
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
+import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
+import static io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
+import static io.pillopl.library.lending.patron.model.PatronFixture.emailAddressFor
+import static io.pillopl.library.lending.patron.model.PatronType.Regular
 import static java.time.Instant.now
 
 @SpringBootTest(classes = LendingTestContext.class)
@@ -47,10 +53,14 @@ class FindingPatronProfileInDatabaseIT extends Specification {
     @Autowired
     DataSource jdbcTemplate
 
+    @Autowired
+    Patrons patronRepo
+
     PatronProfiles patronProfiles;
 
     def setup() {
         patronProfiles = new PatronProfileReadModel(new JdbcTemplate(dataSource))
+        patronRepo.publish(PatronCreated.createdAt(now(), patronId, Regular, emailAddressFor(patronId)))
     }
 
     def 'should create patron profile'() {
@@ -74,6 +84,18 @@ class FindingPatronProfileInDatabaseIT extends Specification {
         then:
             thereIsZeroHoldsAndZeroCheckouts(profile)
 
+    }
+
+    def 'should expose active patron status in profile'() {
+        expect:
+            patronProfiles.fetchFor(patronId).status == PatronStatus.ACTIVE
+    }
+
+    def 'should expose suspended patron status in profile'() {
+        when:
+            patronRepo.publish(PatronSuspended.suspendedAt(now(), patronId, "Policy violation"))
+        then:
+            patronProfiles.fetchFor(patronId).status == PatronStatus.SUSPENDED
     }
 
     private PatronProfile createProfile() {

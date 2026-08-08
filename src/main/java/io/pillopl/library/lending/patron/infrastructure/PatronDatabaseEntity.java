@@ -4,6 +4,7 @@ import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronEvent;
 import io.pillopl.library.lending.patron.model.PatronEvent.*;
 import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patron.model.PatronType;
 import io.vavr.API;
 import lombok.AccessLevel;
@@ -26,6 +27,8 @@ class PatronDatabaseEntity {
     UUID patronId;
     PatronType patronType;
     String emailAddress;
+    String status;
+    String suspensionReason;
     Set<HoldDatabaseEntity> booksOnHold;
     Set<OverdueCheckoutDatabaseEntity> checkouts;
 
@@ -33,6 +36,8 @@ class PatronDatabaseEntity {
         this.patronId = patronId.getPatronId();
         this.patronType = patronType;
         this.emailAddress = emailAddress.value();
+        this.status = PatronStatus.ACTIVE.name();
+        this.suspensionReason = null;
         this.booksOnHold = new HashSet<>();
         this.checkouts = new HashSet<>();
     }
@@ -45,8 +50,9 @@ class PatronDatabaseEntity {
                 Case($(instanceOf(BookHoldCanceled.class)), this::handle),
                 Case($(instanceOf(BookHoldExpired.class)), this::handle),
                 Case($(instanceOf(OverdueCheckoutRegistered.class)), this::handle),
-                Case($(instanceOf(BookReturned.class)), this::handle)
-
+                Case($(instanceOf(BookReturned.class)), this::handle),
+                Case($(instanceOf(PatronSuspended.class)), this::handle),
+                Case($(instanceOf(PatronReactivated.class)), this::handle)
         );
     }
 
@@ -80,6 +86,18 @@ class PatronDatabaseEntity {
 
     private PatronDatabaseEntity handle(BookReturned event) {
         return removeOverdueCheckoutIfPresent(event.getPatronId(), event.getBookId(), event.getLibraryBranchId());
+    }
+
+    private PatronDatabaseEntity handle(PatronSuspended event) {
+        this.status = PatronStatus.SUSPENDED.name();
+        this.suspensionReason = event.getReason();
+        return this;
+    }
+
+    private PatronDatabaseEntity handle(PatronReactivated event) {
+        this.status = PatronStatus.ACTIVE.name();
+        this.suspensionReason = null;
+        return this;
     }
 
     private PatronDatabaseEntity removeHoldIfPresent(UUID patronId, UUID bookId, UUID libraryBranchId) {

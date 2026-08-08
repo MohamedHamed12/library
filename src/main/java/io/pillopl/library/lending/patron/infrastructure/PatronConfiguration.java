@@ -11,7 +11,9 @@ import io.pillopl.library.lending.patron.application.hold.FindBookOnHold;
 import io.pillopl.library.lending.patron.application.hold.HandleDuplicateHold;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.application.patron.PatronIdGenerator;
+import io.pillopl.library.lending.patron.application.patron.ReactivatingPatron;
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
+import io.pillopl.library.lending.patron.application.patron.SuspendingPatron;
 import io.pillopl.library.lending.patron.model.PatronFactory;
 import io.pillopl.library.lending.patron.model.Patrons;
 import java.time.Clock;
@@ -58,6 +60,16 @@ public class PatronConfiguration {
     @Bean
     RegisteringPatron registeringPatron(PatronIdGenerator patronIdGenerator, Patrons patronRepository) {
         return new RegisteringPatron(patronIdGenerator, patronRepository);
+    }
+
+    @Bean
+    SuspendingPatron suspendingPatron(Patrons patronRepository) {
+        return new SuspendingPatron(patronRepository);
+    }
+
+    @Bean
+    ReactivatingPatron reactivatingPatron(Patrons patronRepository) {
+        return new ReactivatingPatron(patronRepository);
     }
 
     @Bean

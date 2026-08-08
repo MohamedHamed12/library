@@ -12,7 +12,7 @@ import static java.util.stream.Collectors.toSet;
 
 public class PatronFactory {
 
-    public Patron create(PatronType patronType,PatronId patronId,EmailAddress emailAddress,Set<Tuple2<BookId, LibraryBranchId>> patronHolds,Map<LibraryBranchId, Set<BookId>> overdueCheckouts) {
+    public Patron create(PatronType patronType,PatronId patronId,EmailAddress emailAddress,Set<Tuple2<BookId, LibraryBranchId>> patronHolds,Map<LibraryBranchId, Set<BookId>> overdueCheckouts,PatronStatus status,String suspensionReason) {
         return new Patron(new PatronInformation(patronId, patronType, emailAddress),
                 allCurrentPolicies(),
                 new OverdueCheckouts(overdueCheckouts),
@@ -20,7 +20,9 @@ public class PatronFactory {
                         patronHolds
                                 .stream()
                                 .map(tuple -> new Hold(tuple._1, tuple._2))
-                                .collect(toSet())));
+                                .collect(toSet())),
+                status,
+                suspensionReason);
     }
 
 }

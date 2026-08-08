@@ -17,11 +17,14 @@ import java.time.Instant
 
 import static io.pillopl.library.catalogue.BookType.Circulating
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
+import static io.pillopl.library.lending.book.model.BookFixture.circulatingAvailableBookAt
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.bookPlacedOnHoldNow
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
+import static io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated
+import static io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.emailAddressFor
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
@@ -49,13 +52,42 @@ class PatronDatabaseRepositoryIT extends Specification {
             patronShouldBeFoundInDatabaseWithOneBookOnHold(patronId)
     }
 
+    def 'suspended patron remains suspended after reload and cannot place hold'() {
+        when:
+            patronRepo.publish(patronCreated())
+        and:
+            patronRepo.publish(PatronSuspended.suspendedAt(NOW, patronId, "Policy violation"))
+        then:
+            Patron patron = loadPersistedPatron(patronId)
+            patron.placeOnHold(
+                    circulatingAvailableBookAt(libraryBranchId),
+                    HoldDuration.closeEnded(NOW, 5),
+                    NOW).isLeft()
+    }
+
+    def 'reactivated patron can place hold after reload'() {
+        when:
+            patronRepo.publish(patronCreated())
+        and:
+            patronRepo.publish(PatronSuspended.suspendedAt(NOW, patronId, "Policy violation"))
+        and:
+            patronRepo.publish(PatronReactivated.reactivatedAt(NOW, patronId))
+        then:
+            Patron patron = loadPersistedPatron(patronId)
+            patron.placeOnHold(
+                    circulatingAvailableBookAt(libraryBranchId),
+                    HoldDuration.closeEnded(NOW, 5),
+                    NOW).isRight()
+    }
+
     BookPlacedOnHoldEvents placedOnHold() {
-        return events(bookPlacedOnHoldNow(
+        return events(placedOnHoldAt(
+                NOW,
                 anyBookId(),
                 Circulating,
                 libraryBranchId,
                 patronId,
-                HoldDuration.closeEnded(5)))
+                HoldDuration.closeEnded(NOW, 5)))
     }
 
     PatronCreated patronCreated() {

@@ -2,7 +2,9 @@ CREATE TABLE IF NOT EXISTS patron_database_entity (
     id INTEGER IDENTITY PRIMARY KEY,
     patron_type VARCHAR(100) NOT NULL,
     patron_id UUID UNIQUE,
-    email_address VARCHAR(254) NOT NULL UNIQUE
+    email_address VARCHAR(254) NOT NULL UNIQUE,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    suspension_reason VARCHAR(1024)
 );
 
 CREATE TABLE IF NOT EXISTS hold_database_entity (id INTEGER IDENTITY PRIMARY KEY, book_id UUID NOT NULL, patron_id UUID NOT NULL, library_branch_id UUID NOT NULL, patron_database_entity INTEGER NOT NULL, till TIMESTAMP NOT NULL);

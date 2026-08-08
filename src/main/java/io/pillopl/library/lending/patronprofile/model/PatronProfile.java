@@ -1,6 +1,7 @@
 package io.pillopl.library.lending.patronprofile.model;
 
 import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.vavr.control.Option;
 import lombok.NonNull;
 import lombok.Value;
@@ -8,6 +9,7 @@ import lombok.Value;
 @Value
 public class PatronProfile {
 
+    @NonNull PatronStatus status;
     @NonNull HoldsView holdsView;
     @NonNull CheckoutsView currentCheckouts;
 
