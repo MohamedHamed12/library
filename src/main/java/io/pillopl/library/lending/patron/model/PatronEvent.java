@@ -339,4 +339,39 @@ public interface PatronEvent extends DomainEvent {
         }
     }
 
+    @Value
+    class PatronSuspended implements PatronEvent {
+        @NonNull
+        UUID eventId = UUID.randomUUID();
+        @NonNull
+        Instant when;
+        @NonNull
+        UUID patronId;
+        @NonNull
+        String reason;
+
+        public static PatronSuspended suspendedAt(Instant timestamp, PatronId patronId, String reason) {
+            return new PatronSuspended(
+                    timestamp,
+                    patronId.getPatronId(),
+                    reason);
+        }
+    }
+
+    @Value
+    class PatronReactivated implements PatronEvent {
+        @NonNull
+        UUID eventId = UUID.randomUUID();
+        @NonNull
+        Instant when;
+        @NonNull
+        UUID patronId;
+
+        public static PatronReactivated reactivatedAt(Instant timestamp, PatronId patronId) {
+            return new PatronReactivated(
+                    timestamp,
+                    patronId.getPatronId());
+        }
+    }
+
 }

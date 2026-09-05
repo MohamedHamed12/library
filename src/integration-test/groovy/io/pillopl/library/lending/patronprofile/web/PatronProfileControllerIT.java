@@ -11,6 +11,7 @@ import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
 import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patronprofile.model.Checkout;
 import io.pillopl.library.lending.patronprofile.model.CheckoutsView;
 import io.pillopl.library.lending.patronprofile.model.Hold;
@@ -91,6 +92,7 @@ public class PatronProfileControllerIT {
                                 .andExpect(jsonPath(
                                                 "$.patronId",
                                                 is(patronId.getPatronId().toString())))
+                                .andExpect(jsonPath("$.status", is("ACTIVE")))
                                 .andExpect(jsonPath("$.currentHoldsCount", is(1)))
                                 .andExpect(jsonPath("$.currentCheckoutsCount", is(1)))
                                 .andExpect(jsonPath("$.overdueCheckoutsCount", is(0)))
@@ -161,6 +163,7 @@ public class PatronProfileControllerIT {
                 Instant futureDate = Instant.parse("2999-01-01T00:00:00Z");
 
                 PatronProfile profile = new PatronProfile(
+                                PatronStatus.ACTIVE,
                                 new HoldsView(of(
                                                 new Hold(bookId, anyDate))),
                                 new CheckoutsView(of(
@@ -579,6 +582,7 @@ public class PatronProfileControllerIT {
 
         private PatronProfile profileWithCurrentActivity() {
                 return new PatronProfile(
+                                PatronStatus.ACTIVE,
                                 new HoldsView(of(
                                                 new Hold(bookId, anyDate))),
                                 new CheckoutsView(of(
@@ -587,6 +591,7 @@ public class PatronProfileControllerIT {
 
         private PatronProfile emptyProfile() {
                 return new PatronProfile(
+                                PatronStatus.ACTIVE,
                                 new HoldsView(of()),
                                 new CheckoutsView(of()));
         }

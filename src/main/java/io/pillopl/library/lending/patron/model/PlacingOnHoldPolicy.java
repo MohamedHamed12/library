@@ -53,20 +53,3 @@ interface PlacingOnHoldPolicy extends Function3<AvailableBook, Patron, HoldDurat
 @Value
 class Allowance { }
 
-@Value
-class Rejection {
-
-    @Value
-    static class Reason {
-        @NonNull
-        String reason;
-    }
-
-    @NonNull
-    Reason reason;
-
-    static Rejection withReason(String reason) {
-        return new Rejection(new Reason(reason));
-    }
-}
-

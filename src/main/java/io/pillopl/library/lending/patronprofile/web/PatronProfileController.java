@@ -10,6 +10,7 @@ import io.pillopl.library.lending.patron.application.hold.CancelingHold;
 import io.pillopl.library.lending.patron.application.hold.PlaceOnHoldCommand;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.vavr.control.Option;
@@ -78,6 +79,7 @@ class PatronProfileController {
 
                 return ok(new PatronProfileSummaryResource(
                                 patronId,
+                                profile.getStatus(),
                                 currentHoldsCount,
                                 currentCheckoutsCount,
                                 overdueCheckoutsCount));
@@ -212,17 +214,20 @@ class PatronProfileSummaryResource
                 extends RepresentationModel<PatronProfileSummaryResource> {
 
         UUID patronId;
+        PatronStatus status;
         int currentHoldsCount;
         int currentCheckoutsCount;
         int overdueCheckoutsCount;
 
         PatronProfileSummaryResource(
                         UUID patronId,
+                        PatronStatus status,
                         int currentHoldsCount,
                         int currentCheckoutsCount,
                         int overdueCheckoutsCount) {
 
                 this.patronId = patronId;
+                this.status = status;
                 this.currentHoldsCount = currentHoldsCount;
                 this.currentCheckoutsCount = currentCheckoutsCount;
                 this.overdueCheckoutsCount = overdueCheckoutsCount;

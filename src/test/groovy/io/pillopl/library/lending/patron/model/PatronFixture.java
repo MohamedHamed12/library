@@ -41,7 +41,9 @@ public class PatronFixture {
         return new Patron(patronInformation(patronId, type),
                 List.of(placingOnHoldPolicy),
                 new OverdueCheckouts(new HashMap<>()),
-                noHolds());
+                noHolds(),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     public static Patron regularPatron(PatronId patronId) {
@@ -49,7 +51,9 @@ public class PatronFixture {
                 patronInformation(patronId, Regular),
                 List.of(onlyResearcherPatronsCanHoldRestrictedBooksPolicy),
                 new OverdueCheckouts(new HashMap<>()),
-                noHolds());
+                noHolds(),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     public static Patron researcherPatron(PatronId patronId) {
@@ -57,7 +61,33 @@ public class PatronFixture {
                 patronInformation(patronId, Researcher),
                 List.of(onlyResearcherPatronsCanHoldRestrictedBooksPolicy),
                 new OverdueCheckouts(new HashMap<>()),
-                noHolds());
+                noHolds(),
+                PatronStatus.ACTIVE,
+                null);
+    }
+
+    public static Patron suspendedRegularPatron() {
+        return suspendedRegularPatron(anyPatronId());
+    }
+
+    public static Patron suspendedRegularPatron(PatronId patronId) {
+        return new Patron(
+                patronInformation(patronId, Regular),
+                allCurrentPolicies(),
+                new OverdueCheckouts(new HashMap<>()),
+                noHolds(),
+                PatronStatus.SUSPENDED,
+                "Policy violation");
+    }
+
+    public static Patron suspendedRegularPatronWithHold(BookOnHold bookOnHold) {
+        return new Patron(
+                patronInformation(anyPatronId(), Regular),
+                allCurrentPolicies(),
+                new OverdueCheckouts(new HashMap<>()),
+                new PatronHolds(Collections.singleton(new Hold(bookOnHold.getBookId(), bookOnHold.getHoldPlacedAt()))),
+                PatronStatus.SUSPENDED,
+                "Policy violation");
     }
 
     static PatronInformation patronInformation(PatronId id, PatronType type) {
@@ -78,7 +108,9 @@ public class PatronFixture {
                 patronInformation(patronId, Regular),
                 List.of(regularPatronMaximumNumberOfHoldsPolicy),
                 new OverdueCheckouts(new HashMap<>()),
-                booksOnHold(numberOfHolds));
+                booksOnHold(numberOfHolds),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     static Patron regularPatronWith(Hold hold) {
@@ -88,7 +120,9 @@ public class PatronFixture {
                 patronInformation(patronId, Regular),
                 allCurrentPolicies(),
                 new OverdueCheckouts(new HashMap<>()),
-                patronHolds);
+                patronHolds,
+                PatronStatus.ACTIVE,
+                null);
     }
 
     public static Patron regularPatronWith(BookOnHold bookOnHold, PatronId patronId) {
@@ -97,7 +131,9 @@ public class PatronFixture {
                 patronInformation(patronId, Regular),
                 allCurrentPolicies(),
                 new OverdueCheckouts(new HashMap<>()),
-                patronHolds);
+                patronHolds,
+                PatronStatus.ACTIVE,
+                null);
     }
 
     public static Hold onHold() {
@@ -116,7 +152,9 @@ public class PatronFixture {
                 patronInformation(patronId, Researcher),
                 List.of(regularPatronMaximumNumberOfHoldsPolicy),
                 new OverdueCheckouts(new HashMap<>()),
-                booksOnHold(numberOfHolds));
+                booksOnHold(numberOfHolds),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     static Patron regularPatronWithOverdueCheckouts(LibraryBranchId libraryBranchId, Set<BookId> overdueBooks) {
@@ -126,7 +164,9 @@ public class PatronFixture {
                 patronInformation(anyPatronId(), Regular),
                 List.of(overdueCheckoutsRejectionPolicy),
                 new OverdueCheckouts(overdueCheckouts),
-                noHolds());
+                noHolds(),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     static Patron regularPatronWith3_OverdueCheckoutsAt(LibraryBranchId libraryBranchId) {
@@ -136,7 +176,9 @@ public class PatronFixture {
                 patronInformation(anyPatronId(), Regular),
                 List.of(overdueCheckoutsRejectionPolicy),
                 new OverdueCheckouts(overdueCheckouts),
-                noHolds());
+                noHolds(),
+                PatronStatus.ACTIVE,
+                null);
     }
 
     public static PatronId anyPatronId() {

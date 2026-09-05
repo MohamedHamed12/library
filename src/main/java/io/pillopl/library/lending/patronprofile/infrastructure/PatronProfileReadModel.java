@@ -2,6 +2,7 @@ package io.pillopl.library.lending.patronprofile.infrastructure;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patronprofile.model.Checkout;
 import io.pillopl.library.lending.patronprofile.model.CheckoutsView;
 import io.pillopl.library.lending.patronprofile.model.Hold;
@@ -38,7 +39,17 @@ class PatronProfileReadModel implements PatronProfiles {
                         .stream()
                         .map(this::toCheckout)
                         .collect(toList())));
-        return new PatronProfile(holdsView, checkoutsView);
+        return new PatronProfile(
+                findStatusOf(patronId),
+                holdsView,
+                checkoutsView);
+    }
+
+    private PatronStatus findStatusOf(PatronId patronId) {
+        return sheets.queryForObject(
+                "SELECT status FROM patron_database_entity WHERE patron_id = ?",
+                new Object[]{patronId.getPatronId()},
+                (rs, rowNum) -> PatronStatus.valueOf(rs.getString("status")));
     }
 
     private List<Map<String, Object>> findCurrentHoldsFor(PatronId patronId) {

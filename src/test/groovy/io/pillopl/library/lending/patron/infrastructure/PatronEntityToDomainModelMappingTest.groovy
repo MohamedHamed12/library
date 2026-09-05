@@ -3,15 +3,19 @@ package io.pillopl.library.lending.patron.infrastructure
 import io.pillopl.library.catalogue.BookId
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.EmailAddress
+import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.PatronFactory
 import io.pillopl.library.lending.patron.model.PatronId
+import io.pillopl.library.lending.patron.model.PatronStatus
 import io.pillopl.library.lending.patron.model.PatronType
 import spock.lang.Specification
 
 import java.time.Instant
 
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
+import static io.pillopl.library.lending.book.model.BookFixture.circulatingAvailableBookAt
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
+import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 import static java.util.Collections.emptyList
@@ -50,6 +54,21 @@ class PatronEntityToDomainModelMappingTest extends Specification {
         then:
             overdueCheckouts.get(libraryBranchId).size() == 1
             overdueCheckouts.get(anotherBranchId).size() == 1
+    }
+
+    def 'should reconstruct suspended patron who rejects holds after mapping'() {
+        given:
+            PatronDatabaseEntity entity = patronEntity(patronId, Regular, [], [])
+            entity.status = PatronStatus.SUSPENDED.name()
+            entity.suspensionReason = "Policy violation"
+        when:
+            Patron patron = domainModelMapper.map(entity)
+            def result = patron.placeOnHold(
+                    circulatingAvailableBookAt(libraryBranchId),
+                    closeEnded(anyDate, 3),
+                    anyDate)
+        then:
+            result.isLeft()
     }
 
 

@@ -41,10 +41,37 @@ public class Patron {
     @NonNull
     private final PatronHolds patronHolds;
 
+    private final PatronStatus status;
+    private final String suspensionReason;
+
+    public Either<Rejection, PatronSuspended> suspend(String reason, Instant timestamp) {
+        if (status == PatronStatus.SUSPENDED) {
+            return announceFailure(withReason("Patron is already suspended"));
+        }
+
+        if (reason == null || reason.trim().isEmpty()) {
+            return announceFailure(withReason("Suspension reason must not be blank"));
+        }
+
+        return announceSuccess(PatronSuspended.suspendedAt(timestamp, patron.getPatronId(), reason));
+    }
+
+    public Either<Rejection, PatronReactivated> reactivate(Instant timestamp) {
+        if (status == PatronStatus.ACTIVE) {
+            return announceFailure(withReason("Patron is already active"));
+        }
+
+        return announceSuccess(PatronReactivated.reactivatedAt(timestamp, patron.getPatronId()));
+    }
+
     public Either<BookHoldFailed, BookPlacedOnHoldEvents> placeOnHold(
             AvailableBook book,
             HoldDuration duration,
             Instant timestamp) {
+        if (isSuspended()) {
+            return announceFailure(holdFailedAt(timestamp, withReason("Patron is suspended"), book.getBookId(), book.getLibraryBranch(), patron));
+        }
+
         Option<Rejection> rejection = patronCanHold(book, duration);
         if (rejection.isEmpty()) {
             BookPlacedOnHold bookPlacedOnHold = placedOnHoldAt(timestamp, book.getBookId(), book.type(),
@@ -79,6 +106,11 @@ public class Patron {
     }
 
     public Either<BookCheckingOutFailed, BookCheckedOut> checkOut(BookOnHold book, CheckoutDuration duration, Instant timestamp) {
+        if (isSuspended()) {
+            return announceFailure(checkoutFailedAt(timestamp, withReason("Patron is suspended"), book.getBookId(),
+                    book.getHoldPlacedAt(), patron));
+        }
+
         if (patronHolds.a(book)) {
             return announceSuccess(checkedOutAt(timestamp, book.getBookId(), book.type(), book.getHoldPlacedAt(),
                     patron.getPatronId(), duration));
@@ -99,6 +131,10 @@ public class Patron {
         return patron.isRegular();
     }
 
+    private boolean isSuspended() {
+        return status == PatronStatus.SUSPENDED;
+    }
+
     int overdueCheckoutsAt(LibraryBranchId libraryBranch) {
         return overdueCheckouts.countAt(libraryBranch);
     }
@@ -106,5 +142,4 @@ public class Patron {
     public int numberOfHolds() {
         return patronHolds.count();
     }
-
 }

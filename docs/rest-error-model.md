@@ -33,6 +33,8 @@ Hold does not exist 404 `HOLD_NOT_FOUND`
 Checkout does not exist 404 `CHECKOUT_NOT_FOUND`
 Hold placement is rejected 409 `HOLD_NOT_ALLOWED`
 Hold cancellation is rejected 409 `HOLD_CANCELLATION_NOT_ALLOWED`
+Patron is already suspended 409 `PATRON_ALREADY_SUSPENDED`
+Patron is already active 409 `PATRON_ALREADY_ACTIVE`
 Unexpected technical failure 500 `INTERNAL_ERROR`
 
 ## Security

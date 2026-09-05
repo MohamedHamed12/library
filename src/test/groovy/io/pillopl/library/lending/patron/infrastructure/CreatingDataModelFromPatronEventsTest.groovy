@@ -120,6 +120,28 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
 
     }
 
+    def 'should set status and reason on patronSuspended event'() {
+        given:
+            PatronDatabaseEntity entity = createPatron()
+        when:
+            entity.handle(patronSuspended())
+        then:
+            entity.status == PatronStatus.SUSPENDED.name()
+            entity.suspensionReason == "Policy violation"
+    }
+
+    def 'should restore active status and clear reason on patronReactivated event'() {
+        given:
+            PatronDatabaseEntity entity = createPatron()
+        and:
+            entity.handle(patronSuspended())
+        when:
+            entity.handle(patronReactivated())
+        then:
+            entity.status == PatronStatus.ACTIVE.name()
+            entity.suspensionReason == null
+    }
+
     PatronDatabaseEntity createPatron() {
         return new PatronDatabaseEntity(patronId, Regular, EmailAddress.of("events@example.test"))
     }
@@ -172,6 +194,14 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
 
     PatronEvent.OverdueCheckoutRegistered overdueCheckoutRegistered() {
         return PatronEvent.OverdueCheckoutRegistered.registeredAt(HOLD_FROM, patronId, bookId, libraryBranchId)
+    }
+
+    PatronEvent.PatronSuspended patronSuspended() {
+        return PatronEvent.PatronSuspended.suspendedAt(HOLD_FROM, patronId, "Policy violation")
+    }
+
+    PatronEvent.PatronReactivated patronReactivated() {
+        return PatronEvent.PatronReactivated.reactivatedAt(HOLD_FROM, patronId)
     }
 
 }

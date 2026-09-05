@@ -95,7 +95,9 @@ class DomainModelMapper {
                 new PatronId(entity.patronId),
                 EmailAddress.of(entity.emailAddress),
                 mapPatronHolds(entity),
-                mapPatronOverdueCheckouts(entity)
+                mapPatronOverdueCheckouts(entity),
+                PatronStatus.valueOf(entity.status),
+                entity.suspensionReason
         );
     }
 
