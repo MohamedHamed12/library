@@ -3,14 +3,18 @@ package io.pillopl.library.catalogue
 import io.vavr.control.Option
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import spock.lang.Specification
+
+import java.time.Clock
 
 import static io.pillopl.library.catalogue.BookFixture.DDD
 import static io.pillopl.library.catalogue.BookFixture.NON_PRESENT_ISBN
 import static io.pillopl.library.catalogue.BookInstance.instanceOf
 import static io.pillopl.library.catalogue.BookType.Restricted
 
-@SpringBootTest(classes = CatalogueConfiguration.class)
+@SpringBootTest(classes = [CatalogueConfiguration, ClockConfiguration])
 class CatalogueDatabaseIT extends Specification {
 
     @Autowired
@@ -42,5 +46,13 @@ class CatalogueDatabaseIT extends Specification {
             noExceptionThrown()
     }
 
+    @TestConfiguration
+    static class ClockConfiguration {
+
+        @Bean
+        Clock clock() {
+            Clock.systemUTC()
+        }
+    }
 
 }

@@ -19,9 +19,7 @@ import static io.pillopl.library.catalogue.BookType.Restricted
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
-import static java.time.Clock.fixed
 import static java.time.Instant.now
-import static java.time.ZoneId.systemDefault
 
 @SpringBootTest(classes = LendingTestContext.class)
 class FindingOverdueCheckoutsInDailySheetDatabaseIT extends Specification {
@@ -39,40 +37,40 @@ class FindingOverdueCheckoutsInDailySheetDatabaseIT extends Specification {
     SheetsReadModel readModel
 
     def setup() {
-        readModel = new SheetsReadModel(new JdbcTemplate(dataSource), fixed(TIME_OF_EXPIRE_CHECK, systemDefault()))
+        readModel = new SheetsReadModel(new JdbcTemplate(dataSource))
     }
 
     def 'should find overdue checkouts'() {
         given:
-            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue().count()
+            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(bookCheckedOut(tillYesterday()))
         and:
             readModel.handle(bookCheckedOut(tillTomorrow()))
         then:
-            readModel.queryForCheckoutsToOverdue().count() == currentNoOfOverdueCheckouts + 1
+            readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count() == currentNoOfOverdueCheckouts + 1
     }
 
     def 'handling bookCheckedOut should de idempotent'() {
         given:
-            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue().count()
+            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count()
         and:
 		PatronEvent.BookCheckedOut event = bookCheckedOut(tillYesterday())
         when:
             2.times { readModel.handle(event) }
         then:
-            readModel.queryForCheckoutsToOverdue().count() == currentNoOfOverdueCheckouts + 1
+            readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count() == currentNoOfOverdueCheckouts + 1
     }
 
     def 'should never find returned books'() {
         given:
-            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue().count()
+            int currentNoOfOverdueCheckouts = readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count()
         and:
             readModel.handle(bookCheckedOut(tillTomorrow()))
         when:
             readModel.handle(bookReturned())
         then:
-            readModel.queryForCheckoutsToOverdue().count() == currentNoOfOverdueCheckouts
+            readModel.queryForCheckoutsToOverdue(TIME_OF_EXPIRE_CHECK).count() == currentNoOfOverdueCheckouts
     }
 
 

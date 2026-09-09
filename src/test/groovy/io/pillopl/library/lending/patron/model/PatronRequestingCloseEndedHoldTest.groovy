@@ -28,7 +28,7 @@ class PatronRequestingCloseEndedHoldTest extends Specification {
             Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(3)), from)
         then:
             hold.isRight()
-            hold.get().with {
+            verifyAll(hold.get()) {
                 BookPlacedOnHold bookPlacedOnHold = it.bookPlacedOnHold
                 assert bookPlacedOnHold.libraryBranchId == aBook.libraryBranch.libraryBranchId
                 assert bookPlacedOnHold.bookId == aBook.bookInformation.bookId.bookId
