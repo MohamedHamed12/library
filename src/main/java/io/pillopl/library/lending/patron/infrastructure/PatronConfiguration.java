@@ -6,6 +6,7 @@ import io.pillopl.library.lending.patron.application.checkout.CheckingOutBookOnH
 import io.pillopl.library.lending.patron.application.checkout.RegisteringOverdueCheckout;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
 import io.pillopl.library.lending.patron.application.hold.ExpiringHolds;
+import io.pillopl.library.lending.patron.application.hold.ExtendingHold;
 import io.pillopl.library.lending.patron.application.hold.FindAvailableBook;
 import io.pillopl.library.lending.patron.application.hold.FindBookOnHold;
 import io.pillopl.library.lending.patron.application.hold.HandleDuplicateHold;
@@ -40,6 +41,11 @@ public class PatronConfiguration {
     @Bean
     CancelingHold cancelingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
         return new CancelingHold(findBookOnHold, patronRepository);
+    }
+
+    @Bean
+    ExtendingHold extendingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+        return new ExtendingHold(findBookOnHold, patronRepository);
     }
 
     @Bean

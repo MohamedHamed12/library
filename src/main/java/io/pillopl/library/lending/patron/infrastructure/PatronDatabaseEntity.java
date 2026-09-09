@@ -46,6 +46,8 @@ class PatronDatabaseEntity {
         return API.Match(event).of(
                 Case($(instanceOf(BookPlacedOnHoldEvents.class)), this::handle),
                 Case($(instanceOf(BookPlacedOnHold.class)), this::handle),
+                Case($(instanceOf(BookHoldExtended.class)), this::handle),
+                Case($(instanceOf(BookHoldExtensionFailed.class)), this::handle),
                 Case($(instanceOf(BookCheckedOut.class)), this::handle),
                 Case($(instanceOf(BookHoldCanceled.class)), this::handle),
                 Case($(instanceOf(BookHoldExpired.class)), this::handle),
@@ -63,6 +65,20 @@ class PatronDatabaseEntity {
 
     private PatronDatabaseEntity handle(BookPlacedOnHold event) {
         booksOnHold.add(new HoldDatabaseEntity(event.getBookId(), event.getPatronId(), event.getLibraryBranchId(), event.getHoldTill()));
+        return this;
+    }
+
+    private PatronDatabaseEntity handle(BookHoldExtended event) {
+        HoldDatabaseEntity hold = booksOnHold
+                .stream()
+                .filter(entity -> entity.is(event.getPatronId(), event.getBookId(), event.getLibraryBranchId()))
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException("Cannot extend a hold that is missing from patron state"));
+        hold.extendTo(event.getHoldTill(), event.getExtensionCount());
+        return this;
+    }
+
+    private PatronDatabaseEntity handle(BookHoldExtensionFailed event) {
         return this;
     }
 

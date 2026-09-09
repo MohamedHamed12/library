@@ -12,6 +12,8 @@ public interface DailySheet {
 
     void handle(BookPlacedOnHold event);
 
+    void handle(BookHoldExtended event);
+
     void handle(BookHoldCanceled event);
 
     void handle(BookHoldExpired event);

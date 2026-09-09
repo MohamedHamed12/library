@@ -2,6 +2,7 @@ package io.pillopl.library.lending.patron.model;
 
 import io.pillopl.library.lending.book.model.AvailableBook;
 import io.pillopl.library.lending.book.model.BookOnHold;
+import io.vavr.control.Option;
 import lombok.NonNull;
 import lombok.Value;
 
@@ -15,8 +16,15 @@ class PatronHolds {
     Set<Hold> resourcesOnHold;
 
     boolean a(@NonNull BookOnHold bookOnHold) {
-        Hold hold = new Hold(bookOnHold.getBookId(), bookOnHold.getHoldPlacedAt());
-        return resourcesOnHold.contains(hold);
+        return find(bookOnHold).isDefined();
+    }
+
+    Option<Hold> find(@NonNull BookOnHold bookOnHold) {
+        return Option.of(resourcesOnHold
+                .stream()
+                .filter(hold -> hold.matches(bookOnHold))
+                .findFirst()
+                .orElse(null));
     }
 
     int count() {

@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS patron_database_entity (
     suspension_reason VARCHAR(1024)
 );
 
-CREATE TABLE IF NOT EXISTS hold_database_entity (id INTEGER IDENTITY PRIMARY KEY, book_id UUID NOT NULL, patron_id UUID NOT NULL, library_branch_id UUID NOT NULL, patron_database_entity INTEGER NOT NULL, till TIMESTAMP NOT NULL);
+CREATE TABLE IF NOT EXISTS hold_database_entity (id INTEGER IDENTITY PRIMARY KEY, book_id UUID NOT NULL, patron_id UUID NOT NULL, library_branch_id UUID NOT NULL, patron_database_entity INTEGER NOT NULL, till TIMESTAMP, extension_count INTEGER NOT NULL DEFAULT 0);
 
 CREATE TABLE IF NOT EXISTS overdue_checkout_database_entity (id INTEGER IDENTITY PRIMARY KEY, book_id UUID NOT NULL, patron_id UUID NOT NULL, library_branch_id UUID NOT NULL, patron_database_entity INTEGER NOT NULL);

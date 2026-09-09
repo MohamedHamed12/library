@@ -60,8 +60,10 @@ class PatronProfileReadModel implements PatronProfiles {
     }
 
     private Hold toHold(Map<String, Object> map) {
-        return new Hold(new BookId((UUID) map.get("BOOK_ID")),
-                ((Timestamp) map.get("HOLD_TILL")).toInstant());
+        Timestamp holdTill = (Timestamp) map.get("HOLD_TILL");
+        return new Hold(
+                new BookId((UUID) map.get("BOOK_ID")),
+                holdTill == null ? null : holdTill.toInstant());
     }
 
     private List<Map<String, Object>> findCurrentCheckoutsFor(PatronId patronId) {

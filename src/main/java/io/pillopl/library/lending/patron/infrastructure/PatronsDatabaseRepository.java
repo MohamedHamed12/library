@@ -6,7 +6,7 @@ import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.*;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.vavr.Tuple;
-import io.vavr.Tuple2;
+import io.vavr.Tuple4;
 import io.vavr.control.Option;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -15,6 +15,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.dao.DuplicateKeyException;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -117,11 +118,15 @@ class DomainModelMapper {
                                         .collect(toSet())));
     }
 
-    Set<Tuple2<BookId, LibraryBranchId>> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
+    Set<Tuple4<BookId, LibraryBranchId, Instant, Integer>> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
         return patronDatabaseEntity
                 .booksOnHold
                 .stream()
-                .map(entity -> Tuple.of((new BookId(entity.bookId)), new LibraryBranchId(entity.libraryBranchId)))
+                .map(entity -> Tuple.of(
+                        new BookId(entity.bookId),
+                        new LibraryBranchId(entity.libraryBranchId),
+                        entity.till,
+                        entity.extensionCount))
                 .collect(toSet());
     }
 

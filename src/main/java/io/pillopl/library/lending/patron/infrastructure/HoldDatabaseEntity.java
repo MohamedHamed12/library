@@ -18,12 +18,19 @@ class HoldDatabaseEntity {
     UUID bookId;
     UUID libraryBranchId;
     Instant till;
+    int extensionCount;
 
     HoldDatabaseEntity(UUID bookId, UUID patronId, UUID libraryBranchId, Instant till) {
         this.bookId = bookId;
         this.patronId = patronId;
         this.libraryBranchId = libraryBranchId;
         this.till = till;
+        this.extensionCount = 0;
+    }
+
+    void extendTo(Instant till, int extensionCount) {
+        this.till = till;
+        this.extensionCount = extensionCount;
     }
 
     boolean is(UUID patronId, UUID bookId, UUID libraryBranchId) {

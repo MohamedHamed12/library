@@ -244,6 +244,73 @@ public interface PatronEvent extends DomainEvent {
     }
 
     @Value
+    class BookHoldExtended implements PatronEvent {
+        @NonNull
+        UUID eventId = UUID.randomUUID();
+        @NonNull
+        Instant when;
+        @NonNull
+        UUID patronId;
+        @NonNull
+        UUID bookId;
+        @NonNull
+        UUID libraryBranchId;
+        @NonNull
+        Instant previousHoldTill;
+        @NonNull
+        Instant holdTill;
+        int extensionCount;
+
+        public static BookHoldExtended extendedAt(
+                Instant timestamp,
+                BookId bookId,
+                LibraryBranchId libraryBranchId,
+                PatronId patronId,
+                Instant previousHoldTill,
+                Instant holdTill,
+                int extensionCount) {
+            return new BookHoldExtended(
+                    timestamp,
+                    patronId.getPatronId(),
+                    bookId.getBookId(),
+                    libraryBranchId.getLibraryBranchId(),
+                    previousHoldTill,
+                    holdTill,
+                    extensionCount);
+        }
+    }
+
+    @Value
+    class BookHoldExtensionFailed implements PatronEvent {
+        @NonNull
+        UUID eventId = UUID.randomUUID();
+        @NonNull
+        String reason;
+        @NonNull
+        Instant when;
+        @NonNull
+        UUID patronId;
+        @NonNull
+        UUID bookId;
+        @NonNull
+        UUID libraryBranchId;
+
+        static BookHoldExtensionFailed extensionFailedAt(
+                Instant timestamp,
+                Rejection rejection,
+                BookId bookId,
+                LibraryBranchId libraryBranchId,
+                PatronInformation patronInformation) {
+            return new BookHoldExtensionFailed(
+                    rejection.getReason().getReason(),
+                    timestamp,
+                    patronInformation.getPatronId().getPatronId(),
+                    bookId.getBookId(),
+                    libraryBranchId.getLibraryBranchId());
+        }
+    }
+
+    @Value
     class BookHoldCanceled implements PatronEvent {
         @NonNull
         UUID eventId = UUID.randomUUID();

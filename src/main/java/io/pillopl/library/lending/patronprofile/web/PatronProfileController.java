@@ -7,8 +7,11 @@ import io.pillopl.library.commons.commands.Result;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.application.hold.CancelHoldCommand;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
+import io.pillopl.library.lending.patron.application.hold.ExtendHoldCommand;
+import io.pillopl.library.lending.patron.application.hold.ExtendingHold;
 import io.pillopl.library.lending.patron.application.hold.PlaceOnHoldCommand;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
+import io.pillopl.library.lending.patron.model.NumberOfDays;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
@@ -52,6 +55,7 @@ class PatronProfileController {
         private final PatronProfiles patronProfiles;
         private final PlacingOnHold placingOnHold;
         private final CancelingHold cancelingHold;
+        private final ExtendingHold extendingHold;
         private final Clock clock;
 
         @GetMapping("/profiles/{patronId}")
@@ -155,6 +159,31 @@ class PatronProfileController {
                                 result,
                                 ApiErrorCode.HOLD_NOT_ALLOWED,
                                 "The patron cannot place this book on hold.");
+
+                return ResponseEntity.ok().build();
+        }
+
+        @PostMapping("/profiles/{patronId}/holds/{bookId}/extension")
+        ResponseEntity<Void> extendHold(
+                        @PathVariable UUID patronId,
+                        @PathVariable UUID bookId,
+                        @Valid @RequestBody ExtendHoldRequest request) {
+                Instant now = clock.instant();
+
+                ExtendHoldCommand command = new ExtendHoldCommand(
+                                now,
+                                new PatronId(patronId),
+                                new BookId(bookId),
+                                NumberOfDays.of(request.getAdditionalDays()));
+
+                Result result = extendingHold
+                                .extendHold(command)
+                                .get();
+
+                rejectIfNeeded(
+                                result,
+                                ApiErrorCode.HOLD_EXTENSION_NOT_ALLOWED,
+                                "The hold cannot be extended in its current state.");
 
                 return ResponseEntity.ok().build();
         }
