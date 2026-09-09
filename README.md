@@ -21,9 +21,9 @@ production-oriented improvements without breaking the domain model.
 I created this fork to move from reading about DDD and Spring architecture to
 implementing the concepts in a real codebase.
 
-The work is organized as a **20-issue learning roadmap**. The roadmap was
-designed with help from Claude and is implemented incrementally through small,
-reviewable changes.
+The work is organized as a **20-issue learning roadmap** plus a separate
+enterprise-modernization backlog. Changes are implemented incrementally through
+small, reviewable pull requests.
 
 Each issue focuses on one or more engineering skills:
 
@@ -144,19 +144,20 @@ infrastructure concerns from leaking into the domain.
 
 ## Technology Stack
 
-- Java 11
-- Spring Boot 2.2
+- Java 25 LTS
+- Spring Boot 4.1
+- Spring Framework 7
 - Spring MVC
 - Spring Data JDBC
 - JDBC Template
-- Maven
+- Maven 3.9.x
 - H2
-- Vavr
+- Vavr 1.0
 - Lombok
-- Groovy
-- Spock
-- JUnit
-- ArchUnit
+- Groovy 5
+- Spock 2.4
+- JUnit Jupiter
+- ArchUnit 1.4
 - Micrometer
 - Prometheus
 - Grafana
@@ -232,8 +233,8 @@ tracked in the repository's GitHub Issues.
 
 ### Requirements
 
-- Java 11
-- Maven
+- Java 25 LTS
+- Maven 3.9.11 or the included Maven wrapper
 - Docker and Docker Compose, optional
 
 ### Clone
@@ -246,13 +247,13 @@ cd library
 ### Run Unit Tests
 
 ```bash
-mvn test
+./mvnw test
 ```
 
 ### Run the Full Verification Build
 
 ```bash
-mvn clean verify
+./mvnw clean verify
 ```
 
 Use `verify` when validating changes that include integration tests.
@@ -260,7 +261,7 @@ Use `verify` when validating changes that include integration tests.
 ### Run the Application
 
 ```bash
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 The application starts at:
@@ -272,7 +273,7 @@ http://localhost:8080
 ### Build the JAR
 
 ```bash
-mvn clean package
+./mvnw clean package
 ```
 
 The generated JAR is placed under `target/`.
@@ -366,7 +367,7 @@ For a change:
 3. Create a focused branch.
 4. Add or update tests.
 5. Implement the smallest correct change.
-6. Run `mvn clean verify`.
+6. Run `./mvnw clean verify`.
 7. Confirm architecture tests still pass.
 8. Document meaningful architectural decisions.
 9. Open a pull request linked to the issue.
@@ -395,9 +396,10 @@ The original maintainers created the initial domain model, EventStorming
 material, architecture, and implementation. This fork keeps that work visible
 and builds an additional learning roadmap on top of it.
 
-The 20-issue enhancement roadmap was prepared with AI assistance from Claude.
-Implementation decisions, code review, testing, and final responsibility remain
-with the repository owner.
+The original 20-issue enhancement roadmap was prepared with AI assistance from
+Claude. The enterprise-modernization backlog is maintained separately in GitHub
+Issues. Implementation decisions, code review, testing, and final responsibility
+remain with the repository owner.
 
 ---
 

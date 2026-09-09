@@ -1,6 +1,5 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import io.micrometer.core.annotation.Timed;
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.commands.Result;
@@ -14,9 +13,12 @@ import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.model.NumberOfDays;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.PatronStatus;
-import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
+import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
+import io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode;
+import io.pillopl.library.lending.patronprofile.web.error.ApiException;
 import io.vavr.control.Option;
+import jakarta.validation.Valid;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -33,19 +35,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import io.pillopl.library.lending.patronprofile.web.error.ApiException;
-import javax.validation.Valid;
-import io.pillopl.library.lending.patronprofile.web.error.ApiException;
-import javax.validation.Valid;
 
-import static io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode.HOLD_NOT_ALLOWED;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.afford;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.http.ResponseEntity.ok;
-import io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode;
-import io.pillopl.library.lending.patronprofile.web.error.ApiException;
 
 @Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
 @RestController
@@ -97,7 +92,7 @@ class PatronProfileController {
                                 .toStream()
                                 .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
                                 .collect(toList());
-                return ResponseEntity.ok(new CollectionModel<>(holds,
+                return ResponseEntity.ok(CollectionModel.of(holds,
                                 linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
 
         }
@@ -121,7 +116,7 @@ class PatronProfileController {
                                 .toStream()
                                 .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
                                 .collect(toList());
-                return ResponseEntity.ok(new CollectionModel<>(checkouts,
+                return ResponseEntity.ok(CollectionModel.of(checkouts,
                                 linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
         }
 
@@ -213,7 +208,7 @@ class PatronProfileController {
 
         private EntityModel<Hold> resourceWithLinkToHoldSelf(UUID patronId,
                         io.pillopl.library.lending.patronprofile.model.Hold hold) {
-                return new EntityModel<>(
+                return EntityModel.of(
                                 new Hold(hold),
                                 linkTo(methodOn(PatronProfileController.class).findHold(patronId,
                                                 hold.getBook().getBookId()))
@@ -224,7 +219,7 @@ class PatronProfileController {
 
         private EntityModel<Checkout> resourceWithLinkToCheckoutSelf(UUID patronId,
                         io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
-                return new EntityModel<>(
+                return EntityModel.of(
                                 new Checkout(checkout),
                                 linkTo(methodOn(PatronProfileController.class).findCheckout(patronId,
                                                 checkout.getBook().getBookId()))

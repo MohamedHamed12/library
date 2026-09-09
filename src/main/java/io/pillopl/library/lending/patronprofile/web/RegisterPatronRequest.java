@@ -3,7 +3,7 @@ package io.pillopl.library.lending.patronprofile.web;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.pillopl.library.lending.patron.model.PatronType;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.Value;
 
 @Value
