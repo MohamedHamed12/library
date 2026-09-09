@@ -11,12 +11,16 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+
+import java.time.Duration;
 import java.time.Instant;
 
 import static io.pillopl.library.commons.events.EitherResult.announceFailure;
 import static io.pillopl.library.commons.events.EitherResult.announceSuccess;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled.canceledAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCancelingFailed.cancellationFailedAt;
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtended.extendedAt;
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtensionFailed.extensionFailedAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldFailed.holdFailedAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut.checkedOutAt;
@@ -83,6 +87,60 @@ public class Patron {
             return announceSuccess(events(bookPlacedOnHold));
         }
         return announceFailure(holdFailedAt(timestamp, rejection.get(), book.getBookId(), book.getLibraryBranch(), patron));
+    }
+
+    public Either<BookHoldExtensionFailed, BookHoldExtended> extendHold(
+            BookOnHold book,
+            NumberOfDays additionalDays,
+            Instant timestamp) {
+        Option<Hold> hold = patronHolds.find(book);
+        if (hold.isEmpty()) {
+            return extensionFailure(timestamp, book, "book is not on hold by patron");
+        }
+
+        Hold currentHold = hold.get();
+        if (currentHold.isOpenEnded()) {
+            return extensionFailure(timestamp, book, "open-ended hold cannot be extended");
+        }
+        if (!currentHold.isCurrentAt(timestamp)) {
+            return extensionFailure(timestamp, book, "expired hold cannot be extended");
+        }
+        if (additionalDays.isGreaterThan(maxExtensionDays())) {
+            return extensionFailure(timestamp, book, "hold extension exceeds maximum number of days");
+        }
+        if (currentHold.getExtensionCount() >= maxNumberOfExtensions()) {
+            return extensionFailure(timestamp, book, "hold extension limit has been reached");
+        }
+
+        Instant newTill = currentHold.getTill().plus(Duration.ofDays(additionalDays.getDays()));
+        return announceSuccess(extendedAt(
+                timestamp,
+                book.getBookId(),
+                book.getHoldPlacedAt(),
+                patron.getPatronId(),
+                currentHold.getTill(),
+                newTill,
+                currentHold.getExtensionCount() + 1));
+    }
+
+    private Either<BookHoldExtensionFailed, BookHoldExtended> extensionFailure(
+            Instant timestamp,
+            BookOnHold book,
+            String reason) {
+        return announceFailure(extensionFailedAt(
+                timestamp,
+                withReason(reason),
+                book.getBookId(),
+                book.getHoldPlacedAt(),
+                patron));
+    }
+
+    private int maxExtensionDays() {
+        return isRegular() ? 7 : 14;
+    }
+
+    private int maxNumberOfExtensions() {
+        return isRegular() ? 1 : 2;
     }
 
     public Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold(

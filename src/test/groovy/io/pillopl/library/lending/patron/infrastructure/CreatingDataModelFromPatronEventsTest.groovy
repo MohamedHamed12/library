@@ -16,6 +16,7 @@ import static io.pillopl.library.lending.patron.model.CheckoutDuration.forNoOfDa
 import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
 import static io.pillopl.library.lending.patron.model.HoldDuration.openEnded
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled.canceledAt
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtended.extendedAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
@@ -41,6 +42,7 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
         then:
             entity.booksOnHold.size() == 1
             entity.booksOnHold.iterator().next().till == HOLD_FROM.plus(Duration.ofDays(1))
+            entity.booksOnHold.iterator().next().extensionCount == 0
 
     }
 
@@ -53,6 +55,19 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
             entity.booksOnHold.size() == 1
             entity.booksOnHold.iterator().next().till == null
 
+    }
+
+    def 'should update hold expiration and extension count on extension'() {
+        given:
+            PatronDatabaseEntity entity = createPatron()
+            entity.handle(placedOnHold(closeEnded(HOLD_FROM, 2)))
+            Instant previousTill = HOLD_FROM.plus(Duration.ofDays(2))
+            Instant newTill = previousTill.plus(Duration.ofDays(3))
+        when:
+            entity.handle(extendedAt(HOLD_FROM, bookId, libraryBranchId, patronId, previousTill, newTill, 1))
+        then:
+            entity.booksOnHold.iterator().next().till == newTill
+            entity.booksOnHold.iterator().next().extensionCount == 1
     }
 
     def 'should remove hold on patronCheckedOut event'() {
@@ -146,7 +161,7 @@ class CreatingDataModelFromPatronEventsTest extends Specification {
         return new PatronDatabaseEntity(patronId, Regular, EmailAddress.of("events@example.test"))
     }
 
-	PatronEvent.BookCheckedOut bookCheckedOut() {
+    PatronEvent.BookCheckedOut bookCheckedOut() {
         return PatronEvent.BookCheckedOut.checkedOutAt(
                 HOLD_FROM,
                 bookId,

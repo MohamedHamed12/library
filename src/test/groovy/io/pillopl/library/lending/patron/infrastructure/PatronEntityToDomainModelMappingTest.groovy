@@ -8,6 +8,7 @@ import io.pillopl.library.lending.patron.model.PatronFactory
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.PatronStatus
 import io.pillopl.library.lending.patron.model.PatronType
+import io.vavr.Tuple4
 import spock.lang.Specification
 
 import java.time.Instant
@@ -31,17 +32,19 @@ class PatronEntityToDomainModelMappingTest extends Specification {
     BookId anotherBookId = anyBookId()
     Instant anyDate = Instant.parse('2026-07-21T10:15:30Z')
 
-    def 'should map patron holds'() {
+    def 'should map patron holds including expiration and extension count'() {
         given:
+            HoldDatabaseEntity first = new HoldDatabaseEntity(bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId, anyDate)
+            first.extensionCount = 1
             PatronDatabaseEntity entity = patronEntity(patronId, Regular, [
-                    new HoldDatabaseEntity(bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId, anyDate),
+                    first,
                     new HoldDatabaseEntity(anotherBookId.bookId, patronId.patronId, anotherBranchId.libraryBranchId, anyDate)])
         when:
-            Set<Tuple2<BookId, LibraryBranchId>> patronHolds = domainModelMapper.mapPatronHolds(entity)
+            Set<Tuple4<BookId, LibraryBranchId, Instant, Integer>> patronHolds = domainModelMapper.mapPatronHolds(entity)
         then:
             patronHolds.size() == 2
-
-
+            patronHolds.find { it._1 == bookId }._3 == anyDate
+            patronHolds.find { it._1 == bookId }._4 == 1
     }
 
     def 'should map patron overdue checkouts'() {

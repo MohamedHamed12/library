@@ -31,6 +31,13 @@ public class PatronEventsHandler {
     }
 
     @EventListener
+    void handle(BookHoldExtended bookHoldExtended) {
+        bookRepository.findBy(new BookId(bookHoldExtended.getBookId()))
+                .map(book -> handleBookHoldExtended(book, bookHoldExtended))
+                .map(this::saveBook);
+    }
+
+    @EventListener
     void handle(BookCheckedOut bookCheckedOut) {
         bookRepository.findBy(new BookId(bookCheckedOut.getBookId()))
                 .map(book -> handleBookCheckedOut(book, bookCheckedOut))
@@ -63,6 +70,13 @@ public class PatronEventsHandler {
         return API.Match(book).of(
                 Case($(instanceOf(AvailableBook.class)), availableBook -> availableBook.handle(bookPlacedOnHold)),
                 Case($(instanceOf(BookOnHold.class)), bookOnHold -> raiseDuplicateHoldFoundEvent(bookOnHold, bookPlacedOnHold)),
+                Case($(), () -> book)
+        );
+    }
+
+    private Book handleBookHoldExtended(Book book, BookHoldExtended bookHoldExtended) {
+        return API.Match(book).of(
+                Case($(instanceOf(BookOnHold.class)), onHold -> onHold.handle(bookHoldExtended)),
                 Case($(), () -> book)
         );
     }

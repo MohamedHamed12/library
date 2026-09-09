@@ -6,6 +6,7 @@ import io.pillopl.library.commons.aggregates.Version;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled;
+import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtended;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExpired;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookReturned;
 import io.pillopl.library.lending.patron.model.PatronId;
@@ -31,7 +32,6 @@ public class BookOnHold implements Book {
     @NonNull
     PatronId byPatron;
 
-    @NonNull
     Instant holdTill;
 
     @NonNull
@@ -68,6 +68,14 @@ public class BookOnHold implements Book {
                 version);
     }
 
+    public BookOnHold handle(BookHoldExtended bookHoldExtended) {
+        return new BookOnHold(
+                bookInformation,
+                holdPlacedAt,
+                byPatron,
+                bookHoldExtended.getHoldTill(),
+                version);
+    }
 
     public BookId getBookId() {
         return bookInformation.getBookId();
