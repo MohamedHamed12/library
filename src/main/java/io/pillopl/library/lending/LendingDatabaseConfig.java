@@ -14,9 +14,11 @@ import java.time.Clock;
 import java.util.UUID;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.flywaydb.core.Flyway;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,18 +38,29 @@ import static io.pillopl.library.lending.patron.model.PatronType.Regular;
 class LendingDatabaseConfig extends AbstractJdbcConfiguration {
 
     @Bean
+    @DependsOn("lendingFlyway")
     JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());
     }
 
     @Bean
+    @DependsOn("lendingFlyway")
     NamedParameterJdbcOperations operations() {
         return new NamedParameterJdbcTemplate(dataSource());
     }
 
     @Bean
+    @DependsOn("lendingFlyway")
     PlatformTransactionManager transactionManager() {
         return new DataSourceTransactionManager(dataSource());
+    }
+
+    @Bean(initMethod = "migrate")
+    Flyway lendingFlyway() {
+        return Flyway.configure()
+                .dataSource(dataSource())
+                .locations("classpath:db/migration/lending")
+                .load();
     }
 
     @Bean
@@ -55,9 +68,6 @@ class LendingDatabaseConfig extends AbstractJdbcConfiguration {
         return new EmbeddedDatabaseBuilder()
                 .generateUniqueName(true)
                 .setType(EmbeddedDatabaseType.H2)
-                .addScript("create_patron_db.sql")
-                .addScript("create_lending_book_db.sql")
-                .addScript("create_sheets_db.sql")
                 .build();
     }
 

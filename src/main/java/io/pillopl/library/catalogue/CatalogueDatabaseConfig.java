@@ -1,7 +1,9 @@
 package io.pillopl.library.catalogue;
 
+import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -16,18 +18,29 @@ import javax.sql.DataSource;
 class CatalogueDatabaseConfig {
 
     @Bean
+    @DependsOn("catalogueFlyway")
     JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());
     }
 
     @Bean
+    @DependsOn("catalogueFlyway")
     NamedParameterJdbcOperations operations() {
         return new NamedParameterJdbcTemplate(dataSource());
     }
 
     @Bean
+    @DependsOn("catalogueFlyway")
     PlatformTransactionManager transactionManager() {
         return new DataSourceTransactionManager(dataSource());
+    }
+
+    @Bean(initMethod = "migrate")
+    Flyway catalogueFlyway() {
+        return Flyway.configure()
+                .dataSource(dataSource())
+                .locations("classpath:db/migration/catalogue")
+                .load();
     }
 
     @Bean
@@ -35,7 +48,6 @@ class CatalogueDatabaseConfig {
         return new EmbeddedDatabaseBuilder()
                 .generateUniqueName(true)
                 .setType(EmbeddedDatabaseType.H2)
-                .addScript("create_catalogue_book.sql")
                 .build();
     }
 }
