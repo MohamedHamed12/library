@@ -21,7 +21,7 @@ import java.time.Instant
 import javax.sql.DataSource
 
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.bookPlacedOnHoldNow
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
@@ -67,12 +67,13 @@ class DuplicateHoldFoundIT extends Specification {
     }
 
     BookPlacedOnHoldEvents placedOnHold(AvailableBook book, PatronId patronId) {
-        return events(bookPlacedOnHoldNow(
+        return events(placedOnHoldAt(
+                NOW,
                 book.getBookId(),
                 book.type(),
                 book.libraryBranch,
                 patronId,
-                HoldDuration.closeEnded(5)))
+                HoldDuration.closeEnded(NOW, 5)))
     }
 
     PatronCreated patronCreated(PatronId patronId) {

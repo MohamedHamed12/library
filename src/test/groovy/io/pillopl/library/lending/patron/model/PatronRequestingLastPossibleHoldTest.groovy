@@ -33,7 +33,7 @@ class PatronRequestingLastPossibleHoldTest
         then:
             hold.isRight()
 
-            hold.get().with {
+            verifyAll(hold.get()) {
                 assert maximumNumberOhHoldsReached.isDefined()
 
                 MaximumNumberOhHoldsReached event =

@@ -26,7 +26,7 @@ class PatronCancelingHoldTest extends Specification {
             Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
             cancelHold.isRight()
-            cancelHold.get().with {
+            verifyAll(cancelHold.get()) {
                 assert it.libraryBranchId == forBook.getHoldPlacedAt().libraryBranchId
                 assert it.bookId == forBook.bookInformation.bookId.bookId
             }

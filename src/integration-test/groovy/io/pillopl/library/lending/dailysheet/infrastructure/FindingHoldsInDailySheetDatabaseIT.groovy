@@ -20,9 +20,7 @@ import static io.pillopl.library.catalogue.BookType.Restricted
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
-import static java.time.Clock.fixed
 import static java.time.Instant.now
-import static java.time.ZoneId.systemDefault
 
 @SpringBootTest(classes = LendingTestContext.class)
 class FindingHoldsInDailySheetDatabaseIT extends Specification {
@@ -41,71 +39,71 @@ class FindingHoldsInDailySheetDatabaseIT extends Specification {
     SheetsReadModel readModel
 
     def setup() {
-        readModel = new SheetsReadModel(new JdbcTemplate(dataSource), fixed(TIME_OF_EXPIRE_CHECK, systemDefault()))
+        readModel = new SheetsReadModel(new JdbcTemplate(dataSource))
     }
 
     def 'should find expired holds'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(placedOnHold(aCloseEndedHoldTillYesterday()))
         and:
             readModel.handle(placedOnHold(aCloseEndedHoldTillTomorrow()))
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds + 1
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds + 1
     }
 
     def 'handling placed on hold should de idempotent'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         and:
             PatronEvent.BookPlacedOnHold event = placedOnHold(aCloseEndedHoldTillYesterday())
         when:
             2.times { readModel.handle(event) }
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds + 1
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds + 1
     }
 
     def 'should never find open-ended holds'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(placedOnHold(anOpenEndedHold()))
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds
     }
 
     def 'should never find canceled holds'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(placedOnHold(aCloseEndedHoldTillYesterday()))
         and:
             readModel.handle(holdCanceled())
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds
     }
 
     def 'should never find already expired holds'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(placedOnHold(anOpenEndedHold()))
         and:
             readModel.handle(holdExpired())
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds
     }
 
     def 'should never find already checkedOut holds'() {
         given:
-            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet().count()
+            int currentNoOfExpiredHolds = readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count()
         when:
             readModel.handle(placedOnHold(aCloseEndedHoldTillYesterday()))
         and:
             readModel.handle(bookCheckedOut())
         then:
-            readModel.queryForHoldsToExpireSheet().count() == currentNoOfExpiredHolds
+            readModel.queryForHoldsToExpireSheet(TIME_OF_EXPIRE_CHECK).count() == currentNoOfExpiredHolds
     }
 
 

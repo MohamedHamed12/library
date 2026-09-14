@@ -15,7 +15,7 @@ import io.pillopl.library.lending.patronprofile.web.error.ApiException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;

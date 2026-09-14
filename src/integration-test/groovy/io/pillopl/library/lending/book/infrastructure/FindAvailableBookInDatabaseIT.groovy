@@ -11,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.catalogue.BookType.Circulating
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.book.model.BookFixture.circulatingAvailableBookAt
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.bookPlacedOnHoldNow
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 
@@ -47,11 +49,13 @@ class FindAvailableBookInDatabaseIT extends Specification {
 
 
     PatronEvent.BookPlacedOnHold placedOnHold() {
+        Instant now = Instant.now()
         return events(
-                bookPlacedOnHoldNow(
+                placedOnHoldAt(
+                        now,
                         bookId, Circulating,
                         libraryBranchId, patronId,
-                        closeEnded(5)))
+                        closeEnded(now, 5)))
                 .bookPlacedOnHold
     }
 

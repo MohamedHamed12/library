@@ -15,11 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
 
+import java.time.Instant
+
 import static io.pillopl.library.catalogue.BookType.Circulating
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.book.model.BookFixture.circulatingAvailableBookAt
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
-import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.bookPlacedOnHoldNow
+import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold.placedOnHoldAt
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents.events
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 
@@ -67,12 +69,14 @@ class OptimisticLockingBookAggregateIT extends Specification {
     }
 
     PatronEvent.BookPlacedOnHold placedOnHoldBy(PatronId patronId) {
-        return events(bookPlacedOnHoldNow(
+        Instant now = Instant.now()
+        return events(placedOnHoldAt(
+                now,
                 bookId,
                 Circulating,
                 libraryBranchId,
                 patronId,
-                HoldDuration.closeEnded(5)))
+                HoldDuration.closeEnded(now, 5)))
                 .bookPlacedOnHold
     }
 }

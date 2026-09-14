@@ -54,11 +54,10 @@ class PatronCheckingOutBookTest extends Specification {
             Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold, forNoOfDays(CHECKOUT_TIME, checkoutDays), CHECKOUT_TIME)
         then:
 		checkOut.isRight()
-		checkOut.get().with {
+            verifyAll(checkOut.get()) {
                 assert it.libraryBranchId == bookOnHold.holdPlacedAt.libraryBranchId
                 assert it.bookId == bookOnHold.bookInformation.bookId.bookId
                 assert it.till == CHECKOUT_TIME.plus(Duration.ofDays(checkoutDays))
-
             }
         where:
             checkoutDays << (1 .. MAX_CHECKOUT_DURATION)

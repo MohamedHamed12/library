@@ -6,6 +6,7 @@ import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.book.model.BookFixture;
 import io.pillopl.library.lending.patron.application.hold.BookNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
+import io.pillopl.library.lending.patron.application.hold.ExtendingHold;
 import io.pillopl.library.lending.patron.application.hold.HoldNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
@@ -19,15 +20,13 @@ import io.pillopl.library.lending.patronprofile.model.HoldsView;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.vavr.control.Try;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
@@ -48,7 +47,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @WebMvcTest(PatronProfileController.class)
 @ContextConfiguration(classes = { LendingTestContext.class })
 public class PatronProfileControllerIT {
@@ -64,16 +62,19 @@ public class PatronProfileControllerIT {
         @Autowired
         private MockMvc mvc;
 
-        @MockBean
+        @MockitoBean
         private PatronProfiles patronProfiles;
 
-        @MockBean
+        @MockitoBean
         private PlacingOnHold placingOnHold;
 
-        @MockBean
+        @MockitoBean
         private CancelingHold cancelingHold;
 
-        @MockBean
+        @MockitoBean
+        private ExtendingHold extendingHold;
+
+        @MockitoBean
         private MeterRegistry meterRegistry;
 
         @Test
@@ -242,7 +243,7 @@ public class PatronProfileControllerIT {
                                                 is(anyDate.toString())))
                                 .andExpect(jsonPath(
                                                 "$._embedded.holdList[0]._templates.default.method",
-                                                is("delete")));
+                                                is("DELETE")));
         }
 
         @Test
@@ -349,7 +350,7 @@ public class PatronProfileControllerIT {
                                                 is(anyDate.toString())))
                                 .andExpect(jsonPath(
                                                 "$._templates.default.method",
-                                                is("delete")))
+                                                is("DELETE")))
                                 .andExpect(jsonPath(
                                                 "$._links.self.href",
                                                 containsString(
@@ -436,7 +437,6 @@ public class PatronProfileControllerIT {
         @Test
         public void shouldNotCancelNotExistingHold()
                         throws Exception {
-
                 given(patronProfiles.fetchFor(patronId))
                                 .willReturn(profileWithCurrentActivity());
 

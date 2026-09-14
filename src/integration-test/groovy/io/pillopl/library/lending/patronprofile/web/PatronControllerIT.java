@@ -2,20 +2,21 @@ package io.pillopl.library.lending.patronprofile.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.pillopl.library.lending.LendingTestContext;
+import io.pillopl.library.lending.patron.application.patron.ReactivatingPatron;
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
+import io.pillopl.library.lending.patron.application.patron.SuspendingPatron;
 import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
 import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.vavr.control.Try;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Clock;
@@ -29,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @WebMvcTest(PatronController.class)
 @ContextConfiguration(classes = { LendingTestContext.class })
 public class PatronControllerIT {
@@ -40,16 +40,22 @@ public class PatronControllerIT {
         @Autowired
         private MockMvc mvc;
 
-        @MockBean
+        @MockitoBean
         private RegisteringPatron registeringPatron;
 
-        @MockBean
+        @MockitoBean
+        private SuspendingPatron suspendingPatron;
+
+        @MockitoBean
+        private ReactivatingPatron reactivatingPatron;
+
+        @MockitoBean
         private Clock clock;
 
-        @MockBean
+        @MockitoBean
         private MeterRegistry meterRegistry;
 
-        @org.junit.Before
+        @BeforeEach
         public void setUp() {
                 given(clock.instant()).willReturn(fixedNow);
         }
