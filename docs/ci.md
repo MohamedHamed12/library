@@ -22,13 +22,13 @@ The CI workflow runs on pull requests targeting `master` and on pushes to `maste
 | Unit tests | Runs the unit-test suite. |
 | Integration tests | Runs `./mvnw clean verify`, including PostgreSQL/Testcontainers integration tests, Flyway migration verification, and JaCoCo coverage generation, then generates the CycloneDX SBOM. |
 | Architecture tests | Runs the ArchUnit architecture rules as a dedicated check. |
-| Dependency review | Fails pull requests that introduce dependencies with high-or-higher known vulnerabilities. |
+| Dependency vulnerability scan | Generates a CycloneDX dependency SBOM and scans it with Grype, failing on high-or-higher known vulnerabilities. This gate does not depend on GitHub Dependency Graph being enabled. |
 | Container scan | Builds `Dockerfile.build` and scans the resulting application image for high-or-higher vulnerabilities. |
 | CodeQL | Performs Java static security analysis on pull requests, `master`, and a weekly schedule. |
 
 Successful full verification uploads test reports, JaCoCo coverage output, and CycloneDX `bom.json` / `bom.xml` artifacts.
 
-GitHub native secret scanning is the repository-level secret detection control. CI configuration must not contain plaintext credentials, and workflow steps must not print secrets or sensitive environment values.
+GitHub native secret scanning, where enabled for the repository, is the repository-level secret detection control. CI configuration must not contain plaintext credentials, and workflow steps must not print secrets or sensitive environment values.
 
 ## Supply-chain policy
 
@@ -36,10 +36,12 @@ GitHub native secret scanning is the repository-level secret detection control. 
 - GitHub-owned actions are preferred. A third-party action is allowed only when it provides a required capability that GitHub Actions does not provide directly; it must be pinned to a reviewed commit SHA.
 - Dependabot checks Maven and GitHub Actions dependencies weekly. Dependabot updates to pinned Actions must be reviewed like application dependency changes.
 - Maven dependencies and plugins use repository-managed versions or explicitly pinned versions. The CycloneDX plugin is pinned because it is part of the build supply chain.
+- Dependency vulnerability scanning uses the generated CycloneDX SBOM, so the blocking CI gate remains available even when GitHub Dependency Graph is disabled.
+- The application runtime image uses an explicit Java 25 Temurin patch and Alpine release rather than a floating major-version runtime tag.
 - Trusted CI must not install tools through `curl | bash`, process substitution from remote scripts, or equivalent unaudited execution patterns.
 - Workflow permissions follow least privilege. Jobs receive only the `GITHUB_TOKEN` permissions they require.
 - CI must not depend on long-lived credentials for build, test, coverage, SBOM generation, or container scanning.
 
 ## Branch protection
 
-For `master`, configure branch protection or a repository ruleset to require the build, unit test, integration test, architecture test, dependency review, container scan, and CodeQL checks before merge.
+For `master`, configure branch protection or a repository ruleset to require the build, unit test, integration test, architecture test, dependency vulnerability scan, container scan, and CodeQL checks before merge.

@@ -113,20 +113,29 @@ jobs:
       - name: Run architecture tests
         run: ./mvnw -B -Dtest=ModularArchitectureTest,LendingHexagonalArchitectureTest,NoSpringInDomainLogicTest test
 
-  dependency-review:
-    name: Dependency review
-    if: github.event_name == 'pull_request'
+  dependency-scan:
+    name: Dependency vulnerability scan
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
-          fail-on-severity: high
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Generate dependency SBOM
+        run: ./mvnw -B -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom
+
+      - name: Scan dependency SBOM
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
+        with:
+          sbom: target/bom.json
+          fail-build: true
+          severity-cutoff: high
 
   container-scan:
     name: Container scan
