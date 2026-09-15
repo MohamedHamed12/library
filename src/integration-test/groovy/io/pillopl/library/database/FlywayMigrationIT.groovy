@@ -34,7 +34,7 @@ class FlywayMigrationIT extends Specification {
 
         then:
             jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.catalogue_book_instance", Integer) == 1
-            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE", Integer) == 1
+            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer) == 1
 
         when:
             flyway.validate()
@@ -74,7 +74,7 @@ class FlywayMigrationIT extends Specification {
             jdbc.queryForObject("SELECT status FROM ${schema}.patron_database_entity WHERE patron_id = ?", String, patronId) == 'ACTIVE'
             jdbc.queryForObject("SELECT till FROM ${schema}.hold_database_entity WHERE patron_id = ?", Timestamp, patronId) == holdTill
             jdbc.queryForObject("SELECT extension_count FROM ${schema}.hold_database_entity WHERE patron_id = ?", Integer, patronId) == 0
-            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE", Integer) == 3
+            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer) == 3
 
         when:
             jdbc.update(

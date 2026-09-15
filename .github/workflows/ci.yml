@@ -134,8 +134,30 @@ jobs:
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           sbom: target/bom.json
-          fail-build: true
-          severity-cutoff: high
+          fail-build: false
+          output-format: json
+          output-file: dependency-vulnerabilities.json
+
+      - name: Enforce dependency vulnerability threshold
+        run: |
+          jq -r '
+            .matches[]
+            | select(.vulnerability.severity == "High" or .vulnerability.severity == "Critical")
+            | "\(.vulnerability.severity)\t\(.artifact.name):\(.artifact.version)\t\(.vulnerability.id)\tfixed-in=\((.vulnerability.fix.versions // []) | join(","))"
+          ' dependency-vulnerabilities.json | sort -u | tee high-dependency-vulnerabilities.txt
+          if [ -s high-dependency-vulnerabilities.txt ]; then
+            echo "::error::High or critical dependency vulnerabilities found"
+            exit 1
+          fi
+
+      - name: Upload dependency scan report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dependency-vulnerability-report
+          path: dependency-vulnerabilities.json
+          if-no-files-found: ignore
+          retention-days: 14
 
   container-scan:
     name: Container scan
@@ -151,5 +173,27 @@ jobs:
         uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: library-ci:${{ github.sha }}
-          fail-build: true
-          severity-cutoff: high
+          fail-build: false
+          output-format: json
+          output-file: container-vulnerabilities.json
+
+      - name: Enforce container vulnerability threshold
+        run: |
+          jq -r '
+            .matches[]
+            | select(.vulnerability.severity == "High" or .vulnerability.severity == "Critical")
+            | "\(.vulnerability.severity)\t\(.artifact.name):\(.artifact.version)\t\(.vulnerability.id)\tfixed-in=\((.vulnerability.fix.versions // []) | join(","))"
+          ' container-vulnerabilities.json | sort -u | tee high-container-vulnerabilities.txt
+          if [ -s high-container-vulnerabilities.txt ]; then
+            echo "::error::High or critical container vulnerabilities found"
+            exit 1
+          fi
+
+      - name: Upload container scan report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-vulnerability-report
+          path: container-vulnerabilities.json
+          if-no-files-found: ignore
+          retention-days: 14
