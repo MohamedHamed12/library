@@ -256,7 +256,41 @@ cd library
 ./mvnw clean verify
 ```
 
-Use `verify` when validating changes that include integration tests.
+Use `verify` when validating changes that include integration tests. It also
+runs the formatting and static-analysis gates.
+
+### Code Formatting and Static Analysis
+
+Check formatting without modifying files:
+
+```bash
+./mvnw spotless:check
+```
+
+Apply the formatter intentionally:
+
+```bash
+./mvnw spotless:apply
+```
+
+Run the focused SpotBugs gate:
+
+```bash
+./mvnw -DskipTests compile spotbugs:check
+```
+
+Spotless uses google-java-format for Java, removes unused imports, and enforces
+the repository import order. Existing files are ratcheted from the issue #50
+baseline, so formatting is enforced when files are touched instead of producing
+a one-time repository-wide style diff.
+
+SpotBugs initially reports only high-priority correctness and multithreaded
+correctness findings. This keeps the first gate actionable without adding a
+suppression baseline for existing code.
+
+For IDEs, use a google-java-format integration for on-save formatting when
+available, but treat Maven Spotless as the source of truth. Run
+`./mvnw spotless:apply` before committing if the IDE formatter differs.
 
 ### Run the Application
 

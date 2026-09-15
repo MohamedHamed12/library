@@ -27,6 +27,10 @@
         <archunit.version>1.4.2</archunit.version>
         <vavr.version>1.0.1</vavr.version>
         <lombok.version>1.18.48</lombok.version>
+        <spotless.version>3.2.0</spotless.version>
+        <google-java-format.version>1.34.1</google-java-format.version>
+        <spotbugs-maven-plugin.version>4.9.8.0</spotbugs-maven-plugin.version>
+        <spotless.ratchetFrom>67500b2f737289b5b789567e5a5985f78c826d19</spotless.ratchetFrom>
     </properties>
 
     <dependencies>
@@ -154,6 +158,79 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <ratchetFrom>${spotless.ratchetFrom}</ratchetFrom>
+                    <formats>
+                        <format>
+                            <includes>
+                                <include>*.md</include>
+                                <include>docs/**/*.md</include>
+                                <include>*.xml</include>
+                                <include>src/**/*.xml</include>
+                                <include>*.yml</include>
+                                <include>*.yaml</include>
+                                <include>.github/**/*.yml</include>
+                                <include>.github/**/*.yaml</include>
+                            </includes>
+                            <excludes>
+                                <exclude>target/**</exclude>
+                                <exclude>**/target/**</exclude>
+                                <exclude>**/generated-sources/**</exclude>
+                            </excludes>
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                        </format>
+                    </formats>
+                    <java>
+                        <includes>
+                            <include>src/**/*.java</include>
+                        </includes>
+                        <googleJavaFormat>
+                            <version>${google-java-format.version}</version>
+                            <style>GOOGLE</style>
+                        </googleJavaFormat>
+                        <removeUnusedImports/>
+                        <importOrder>
+                            <order>\#,java,javax,jakarta,org,com,io,</order>
+                        </importOrder>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-formatting</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>${spotbugs-maven-plugin.version}</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>High</threshold>
+                    <includeFilterFile>${project.basedir}/config/spotbugs/include.xml</includeFilterFile>
+                    <failOnError>true</failOnError>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
