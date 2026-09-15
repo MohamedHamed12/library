@@ -1,4 +1,5 @@
 FROM eclipse-temurin:25.0.4_7-jre-alpine-3.24
+RUN apk upgrade --no-cache
 EXPOSE 8080
 WORKDIR /app
 ARG JAR=library-0.0.1-SNAPSHOT.jar
