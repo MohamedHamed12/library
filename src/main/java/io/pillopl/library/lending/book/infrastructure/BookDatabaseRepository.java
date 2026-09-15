@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -61,7 +62,7 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
     }
 
     private int update(AvailableBook availableBook) {
-        return jdbcTemplate.update("UPDATE book_database_entity b SET b.book_state = ?, b.available_at_branch = ?, b.version = ? WHERE book_id = ? AND version = ?",
+        return jdbcTemplate.update("UPDATE book_database_entity SET book_state = ?, available_at_branch = ?, version = ? WHERE book_id = ? AND version = ?",
                 Available.toString(),
                 availableBook.getLibraryBranch().getLibraryBranchId(),
                 availableBook.getVersion().getVersion() + 1,
@@ -70,18 +71,18 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
     }
 
     private int update(BookOnHold bookOnHold) {
-        return jdbcTemplate.update("UPDATE book_database_entity b SET b.book_state = ?, b.on_hold_at_branch = ?, b.on_hold_by_patron = ?, b.on_hold_till = ?, b.version = ? WHERE book_id = ? AND version = ?",
+        return jdbcTemplate.update("UPDATE book_database_entity SET book_state = ?, on_hold_at_branch = ?, on_hold_by_patron = ?, on_hold_till = ?, version = ? WHERE book_id = ? AND version = ?",
                 OnHold.toString(),
                 bookOnHold.getHoldPlacedAt().getLibraryBranchId(),
                 bookOnHold.getByPatron().getPatronId(),
-                bookOnHold.getHoldTill(),
+                toTimestamp(bookOnHold.getHoldTill()),
                 bookOnHold.getVersion().getVersion() + 1,
                 bookOnHold.getBookId().getBookId(),
                 bookOnHold.getVersion().getVersion());
     }
 
     private int update(CheckedOutBook checkedoutBook) {
-        return jdbcTemplate.update("UPDATE book_database_entity b SET b.book_state = ?, b.checked_out_at_branch = ?, b.checked_out_by_patron = ?, b.version = ? WHERE book_id = ? AND version = ?",
+        return jdbcTemplate.update("UPDATE book_database_entity SET book_state = ?, checked_out_at_branch = ?, checked_out_by_patron = ?, version = ? WHERE book_id = ? AND version = ?",
                 CheckedOut.toString(),
                 checkedoutBook.getCheckedOutAt().getLibraryBranchId(),
                 checkedoutBook.getByPatron().getPatronId(),
@@ -114,8 +115,7 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
 
     private int insert(BookId bookId, BookType bookType, BookDatabaseEntity.BookState state, UUID availableAt, UUID onHoldAt, UUID onHoldBy, Instant onHoldTill, UUID checkedOutAt, UUID checkedOutBy) {
         return jdbcTemplate.update("INSERT INTO book_database_entity " +
-                        "(id, " +
-                        "book_id, " +
+                        "(book_id, " +
                         "book_type, " +
                         "book_state, " +
                         "available_at_branch," +
@@ -125,8 +125,12 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
                         "checked_out_at_branch, " +
                         "checked_out_by_patron, " +
                         "version) VALUES " +
-                        "(NEXT VALUE FOR book_database_entity_seq, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
-                bookId.getBookId(), bookType.toString(), state.toString(), availableAt, onHoldAt, onHoldBy, onHoldTill, checkedOutAt, checkedOutBy);
+                        "(?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+                bookId.getBookId(), bookType.toString(), state.toString(), availableAt, onHoldAt, onHoldBy, toTimestamp(onHoldTill), checkedOutAt, checkedOutBy);
+    }
+
+    private static Timestamp toTimestamp(Instant instant) {
+        return instant == null ? null : Timestamp.from(instant);
     }
 
     @Override
@@ -146,4 +150,3 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
     }
 
 }
-

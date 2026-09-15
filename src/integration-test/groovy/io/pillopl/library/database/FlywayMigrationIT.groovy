@@ -2,21 +2,27 @@ package io.pillopl.library.database
 
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.MigrationVersion
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType
+import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.testcontainers.postgresql.PostgreSQLContainer
 import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Timestamp
-import java.time.Instant
 
+@SpringBootTest(classes = PostgreSQLTestConfiguration)
 class FlywayMigrationIT extends Specification {
+
+    @Autowired
+    PostgreSQLContainer postgreSQLContainer
 
     def 'creates catalogue schema from an empty database'() {
         given:
-            def database = database()
-            def flyway = flyway(database, 'classpath:db/migration/catalogue')
+            def schema = schema('catalogue')
+            def database = database(schema)
+            def flyway = flyway(database, 'classpath:db/migration/catalogue', schema)
             def jdbc = new JdbcTemplate(database)
 
         when:
@@ -29,30 +35,23 @@ class FlywayMigrationIT extends Specification {
         then:
             jdbc.queryForObject('SELECT COUNT(*) FROM catalogue_book_instance', Integer) == 1
             jdbc.queryForObject('SELECT COUNT(*) FROM flyway_schema_history WHERE success = TRUE', Integer) == 1
-            noExceptionThrown()
 
         when:
             flyway.validate()
 
         then:
             noExceptionThrown()
-
-        cleanup:
-            database.shutdown()
     }
 
     def 'upgrades lending version one schema to the latest version'() {
         given:
-            def database = database()
+            def schema = schema('lending')
+            def database = database(schema)
             def jdbc = new JdbcTemplate(database)
-            def versionOne = Flyway.configure()
-                    .dataSource(database)
-                    .locations('classpath:db/migration/lending')
-                    .target(MigrationVersion.fromVersion('1'))
-                    .load()
-            def latest = flyway(database, 'classpath:db/migration/lending')
+            def versionOne = flyway(database, 'classpath:db/migration/lending', schema, MigrationVersion.fromVersion('1'))
+            def latest = flyway(database, 'classpath:db/migration/lending', schema)
             def patronId = UUID.randomUUID()
-            def holdTill = Timestamp.from(Instant.parse('2026-09-14T12:00:00Z'))
+            def holdTill = Timestamp.valueOf('2026-09-14 12:00:00')
 
         when:
             versionOne.migrate()
@@ -71,7 +70,9 @@ class FlywayMigrationIT extends Specification {
             latest.migrate()
 
         then:
+            jdbc.queryForObject('SELECT patron_id FROM patron_database_entity WHERE patron_id = ?', UUID, patronId) == patronId
             jdbc.queryForObject('SELECT status FROM patron_database_entity WHERE patron_id = ?', String, patronId) == 'ACTIVE'
+            jdbc.queryForObject('SELECT till FROM hold_database_entity WHERE patron_id = ?', Timestamp, patronId) == holdTill
             jdbc.queryForObject('SELECT extension_count FROM hold_database_entity WHERE patron_id = ?', Integer, patronId) == 0
             jdbc.queryForObject('SELECT COUNT(*) FROM flyway_schema_history WHERE success = TRUE', Integer) == 3
 
@@ -87,22 +88,32 @@ class FlywayMigrationIT extends Specification {
 
         then:
             noExceptionThrown()
-
-        cleanup:
-            database.shutdown()
     }
 
-    private static def database() {
-        new EmbeddedDatabaseBuilder()
-                .generateUniqueName(true)
-                .setType(EmbeddedDatabaseType.H2)
-                .build()
+    private DataSource database(String schema) {
+        def dataSource = new DriverManagerDataSource()
+        dataSource.setDriverClassName('org.postgresql.Driver')
+        dataSource.setUrl("${postgreSQLContainer.jdbcUrl}?currentSchema=${schema}")
+        dataSource.setUsername(postgreSQLContainer.username)
+        dataSource.setPassword(postgreSQLContainer.password)
+        return dataSource
     }
 
-    private static Flyway flyway(DataSource dataSource, String location) {
-        Flyway.configure()
+    private static String schema(String prefix) {
+        "${prefix}_${UUID.randomUUID().toString().replace('-', '')}"
+    }
+
+    private static Flyway flyway(DataSource dataSource, String location, String schema, MigrationVersion target = null) {
+        def configuration = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(location)
-                .load()
+                .schemas(schema)
+                .defaultSchema(schema)
+
+        if (target != null) {
+            configuration.target(target)
+        }
+
+        configuration.load()
     }
 }
