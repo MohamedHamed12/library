@@ -28,13 +28,13 @@ class FlywayMigrationIT extends Specification {
         when:
             flyway.migrate()
             jdbc.update(
-                    'INSERT INTO catalogue_book_instance (isbn, book_id) VALUES (?, ?)',
+                    "INSERT INTO ${schema}.catalogue_book_instance (isbn, book_id) VALUES (?, ?)",
                     '9780134685991',
                     UUID.randomUUID())
 
         then:
-            jdbc.queryForObject('SELECT COUNT(*) FROM catalogue_book_instance', Integer) == 1
-            jdbc.queryForObject('SELECT COUNT(*) FROM flyway_schema_history WHERE success = TRUE', Integer) == 1
+            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.catalogue_book_instance", Integer) == 1
+            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer) == 1
 
         when:
             flyway.validate()
@@ -56,12 +56,12 @@ class FlywayMigrationIT extends Specification {
         when:
             versionOne.migrate()
             jdbc.update(
-                    'INSERT INTO patron_database_entity (patron_type, patron_id, email_address) VALUES (?, ?, ?)',
+                    "INSERT INTO ${schema}.patron_database_entity (patron_type, patron_id, email_address) VALUES (?, ?, ?)",
                     'Regular',
                     patronId,
                     'legacy@example.test')
             jdbc.update(
-                    'INSERT INTO hold_database_entity (book_id, patron_id, library_branch_id, patron_database_entity, till) VALUES (?, ?, ?, ?, ?)',
+                    "INSERT INTO ${schema}.hold_database_entity (book_id, patron_id, library_branch_id, patron_database_entity, till) VALUES (?, ?, ?, ?, ?)",
                     UUID.randomUUID(),
                     patronId,
                     UUID.randomUUID(),
@@ -70,15 +70,15 @@ class FlywayMigrationIT extends Specification {
             latest.migrate()
 
         then:
-            jdbc.queryForObject('SELECT patron_id FROM patron_database_entity WHERE patron_id = ?', UUID, patronId) == patronId
-            jdbc.queryForObject('SELECT status FROM patron_database_entity WHERE patron_id = ?', String, patronId) == 'ACTIVE'
-            jdbc.queryForObject('SELECT till FROM hold_database_entity WHERE patron_id = ?', Timestamp, patronId) == holdTill
-            jdbc.queryForObject('SELECT extension_count FROM hold_database_entity WHERE patron_id = ?', Integer, patronId) == 0
-            jdbc.queryForObject('SELECT COUNT(*) FROM flyway_schema_history WHERE success = TRUE', Integer) == 3
+            jdbc.queryForObject("SELECT patron_id FROM ${schema}.patron_database_entity WHERE patron_id = ?", UUID, patronId) == patronId
+            jdbc.queryForObject("SELECT status FROM ${schema}.patron_database_entity WHERE patron_id = ?", String, patronId) == 'ACTIVE'
+            jdbc.queryForObject("SELECT till FROM ${schema}.hold_database_entity WHERE patron_id = ?", Timestamp, patronId) == holdTill
+            jdbc.queryForObject("SELECT extension_count FROM ${schema}.hold_database_entity WHERE patron_id = ?", Integer, patronId) == 0
+            jdbc.queryForObject("SELECT COUNT(*) FROM ${schema}.flyway_schema_history WHERE success = TRUE AND type = 'SQL'", Integer) == 3
 
         when:
             jdbc.update(
-                    'INSERT INTO hold_database_entity (book_id, patron_id, library_branch_id, patron_database_entity, till) VALUES (?, ?, ?, ?, ?)',
+                    "INSERT INTO ${schema}.hold_database_entity (book_id, patron_id, library_branch_id, patron_database_entity, till) VALUES (?, ?, ?, ?, ?)",
                     UUID.randomUUID(),
                     patronId,
                     UUID.randomUUID(),

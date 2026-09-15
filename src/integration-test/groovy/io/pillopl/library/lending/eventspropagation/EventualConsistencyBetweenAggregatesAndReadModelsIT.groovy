@@ -14,7 +14,6 @@ import io.pillopl.library.lending.patron.model.PatronId
 import io.vavr.control.Option
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.ColumnMapRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
@@ -79,11 +78,11 @@ class EventualConsistencyBetweenAggregatesAndReadModelsIT extends Specification 
         }
     }
 
-    private Object countOfHoldsInDailySheet() {
-        return new JdbcTemplate(datasource).query("select count(*) from holds_sheet s where s.hold_by_patron_id = ?",
-                [patronId.patronId] as Object[],
-                new ColumnMapRowMapper()).get(0)
-                .get("COUNT(*)")
+    private Integer countOfHoldsInDailySheet() {
+        return new JdbcTemplate(datasource).queryForObject(
+                "select count(*) from holds_sheet s where s.hold_by_patron_id = ?",
+                Integer,
+                patronId.patronId)
     }
 
     BookPlacedOnHoldEvents placedOnHold(AvailableBook book) {
