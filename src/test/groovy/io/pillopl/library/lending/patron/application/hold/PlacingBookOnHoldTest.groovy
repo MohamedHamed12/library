@@ -1,6 +1,7 @@
 package io.pillopl.library.lending.patron.application.hold
 
 import io.pillopl.library.commons.commands.Result
+import io.pillopl.library.lending.book.FindAvailableBook
 import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronFixture

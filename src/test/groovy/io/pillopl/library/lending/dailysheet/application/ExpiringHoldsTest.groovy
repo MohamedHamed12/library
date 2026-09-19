@@ -1,4 +1,4 @@
-package io.pillopl.library.lending.patron.application.hold
+package io.pillopl.library.lending.dailysheet.application
 
 import io.pillopl.library.commons.commands.BatchResult
 import io.pillopl.library.lending.dailysheet.model.DailySheet
