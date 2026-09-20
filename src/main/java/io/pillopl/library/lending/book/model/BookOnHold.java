@@ -22,7 +22,7 @@ import lombok.Value;
 @Value
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @EqualsAndHashCode(of = "bookInformation")
-public class BookOnHold implements Book {
+public final class BookOnHold implements Book {
 
   @NonNull BookInformation bookInformation;
 

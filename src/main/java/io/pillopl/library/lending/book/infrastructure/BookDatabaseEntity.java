@@ -1,7 +1,6 @@
 package io.pillopl.library.lending.book.infrastructure;
 
 import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.*;
-import static io.vavr.API.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -38,11 +37,11 @@ class BookDatabaseEntity {
   int version;
 
   Book toDomainModel() {
-    return Match(book_state)
-        .of(
-            Case($(Available), this::toAvailableBook),
-            Case($(OnHold), this::toBookOnHold),
-            Case($(CheckedOut), this::toCheckedOutBook));
+    return switch (book_state) {
+      case Available -> toAvailableBook();
+      case OnHold -> toBookOnHold();
+      case CheckedOut -> toCheckedOutBook();
+    };
   }
 
   private AvailableBook toAvailableBook() {

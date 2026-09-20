@@ -1,9 +1,6 @@
 package io.pillopl.library.lending.book.infrastructure;
 
 import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.*;
-import static io.vavr.API.*;
-import static io.vavr.Patterns.$Some;
-import static io.vavr.Predicates.instanceOf;
 import static io.vavr.control.Option.none;
 import static io.vavr.control.Option.of;
 
@@ -55,11 +52,11 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
 
   private int updateOptimistically(Book book) {
     int result =
-        Match(book)
-            .of(
-                Case($(instanceOf(AvailableBook.class)), this::update),
-                Case($(instanceOf(BookOnHold.class)), this::update),
-                Case($(instanceOf(CheckedOutBook.class)), this::update));
+        switch (book) {
+          case AvailableBook availableBook -> update(availableBook);
+          case BookOnHold bookOnHold -> update(bookOnHold);
+          case CheckedOutBook checkedOutBook -> update(checkedOutBook);
+        };
     if (result == 0) {
       throw new AggregateRootIsStale("Someone has updated book in the meantime, book: " + book);
     }
@@ -100,11 +97,11 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
   }
 
   private void insertNew(Book book) {
-    Match(book)
-        .of(
-            Case($(instanceOf(AvailableBook.class)), this::insert),
-            Case($(instanceOf(BookOnHold.class)), this::insert),
-            Case($(instanceOf(CheckedOutBook.class)), this::insert));
+    switch (book) {
+      case AvailableBook availableBook -> insert(availableBook);
+      case BookOnHold bookOnHold -> insert(bookOnHold);
+      case CheckedOutBook checkedOutBook -> insert(checkedOutBook);
+    }
   }
 
   private int insert(AvailableBook availableBook) {
@@ -186,13 +183,11 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
 
   @Override
   public Option<AvailableBook> findAvailableBookBy(BookId bookId) {
-    return Match(findBy(bookId))
-        .of(Case($Some($(instanceOf(AvailableBook.class))), Option::of), Case($(), Option::none));
+    return findBy(bookId).filter(AvailableBook.class::isInstance).map(AvailableBook.class::cast);
   }
 
   @Override
   public Option<BookOnHold> findBookOnHold(BookId bookId, PatronReference patronId) {
-    return Match(findBy(bookId))
-        .of(Case($Some($(instanceOf(BookOnHold.class))), Option::of), Case($(), Option::none));
+    return findBy(bookId).filter(BookOnHold.class::isInstance).map(BookOnHold.class::cast);
   }
 }

@@ -1,12 +1,15 @@
 package io.pillopl.library.lending.librarybranch.model;
 
-import lombok.NonNull;
-import lombok.Value;
-
+import java.util.Objects;
 import java.util.UUID;
 
-@Value
-public class LibraryBranchId {
+public record LibraryBranchId(UUID libraryBranchId) {
 
-    @NonNull UUID libraryBranchId;
+  public LibraryBranchId {
+    Objects.requireNonNull(libraryBranchId, "libraryBranchId");
+  }
+
+  public UUID getLibraryBranchId() {
+    return libraryBranchId;
+  }
 }

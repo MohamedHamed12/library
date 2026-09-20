@@ -15,7 +15,7 @@ import lombok.Value;
 @Value
 @AllArgsConstructor
 @EqualsAndHashCode(of = "bookInformation")
-public class AvailableBook implements Book {
+public final class AvailableBook implements Book {
 
   @NonNull BookInformation bookInformation;
 
