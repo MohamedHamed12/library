@@ -1,21 +1,29 @@
 package io.pillopl.library.lending.patron.model;
 
-import lombok.NonNull;
-import lombok.Value;
+import java.util.Objects;
 
-@Value
-public class Rejection {
+public record Rejection(Reason reason) {
 
-    @Value
-    public static class Reason {
-        @NonNull
-        String reason;
+  public Rejection {
+    Objects.requireNonNull(reason, "reason");
+  }
+
+  public Reason getReason() {
+    return reason;
+  }
+
+  public record Reason(String reason) {
+
+    public Reason {
+      Objects.requireNonNull(reason, "reason");
     }
 
-    @NonNull
-    Reason reason;
-
-    static Rejection withReason(String reason) {
-        return new Rejection(new Reason(reason));
+    public String getReason() {
+      return reason;
     }
+  }
+
+  static Rejection withReason(String reason) {
+    return new Rejection(new Reason(reason));
+  }
 }

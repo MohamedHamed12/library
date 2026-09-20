@@ -53,11 +53,9 @@ class ModernDomainModelingTest {
   void convertedValueObjectsKeepNullInvariants() {
     assertThrows(NullPointerException.class, () -> new BookId(null));
     assertThrows(NullPointerException.class, () -> new LibraryBranchId(null));
+    assertThrows(NullPointerException.class, () -> new BookInformation(null, BookType.Circulating));
     assertThrows(
-        NullPointerException.class, () -> new BookInformation(null, BookType.Circulating));
-    assertThrows(
-        NullPointerException.class,
-        () -> new BookInformation(new BookId(UUID.randomUUID()), null));
+        NullPointerException.class, () -> new BookInformation(new BookId(UUID.randomUUID()), null));
   }
 
   @Test
