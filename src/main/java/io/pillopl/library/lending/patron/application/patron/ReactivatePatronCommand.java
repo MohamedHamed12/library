@@ -1,13 +1,22 @@
 package io.pillopl.library.lending.patron.application.patron;
 
-import io.pillopl.library.lending.patron.model.PatronId;
-import lombok.NonNull;
-import lombok.Value;
-
 import java.time.Instant;
+import java.util.Objects;
 
-@Value
-public class ReactivatePatronCommand {
-    @NonNull Instant timestamp;
-    @NonNull PatronId patronId;
+import io.pillopl.library.lending.patron.model.PatronId;
+
+public record ReactivatePatronCommand(Instant timestamp, PatronId patronId) {
+
+  public ReactivatePatronCommand {
+    Objects.requireNonNull(timestamp, "timestamp");
+    Objects.requireNonNull(patronId, "patronId");
+  }
+
+  public Instant getTimestamp() {
+    return timestamp;
+  }
+
+  public PatronId getPatronId() {
+    return patronId;
+  }
 }

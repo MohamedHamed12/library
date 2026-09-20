@@ -1,16 +1,28 @@
 package io.pillopl.library.lending.patron.application.hold;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.patron.model.PatronId;
-import lombok.NonNull;
-import lombok.Value;
 
-import java.time.Instant;
+public record CancelHoldCommand(Instant timestamp, PatronId patronId, BookId bookId) {
 
-@Value
-public class CancelHoldCommand {
-    @NonNull Instant timestamp;
-    @NonNull PatronId patronId;
-    @NonNull BookId bookId;
+  public CancelHoldCommand {
+    Objects.requireNonNull(timestamp, "timestamp");
+    Objects.requireNonNull(patronId, "patronId");
+    Objects.requireNonNull(bookId, "bookId");
+  }
 
+  public Instant getTimestamp() {
+    return timestamp;
+  }
+
+  public PatronId getPatronId() {
+    return patronId;
+  }
+
+  public BookId getBookId() {
+    return bookId;
+  }
 }
