@@ -9,8 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record PlaceHoldRequest(
     @JsonProperty("bookId") @NotNull(message = "bookId is required") UUID bookId,
-    @JsonProperty("libraryBranchId")
-        @NotNull(message = "libraryBranchId is required")
+    @JsonProperty("libraryBranchId") @NotNull(message = "libraryBranchId is required")
         UUID libraryBranchId,
     @JsonProperty("numberOfDays")
         @Min(value = 1, message = "numberOfDays must be greater than or equal to 1")

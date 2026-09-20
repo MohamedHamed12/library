@@ -6,8 +6,7 @@ import java.util.Objects;
 import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronType;
 
-public record RegisterPatronCommand(
-    Instant timestamp, PatronType type, EmailAddress emailAddress) {
+public record RegisterPatronCommand(Instant timestamp, PatronType type, EmailAddress emailAddress) {
 
   public RegisterPatronCommand {
     Objects.requireNonNull(timestamp, "timestamp");

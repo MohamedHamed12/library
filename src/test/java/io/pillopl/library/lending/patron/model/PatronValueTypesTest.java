@@ -18,7 +18,8 @@ class PatronValueTypesTest {
     PatronInformation information =
         new PatronInformation(patronId, PatronType.Regular, emailAddress);
     PatronInformation sameInformation =
-        new PatronInformation(new PatronId(patronId.getPatronId()), PatronType.Regular, emailAddress);
+        new PatronInformation(
+            new PatronId(patronId.getPatronId()), PatronType.Regular, emailAddress);
 
     assertTrue(PatronInformation.class.isRecord());
     assertEquals(information, sameInformation);
