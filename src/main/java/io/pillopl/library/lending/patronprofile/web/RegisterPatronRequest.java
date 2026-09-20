@@ -1,26 +1,20 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.pillopl.library.lending.patron.model.PatronType;
 import jakarta.validation.constraints.NotNull;
-import lombok.Value;
 
-@Value
-public class RegisterPatronRequest {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    @NotNull(message = "type is required")
-    PatronType type;
+import io.pillopl.library.lending.patron.model.PatronType;
 
-    @NotNull(message = "email is required")
-    String email;
+public record RegisterPatronRequest(
+    @JsonProperty("type") @NotNull(message = "type is required") PatronType type,
+    @JsonProperty("email") @NotNull(message = "email is required") String email) {
 
-    @JsonCreator
-    public RegisterPatronRequest(
-            @JsonProperty("type") PatronType type,
-            @JsonProperty("email") String email
-    ) {
-        this.type = type;
-        this.email = email;
-    }
+  public PatronType getType() {
+    return type;
+  }
+
+  public String getEmail() {
+    return email;
+  }
 }
