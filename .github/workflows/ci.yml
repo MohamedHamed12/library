@@ -113,7 +113,7 @@ jobs:
           cache: maven
 
       - name: Run architecture tests
-        run: ./mvnw -B -Dtest=ModularArchitectureTest,LendingHexagonalArchitectureTest,NoSpringInDomainLogicTest test
+        run: ./mvnw -B -Dtest=ModularArchitectureTest,SpringModulithArchitectureTest,LendingHexagonalArchitectureTest,NoSpringInDomainLogicTest test
 
   code-quality:
     name: Code quality

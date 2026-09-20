@@ -3,11 +3,10 @@ COPY . /src
 WORKDIR /src
 RUN mvn package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:25.0.4_7-jre-alpine-3.24
-RUN apk upgrade --no-cache
+FROM ubuntu/jre:25-26.04_stable
 EXPOSE 8080
 WORKDIR /app
 ARG JAR=library-0.0.1-SNAPSHOT.jar
 
 COPY --from=BUILD /src/target/$JAR /app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["/usr/bin/java","-jar","/app.jar"]

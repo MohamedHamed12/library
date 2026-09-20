@@ -140,6 +140,22 @@ retry handling, replay, reconciliation, and observability.
 ArchUnit is used to protect dependency rules and prevent framework or
 infrastructure concerns from leaking into the domain.
 
+Spring Modulith adds executable module boundaries on top of those rules. The
+verified module structure is:
+
+```text
+Catalogue
+Commons (shared)
+Lending
+├── Book
+├── Daily Sheet
+├── Patron
+└── Patron Profile
+```
+
+Module verification runs as part of the normal test build, and generated
+Spring Modulith documentation is derived from the same executable model.
+
 ---
 
 ## Technology Stack

@@ -1,11 +1,17 @@
 package io.pillopl.library.lending.patron.model;
 
-import lombok.NonNull;
-import lombok.Value;
-
 import java.util.UUID;
 
-@Value
-public class PatronId {
-    @NonNull UUID patronId;
+import io.pillopl.library.lending.PatronReference;
+
+public class PatronId extends PatronReference {
+
+  public PatronId(UUID patronId) {
+    super(patronId);
+  }
+
+  @Override
+  public String toString() {
+    return "PatronId(patronId=" + getPatronId() + ")";
+  }
 }

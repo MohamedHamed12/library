@@ -1,14 +1,17 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
+import java.time.Clock;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
+
 import io.pillopl.library.commons.events.DomainEvents;
-import io.pillopl.library.lending.dailysheet.model.DailySheet;
+import io.pillopl.library.lending.book.FindAvailableBook;
+import io.pillopl.library.lending.book.FindBookOnHold;
 import io.pillopl.library.lending.patron.application.checkout.CheckingOutBookOnHold;
-import io.pillopl.library.lending.patron.application.checkout.RegisteringOverdueCheckout;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
-import io.pillopl.library.lending.patron.application.hold.ExpiringHolds;
 import io.pillopl.library.lending.patron.application.hold.ExtendingHold;
-import io.pillopl.library.lending.patron.application.hold.FindAvailableBook;
-import io.pillopl.library.lending.patron.application.hold.FindBookOnHold;
 import io.pillopl.library.lending.patron.application.hold.HandleDuplicateHold;
 import io.pillopl.library.lending.patron.application.hold.PlacingOnHold;
 import io.pillopl.library.lending.patron.application.patron.PatronIdGenerator;
@@ -17,83 +20,67 @@ import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
 import io.pillopl.library.lending.patron.application.patron.SuspendingPatron;
 import io.pillopl.library.lending.patron.model.PatronFactory;
 import io.pillopl.library.lending.patron.model.Patrons;
-import java.time.Clock;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
-
-import java.time.Clock;
 
 @Configuration
 @EnableJdbcRepositories
 public class PatronConfiguration {
 
-    @Bean
-    CheckingOutBookOnHold checkingOutBookOnHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
-        return new CheckingOutBookOnHold(findBookOnHold, patronRepository);
-    }
+  @Bean
+  CheckingOutBookOnHold checkingOutBookOnHold(
+      FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    return new CheckingOutBookOnHold(findBookOnHold, patronRepository);
+  }
 
-    @Bean
-    RegisteringOverdueCheckout registeringOverdueCheckout(DailySheet dailySheet, Patrons patronRepository, Clock clock) {
-        return new RegisteringOverdueCheckout(dailySheet, patronRepository, clock);
-    }
+  @Bean
+  CancelingHold cancelingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    return new CancelingHold(findBookOnHold, patronRepository);
+  }
 
-    @Bean
-    CancelingHold cancelingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
-        return new CancelingHold(findBookOnHold, patronRepository);
-    }
+  @Bean
+  ExtendingHold extendingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    return new ExtendingHold(findBookOnHold, patronRepository);
+  }
 
-    @Bean
-    ExtendingHold extendingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
-        return new ExtendingHold(findBookOnHold, patronRepository);
-    }
+  @Bean
+  HandleDuplicateHold handleDuplicateHold(CancelingHold cancelingHold, Clock clock) {
+    return new HandleDuplicateHold(cancelingHold, clock);
+  }
 
-    @Bean
-    ExpiringHolds expiringHolds(DailySheet dailySheet, Patrons patronRepository, Clock clock) {
-        return new ExpiringHolds(dailySheet, patronRepository, clock);
-    }
+  @Bean
+  PlacingOnHold placingOnHold(FindAvailableBook findAvailableBook, Patrons patronRepository) {
+    return new PlacingOnHold(findAvailableBook, patronRepository);
+  }
 
-    @Bean
-    HandleDuplicateHold handleDuplicateHold(CancelingHold cancelingHold, Clock clock) {
-        return new HandleDuplicateHold(cancelingHold, clock);
-    }
+  @Bean
+  RegisteringPatron registeringPatron(
+      PatronIdGenerator patronIdGenerator, Patrons patronRepository) {
+    return new RegisteringPatron(patronIdGenerator, patronRepository);
+  }
 
-    @Bean
-    PlacingOnHold placingOnHold(FindAvailableBook findAvailableBook, Patrons patronRepository) {
-        return new PlacingOnHold(findAvailableBook, patronRepository);
-    }
+  @Bean
+  SuspendingPatron suspendingPatron(Patrons patronRepository) {
+    return new SuspendingPatron(patronRepository);
+  }
 
-    @Bean
-    RegisteringPatron registeringPatron(PatronIdGenerator patronIdGenerator, Patrons patronRepository) {
-        return new RegisteringPatron(patronIdGenerator, patronRepository);
-    }
+  @Bean
+  ReactivatingPatron reactivatingPatron(Patrons patronRepository) {
+    return new ReactivatingPatron(patronRepository);
+  }
 
-    @Bean
-    SuspendingPatron suspendingPatron(Patrons patronRepository) {
-        return new SuspendingPatron(patronRepository);
-    }
+  @Bean
+  PatronIdGenerator patronIdGenerator() {
+    return new RandomPatronIdGenerator();
+  }
 
-    @Bean
-    ReactivatingPatron reactivatingPatron(Patrons patronRepository) {
-        return new ReactivatingPatron(patronRepository);
-    }
+  @Bean
+  Clock clock() {
+    return Clock.systemUTC();
+  }
 
-    @Bean
-    PatronIdGenerator patronIdGenerator() {
-        return new RandomPatronIdGenerator();
-    }
-
-    @Bean
-    Clock clock() {
-        return Clock.systemUTC();
-    }
-
-    @Bean
-    Patrons patronRepository(PatronEntityRepository patronEntityRepository,
-                             DomainEvents domainEvents) {
-        return new PatronsDatabaseRepository(
-                patronEntityRepository,
-                new DomainModelMapper(new PatronFactory()),
-                domainEvents);
-    }
+  @Bean
+  Patrons patronRepository(
+      PatronEntityRepository patronEntityRepository, DomainEvents domainEvents) {
+    return new PatronsDatabaseRepository(
+        patronEntityRepository, new DomainModelMapper(new PatronFactory()), domainEvents);
+  }
 }

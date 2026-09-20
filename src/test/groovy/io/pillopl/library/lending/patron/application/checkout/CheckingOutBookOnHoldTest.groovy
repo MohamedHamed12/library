@@ -2,7 +2,7 @@ package io.pillopl.library.lending.patron.application.checkout
 
 
 import io.pillopl.library.commons.commands.Result
-import io.pillopl.library.lending.patron.application.hold.FindBookOnHold
+import io.pillopl.library.lending.book.FindBookOnHold
 import io.pillopl.library.lending.book.model.BookOnHold
 import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.PatronEvent

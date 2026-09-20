@@ -1,4 +1,4 @@
-package io.pillopl.library.lending.patron.application.checkout
+package io.pillopl.library.lending.dailysheet.application
 
 import io.pillopl.library.commons.commands.BatchResult
 import io.pillopl.library.lending.dailysheet.model.CheckoutsToOverdueSheet
