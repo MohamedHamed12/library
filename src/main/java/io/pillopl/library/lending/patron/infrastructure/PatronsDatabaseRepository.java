@@ -21,8 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import static io.vavr.API.*;
-import static io.vavr.Predicates.instanceOf;
 import static java.util.stream.Collectors.*;
 
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
@@ -46,9 +44,9 @@ class PatronsDatabaseRepository implements Patrons {
 
     @Override
     public Patron publish(PatronEvent domainEvent) {
-        Patron result = Match(domainEvent).of(
-                Case($(instanceOf(PatronCreated.class)), this::createNewPatron),
-                Case($(), this::handleNextEvent));
+        Patron result = domainEvent instanceof PatronCreated patronCreated
+                ? createNewPatron(patronCreated)
+                : handleNextEvent(domainEvent);
         domainEvents.publish(domainEvent.normalize());
         return result;
     }

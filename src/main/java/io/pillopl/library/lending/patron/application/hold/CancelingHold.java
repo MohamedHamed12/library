@@ -2,9 +2,6 @@ package io.pillopl.library.lending.patron.application.hold;
 
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
-import static io.vavr.API.*;
-import static io.vavr.Patterns.$Left;
-import static io.vavr.Patterns.$Right;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.commands.Result;
@@ -34,8 +31,7 @@ public class CancelingHold {
           Patron patron = find(command.getPatronId());
           Either<BookHoldCancelingFailed, BookHoldCanceled> result =
               patron.cancelHold(bookOnHold, command.getTimestamp());
-          return Match(result)
-              .of(Case($Left($()), this::publishEvents), Case($Right($()), this::publishEvents));
+          return result.fold(this::publishEvents, this::publishEvents);
         });
   }
 
