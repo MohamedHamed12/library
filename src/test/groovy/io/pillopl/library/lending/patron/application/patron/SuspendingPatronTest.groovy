@@ -43,9 +43,10 @@ class SuspendingPatronTest extends Specification {
             SuspendPatronCommand command = new SuspendPatronCommand(now, patronId, "Another reason")
         and:
             repository.findBy(patronId) >> Optional.of(suspendedRegularPatron())
-        expect:
-            suspendingPatron.suspend(command) == Result.Rejection
-        and:
+        when:
+            Result result = suspendingPatron.suspend(command)
+        then:
+            result == Result.Rejection
             0 * repository.publish(_)
     }
 

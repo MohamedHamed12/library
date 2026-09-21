@@ -41,9 +41,10 @@ class ReactivatingPatronTest extends Specification {
             ReactivatePatronCommand command = new ReactivatePatronCommand(now, patronId)
         and:
             repository.findBy(patronId) >> Optional.of(regularPatron(patronId))
-        expect:
-            reactivatingPatron.reactivate(command) == Result.Rejection
-        and:
+        when:
+            Result result = reactivatingPatron.reactivate(command)
+        then:
+            result == Result.Rejection
             0 * repository.publish(_)
     }
 
