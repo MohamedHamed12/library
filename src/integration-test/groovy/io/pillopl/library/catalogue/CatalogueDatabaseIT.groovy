@@ -1,7 +1,7 @@
 package io.pillopl.library.catalogue
 
 import io.pillopl.library.database.PostgreSQLTestConfiguration
-import io.vavr.control.Option
+import java.util.Optional
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -29,15 +29,15 @@ class CatalogueDatabaseIT extends Specification {
         when:
             catalogueDatabase.saveNew(book)
         and:
-            Option<Book> ddd = catalogueDatabase.findBy(book.bookIsbn)
+            Optional<Book> ddd = catalogueDatabase.findBy(book.bookIsbn)
         then:
-            ddd.isDefined()
+            ddd.isPresent()
             ddd.get() == book
     }
 
     def 'should not load not present book'() {
         when:
-            Option<Book> ddd = catalogueDatabase.findBy(NON_PRESENT_ISBN)
+            Optional<Book> ddd = catalogueDatabase.findBy(NON_PRESENT_ISBN)
         then:
             ddd.isEmpty()
     }

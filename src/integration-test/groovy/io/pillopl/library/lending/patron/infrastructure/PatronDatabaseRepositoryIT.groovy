@@ -8,7 +8,7 @@ import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.Patrons
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.PatronType
-import io.vavr.control.Option
+import java.util.Optional
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
@@ -112,8 +112,8 @@ class PatronDatabaseRepositoryIT extends Specification {
     }
 
     Patron loadPersistedPatron(PatronId patronId) {
-        Option<Patron> loaded = patronRepo.findBy(patronId)
-        Patron patron = loaded.getOrElseThrow({
+        Optional<Patron> loaded = patronRepo.findBy(patronId)
+        Patron patron = loaded.orElseThrow({
             new IllegalStateException("should have been persisted")
         })
         return patron
