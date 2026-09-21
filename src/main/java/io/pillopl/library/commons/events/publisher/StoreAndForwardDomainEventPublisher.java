@@ -2,7 +2,7 @@ package io.pillopl.library.commons.events.publisher;
 
 import io.pillopl.library.commons.events.DomainEvent;
 import io.pillopl.library.commons.events.DomainEvents;
-import io.vavr.collection.List;
+import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 

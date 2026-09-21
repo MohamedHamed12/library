@@ -40,6 +40,6 @@ public class ReactivatingPatron {
     private Patron findPatron(PatronId patronId) {
         return patrons
                 .findBy(patronId)
-                .getOrElseThrow(() -> new PatronNotFoundException(patronId));
+                .orElseThrow(() -> new PatronNotFoundException(patronId));
     }
 }

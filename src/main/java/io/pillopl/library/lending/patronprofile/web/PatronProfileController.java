@@ -17,11 +17,11 @@ import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode;
 import io.pillopl.library.lending.patronprofile.web.error.ApiException;
-import io.vavr.control.Option;
 import jakarta.validation.Valid;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -99,7 +99,7 @@ class PatronProfileController {
                 List<EntityModel<Hold>> holds = patronProfiles.fetchFor(new PatronId(patronId))
                                 .getHoldsView()
                                 .getCurrentHolds()
-                                .toStream()
+                                .stream()
                                 .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
                                 .collect(toList());
                 return ResponseEntity.ok(CollectionModel.of(holds,
@@ -112,7 +112,7 @@ class PatronProfileController {
                 return patronProfiles.fetchFor(new PatronId(patronId))
                                 .findHold(new BookId(bookId))
                                 .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
-                                .getOrElseThrow(() -> ApiException.notFound(
+                                .orElseThrow(() -> ApiException.notFound(
                                                 ApiErrorCode.HOLD_NOT_FOUND,
                                                 "The requested hold was not found."));
 
@@ -123,7 +123,7 @@ class PatronProfileController {
                 List<EntityModel<Checkout>> checkouts = patronProfiles.fetchFor(new PatronId(patronId))
                                 .getCurrentCheckouts()
                                 .getCurrentCheckouts()
-                                .toStream()
+                                .stream()
                                 .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
                                 .collect(toList());
                 return ResponseEntity.ok(CollectionModel.of(checkouts,
@@ -138,7 +138,7 @@ class PatronProfileController {
                                 .map(checkout -> ok(resourceWithLinkToCheckoutSelf(
                                                 patronId,
                                                 checkout)))
-                                .getOrElseThrow(() -> ApiException.notFound(
+                                .orElseThrow(() -> ApiException.notFound(
                                                 ApiErrorCode.CHECKOUT_NOT_FOUND,
                                                 "The requested checkout was not found."));
         }
@@ -154,7 +154,7 @@ class PatronProfileController {
                                 new PatronId(patronId),
                                 new LibraryBranchId(request.getLibraryBranchId()),
                                 new BookId(request.getBookId()),
-                                Option.of(request.getNumberOfDays()));
+                                Optional.ofNullable(request.getNumberOfDays()));
 
                 Result result = placingOnHold
                                 .placeOnHold(command)

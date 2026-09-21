@@ -5,9 +5,6 @@ import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.*;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
-import io.vavr.Tuple;
-import io.vavr.Tuple4;
-import io.vavr.control.Option;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +12,7 @@ import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
@@ -40,8 +38,8 @@ class PatronsDatabaseRepository implements Patrons {
     }
 
     @Override
-    public Option<Patron> findBy(PatronId patronId) {
-        return Option.of(patronEntityRepository
+    public Optional<Patron> findBy(PatronId patronId) {
+        return Optional.ofNullable(patronEntityRepository
                 .findByPatronId(patronId.getPatronId()))
                 .map(domainModelMapper::map);
     }
@@ -128,11 +126,11 @@ class DomainModelMapper {
                                         .collect(toSet())));
     }
 
-    Set<Tuple4<BookId, LibraryBranchId, Instant, Integer>> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
+    Set<PatronHoldSnapshot> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
         return patronDatabaseEntity
                 .booksOnHold
                 .stream()
-                .map(entity -> Tuple.of(
+                .map(entity -> new PatronHoldSnapshot(
                         new BookId(entity.bookId),
                         new LibraryBranchId(entity.libraryBranchId),
                         entity.till,

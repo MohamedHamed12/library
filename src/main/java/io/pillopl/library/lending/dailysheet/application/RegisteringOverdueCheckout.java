@@ -29,9 +29,10 @@ public class RegisteringOverdueCheckout {
           return find.queryForCheckoutsToOverdue(processingTime)
               .toStreamOfEvents(processingTime)
               .map(this::publish)
-              .find(Try::isFailure)
+              .filter(Try::isFailure)
+              .findFirst()
               .map(handleEventError -> BatchResult.SomeFailed)
-              .getOrElse(BatchResult.FullSuccess);
+              .orElse(BatchResult.FullSuccess);
         });
   }
 

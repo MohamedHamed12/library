@@ -1,14 +1,15 @@
 package io.pillopl.library.lending.book.infrastructure;
 
-import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.*;
-import static io.vavr.control.Option.none;
-import static io.vavr.control.Option.of;
+import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.Available;
+import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.CheckedOut;
+import static io.pillopl.library.lending.book.infrastructure.BookDatabaseEntity.BookState.OnHold;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import io.pillopl.library.catalogue.BookId;
@@ -17,9 +18,11 @@ import io.pillopl.library.commons.aggregates.AggregateRootIsStale;
 import io.pillopl.library.lending.PatronReference;
 import io.pillopl.library.lending.book.FindAvailableBook;
 import io.pillopl.library.lending.book.FindBookOnHold;
-import io.pillopl.library.lending.book.model.*;
-import io.vavr.control.Option;
-import io.vavr.control.Try;
+import io.pillopl.library.lending.book.model.AvailableBook;
+import io.pillopl.library.lending.book.model.Book;
+import io.pillopl.library.lending.book.model.BookOnHold;
+import io.pillopl.library.lending.book.model.BookRepository;
+import io.pillopl.library.lending.book.model.CheckedOutBook;
 
 class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindBookOnHold {
 
@@ -30,24 +33,26 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
   }
 
   @Override
-  public Option<Book> findBy(BookId bookId) {
+  public Optional<Book> findBy(BookId bookId) {
     return findBookById(bookId).map(BookDatabaseEntity::toDomainModel);
   }
 
-  private Option<BookDatabaseEntity> findBookById(BookId bookId) {
-    return Try.ofSupplier(
-            () ->
-                of(
-                    jdbcTemplate.queryForObject(
-                        "SELECT b.* FROM book_database_entity b WHERE b.book_id = ?",
-                        new BeanPropertyRowMapper<>(BookDatabaseEntity.class),
-                        bookId.getBookId())))
-        .getOrElse(none());
+  private Optional<BookDatabaseEntity> findBookById(BookId bookId) {
+    try {
+      return Optional.ofNullable(
+          jdbcTemplate.queryForObject(
+              "SELECT b.* FROM book_database_entity b WHERE b.book_id = ?",
+              (rs, rowNum) -> BookDatabaseEntity.from(rs),
+              bookId.getBookId()));
+    } catch (EmptyResultDataAccessException exception) {
+      return Optional.empty();
+    }
   }
 
   @Override
   public void save(Book book) {
-    findBy(book.bookId()).map(entity -> updateOptimistically(book)).onEmpty(() -> insertNew(book));
+    findBy(book.bookId())
+        .ifPresentOrElse(ignored -> updateOptimistically(book), () -> insertNew(book));
   }
 
   private int updateOptimistically(Book book) {
@@ -154,18 +159,20 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
       UUID checkedOutAt,
       UUID checkedOutBy) {
     return jdbcTemplate.update(
-        "INSERT INTO book_database_entity "
-            + "(book_id, "
-            + "book_type, "
-            + "book_state, "
-            + "available_at_branch,"
-            + "on_hold_at_branch, "
-            + "on_hold_by_patron, "
-            + "on_hold_till, "
-            + "checked_out_at_branch, "
-            + "checked_out_by_patron, "
-            + "version) VALUES "
-            + "(?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+        """
+        INSERT INTO book_database_entity (
+            book_id,
+            book_type,
+            book_state,
+            available_at_branch,
+            on_hold_at_branch,
+            on_hold_by_patron,
+            on_hold_till,
+            checked_out_at_branch,
+            checked_out_by_patron,
+            version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        """,
         bookId.getBookId(),
         bookType.toString(),
         state.toString(),
@@ -182,12 +189,12 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
   }
 
   @Override
-  public Option<AvailableBook> findAvailableBookBy(BookId bookId) {
+  public Optional<AvailableBook> findAvailableBookBy(BookId bookId) {
     return findBy(bookId).filter(AvailableBook.class::isInstance).map(AvailableBook.class::cast);
   }
 
   @Override
-  public Option<BookOnHold> findBookOnHold(BookId bookId, PatronReference patronId) {
+  public Optional<BookOnHold> findBookOnHold(BookId bookId, PatronReference patronId) {
     return findBy(bookId).filter(BookOnHold.class::isInstance).map(BookOnHold.class::cast);
   }
 }

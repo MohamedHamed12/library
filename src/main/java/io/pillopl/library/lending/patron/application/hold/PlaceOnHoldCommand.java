@@ -2,13 +2,13 @@ package io.pillopl.library.lending.patron.application.hold;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.HoldDuration;
 import io.pillopl.library.lending.patron.model.NumberOfDays;
 import io.pillopl.library.lending.patron.model.PatronId;
-import io.vavr.control.Option;
 
 public final class PlaceOnHoldCommand {
 
@@ -16,19 +16,19 @@ public final class PlaceOnHoldCommand {
   private final PatronId patronId;
   private final LibraryBranchId libraryId;
   private final BookId bookId;
-  private final Option<Integer> noOfDays;
+  private final Optional<Integer> noOfDays;
 
   public PlaceOnHoldCommand(
       Instant timestamp,
       PatronId patronId,
       LibraryBranchId libraryId,
       BookId bookId,
-      Option<Integer> noOfDays) {
+      Optional<Integer> noOfDays) {
     this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
     this.patronId = Objects.requireNonNull(patronId, "patronId");
     this.libraryId = Objects.requireNonNull(libraryId, "libraryId");
     this.bookId = Objects.requireNonNull(bookId, "bookId");
-    this.noOfDays = noOfDays;
+    this.noOfDays = Objects.requireNonNull(noOfDays, "noOfDays");
   }
 
   static PlaceOnHoldCommand closeEnded(
@@ -38,12 +38,13 @@ public final class PlaceOnHoldCommand {
       BookId bookId,
       int forDays) {
     return new PlaceOnHoldCommand(
-        timestamp, patronId, libraryBranchId, bookId, Option.of(forDays));
+        timestamp, patronId, libraryBranchId, bookId, Optional.of(forDays));
   }
 
   static PlaceOnHoldCommand openEnded(
       Instant timestamp, PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId) {
-    return new PlaceOnHoldCommand(timestamp, patronId, libraryBranchId, bookId, Option.none());
+    return new PlaceOnHoldCommand(
+        timestamp, patronId, libraryBranchId, bookId, Optional.empty());
   }
 
   public Instant getTimestamp() {
@@ -62,7 +63,7 @@ public final class PlaceOnHoldCommand {
     return bookId;
   }
 
-  public Option<Integer> getNoOfDays() {
+  public Optional<Integer> getNoOfDays() {
     return noOfDays;
   }
 
@@ -70,7 +71,7 @@ public final class PlaceOnHoldCommand {
     return noOfDays
         .map(NumberOfDays::of)
         .map(days -> HoldDuration.closeEnded(timestamp, days))
-        .getOrElse(() -> HoldDuration.openEnded(timestamp));
+        .orElseGet(() -> HoldDuration.openEnded(timestamp));
   }
 
   @Override
@@ -85,7 +86,7 @@ public final class PlaceOnHoldCommand {
         && patronId.equals(that.patronId)
         && libraryId.equals(that.libraryId)
         && bookId.equals(that.bookId)
-        && Objects.equals(noOfDays, that.noOfDays);
+        && noOfDays.equals(that.noOfDays);
   }
 
   @Override

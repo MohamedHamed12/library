@@ -9,8 +9,9 @@ import io.pillopl.library.catalogue.BookType;
 import io.pillopl.library.commons.events.DomainEvent;
 import io.pillopl.library.lending.LendingEvent;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import io.vavr.collection.List;
-import io.vavr.control.Option;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public sealed interface PatronEvent extends DomainEvent {
 
@@ -129,7 +130,7 @@ public sealed interface PatronEvent extends DomainEvent {
           bookType,
           libraryBranchId.getLibraryBranchId(),
           holdDuration.getFrom(),
-          holdDuration.getTo().getOrNull());
+          holdDuration.getTo().orElse(null));
     }
 
     @Override
@@ -175,7 +176,7 @@ public sealed interface PatronEvent extends DomainEvent {
       UUID eventId,
       UUID patronIdValue,
       BookPlacedOnHold bookPlacedOnHold,
-      Option<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached)
+      Optional<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached)
       implements PatronEvent {
 
     public BookPlacedOnHoldEvents {
@@ -188,7 +189,7 @@ public sealed interface PatronEvent extends DomainEvent {
     public BookPlacedOnHoldEvents(
         UUID patronIdValue,
         BookPlacedOnHold bookPlacedOnHold,
-        Option<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached) {
+        Optional<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached) {
       this(UUID.randomUUID(), patronIdValue, bookPlacedOnHold, maximumNumberOhHoldsReached);
     }
 
@@ -206,7 +207,7 @@ public sealed interface PatronEvent extends DomainEvent {
       return bookPlacedOnHold;
     }
 
-    public Option<MaximumNumberOhHoldsReached> getMaximumNumberOhHoldsReached() {
+    public Optional<MaximumNumberOhHoldsReached> getMaximumNumberOhHoldsReached() {
       return maximumNumberOhHoldsReached;
     }
 
@@ -217,7 +218,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     public static BookPlacedOnHoldEvents events(BookPlacedOnHold bookPlacedOnHold) {
       return new BookPlacedOnHoldEvents(
-          bookPlacedOnHold.getPatronId(), bookPlacedOnHold, Option.none());
+          bookPlacedOnHold.getPatronId(), bookPlacedOnHold, Optional.empty());
     }
 
     public static BookPlacedOnHoldEvents events(
@@ -226,13 +227,15 @@ public sealed interface PatronEvent extends DomainEvent {
       return new BookPlacedOnHoldEvents(
           bookPlacedOnHold.getPatronId(),
           bookPlacedOnHold,
-          Option.of(maximumNumberOhHoldsReached));
+          Optional.of(maximumNumberOhHoldsReached));
     }
 
     @Override
     public List<DomainEvent> normalize() {
-      return List.<DomainEvent>of(bookPlacedOnHold)
-          .appendAll(maximumNumberOhHoldsReached.toList());
+      List<DomainEvent> events = new ArrayList<>();
+      events.add(bookPlacedOnHold);
+      maximumNumberOhHoldsReached.ifPresent(events::add);
+      return List.copyOf(events);
     }
   }
 

@@ -1,11 +1,11 @@
 package io.pillopl.library.lending.patron.model;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import io.pillopl.library.lending.book.model.AvailableBook;
 import io.pillopl.library.lending.book.model.BookOnHold;
-import io.vavr.control.Option;
 
 record PatronHolds(Set<Hold> resourcesOnHold) {
 
@@ -16,14 +16,12 @@ record PatronHolds(Set<Hold> resourcesOnHold) {
   }
 
   boolean a(BookOnHold bookOnHold) {
-    Objects.requireNonNull(bookOnHold, "bookOnHold");
-    return find(bookOnHold).isDefined();
+    return find(Objects.requireNonNull(bookOnHold, "bookOnHold")).isPresent();
   }
 
-  Option<Hold> find(BookOnHold bookOnHold) {
+  Optional<Hold> find(BookOnHold bookOnHold) {
     Objects.requireNonNull(bookOnHold, "bookOnHold");
-    return Option.of(
-        resourcesOnHold.stream().filter(hold -> hold.matches(bookOnHold)).findFirst().orElse(null));
+    return resourcesOnHold.stream().filter(hold -> hold.matches(bookOnHold)).findFirst();
   }
 
   int count() {

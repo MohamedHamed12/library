@@ -51,7 +51,7 @@ public class CheckingOutBookOnHold {
   private BookOnHold find(BookId id, PatronId patronId) {
     return findBookOnHold
         .findBookOnHold(id, patronId)
-        .getOrElseThrow(
+        .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     "Cannot find book on hold with Id: " + id.getBookId()));
@@ -60,7 +60,7 @@ public class CheckingOutBookOnHold {
   private Patron find(PatronId patronId) {
     return patronRepository
         .findBy(patronId)
-        .getOrElseThrow(
+        .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     "Patron with given Id does not exists: " + patronId.getPatronId()));

@@ -3,8 +3,7 @@ package io.pillopl.library.lending.patron.model;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
-
-import io.vavr.control.Option;
+import java.util.Optional;
 
 public final class HoldDuration {
 
@@ -30,8 +29,8 @@ public final class HoldDuration {
     return getTo().isEmpty();
   }
 
-  Option<Instant> getTo() {
-    return Option.of(to);
+  Optional<Instant> getTo() {
+    return Optional.ofNullable(to);
   }
 
   public static HoldDuration openEnded(Instant from) {

@@ -1,10 +1,10 @@
 package io.pillopl.library.lending.patronprofile.model;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.patron.model.PatronStatus;
-import io.vavr.control.Option;
 
 public record PatronProfile(
     PatronStatus status, HoldsView holdsView, CheckoutsView currentCheckouts) {
@@ -27,17 +27,13 @@ public record PatronProfile(
     return currentCheckouts;
   }
 
-  public Option<Hold> findHold(BookId bookId) {
-    return holdsView
-        .getCurrentHolds()
-        .toStream()
-        .find(hold -> hold.getBook().equals(bookId));
+  public Optional<Hold> findHold(BookId bookId) {
+    return holdsView.currentHolds().stream().filter(hold -> hold.book().equals(bookId)).findFirst();
   }
 
-  public Option<Checkout> findCheckout(BookId bookId) {
-    return currentCheckouts
-        .getCurrentCheckouts()
-        .toStream()
-        .find(checkout -> checkout.getBook().equals(bookId));
+  public Optional<Checkout> findCheckout(BookId bookId) {
+    return currentCheckouts.currentCheckouts().stream()
+        .filter(checkout -> checkout.book().equals(bookId))
+        .findFirst();
   }
 }

@@ -1,9 +1,9 @@
 package io.pillopl.library.catalogue;
 
+import java.util.Optional;
+
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import io.vavr.control.Option;
 
 class CatalogueDatabase {
 
@@ -36,9 +36,9 @@ class CatalogueDatabase {
         return bookInstance;
     }
 
-    Option<Book> findBy(ISBN isbn) {
+    Optional<Book> findBy(ISBN isbn) {
         try {
-            return Option.of(
+            return Optional.ofNullable(
                     jdbcTemplate.queryForObject(
                             "SELECT b.* FROM catalogue_book b WHERE b.isbn = ?",
                             (rs, rowNum) -> new Book(
@@ -47,7 +47,7 @@ class CatalogueDatabase {
                                     rs.getString("title")),
                             isbn.getIsbn()));
         } catch (EmptyResultDataAccessException e) {
-            return Option.none();
+            return Optional.empty();
         }
     }
 }

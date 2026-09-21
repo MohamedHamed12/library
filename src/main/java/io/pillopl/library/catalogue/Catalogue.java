@@ -37,7 +37,7 @@ public class Catalogue {
                 .map(book -> BookInstance.instanceOf(book, bookType))
                 .map(bookInstance -> saveAndPublishEvent(bookInstance, timestamp))
                 .map(savedInstance -> Success)
-                .getOrElse(Rejection);
+                .orElse(Rejection);
         });
     }
 

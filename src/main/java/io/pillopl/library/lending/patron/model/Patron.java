@@ -16,7 +16,9 @@ import static io.pillopl.library.lending.patron.model.Rejection.withReason;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import io.pillopl.library.lending.book.model.AvailableBook;
 import io.pillopl.library.lending.book.model.BookOnHold;
@@ -33,9 +35,7 @@ import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvent
 import io.pillopl.library.lending.patron.model.PatronEvent.MaximumNumberOhHoldsReached;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended;
-import io.vavr.collection.List;
 import io.vavr.control.Either;
-import io.vavr.control.Option;
 
 public class Patron {
 
@@ -94,7 +94,7 @@ public class Patron {
               patron));
     }
 
-    Option<Rejection> rejection = patronCanHold(book, duration);
+    Optional<Rejection> rejection = patronCanHold(book, duration);
     if (rejection.isEmpty()) {
       BookPlacedOnHold bookPlacedOnHold =
           placedOnHoldAt(
@@ -124,7 +124,7 @@ public class Patron {
 
   public Either<BookHoldExtensionFailed, BookHoldExtended> extendHold(
       BookOnHold book, NumberOfDays additionalDays, Instant timestamp) {
-    Option<Hold> hold = patronHolds.find(book);
+    Optional<Hold> hold = patronHolds.find(book);
     if (hold.isEmpty()) {
       return extensionFailure(timestamp, book, "book is not on hold by patron");
     }
@@ -217,9 +217,9 @@ public class Patron {
             patron));
   }
 
-  private Option<Rejection> patronCanHold(AvailableBook aBook, HoldDuration forDuration) {
+  private Optional<Rejection> patronCanHold(AvailableBook aBook, HoldDuration forDuration) {
     return placingOnHoldPolicies
-        .toStream()
+        .stream()
         .map(policy -> policy.apply(aBook, this, forDuration))
         .find(Either::isLeft)
         .map(Either::getLeft);

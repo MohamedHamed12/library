@@ -1,13 +1,14 @@
 package io.pillopl.library.commons.events.publisher;
 
+import java.util.List;
+
 import io.pillopl.library.commons.events.DomainEvent;
-import io.vavr.collection.List;
 
 public interface EventsStorage {
 
-    void save(DomainEvent event);
+  void save(DomainEvent event);
 
-    List<DomainEvent> toPublish();
+  List<DomainEvent> toPublish();
 
-    void published(List<DomainEvent> events);
+  void published(List<DomainEvent> events);
 }

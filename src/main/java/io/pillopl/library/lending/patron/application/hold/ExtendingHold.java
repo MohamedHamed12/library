@@ -51,12 +51,12 @@ public class ExtendingHold {
   private BookOnHold find(BookId bookId, PatronId patronId) {
     return findBookOnHold
         .findBookOnHold(bookId, patronId)
-        .getOrElseThrow(() -> new HoldNotFoundException(bookId));
+        .orElseThrow(() -> new HoldNotFoundException(bookId));
   }
 
   private Patron find(PatronId patronId) {
     return patronRepository
         .findBy(patronId)
-        .getOrElseThrow(() -> new PatronNotFoundException(patronId));
+        .orElseThrow(() -> new PatronNotFoundException(patronId));
   }
 }
