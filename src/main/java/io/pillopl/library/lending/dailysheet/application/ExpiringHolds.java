@@ -9,14 +9,18 @@ import io.pillopl.library.lending.patron.model.PatronEvent;
 import io.pillopl.library.lending.patron.model.Patrons;
 import io.vavr.control.Try;
 
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class ExpiringHolds {
 
   private final DailySheet find;
   private final Patrons patronRepository;
   private final Clock clock;
+
+  public ExpiringHolds(DailySheet find, Patrons patronRepository, Clock clock) {
+    this.find = find;
+    this.patronRepository = patronRepository;
+    this.clock = clock;
+  }
 
   public Try<BatchResult> expireHolds() {
     return Try.of(

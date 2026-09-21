@@ -5,20 +5,24 @@ import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
 import io.vavr.control.Try;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 import static io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated.createdAt;
 
-@AllArgsConstructor
-@Slf4j
 public class RegisteringPatron {
+
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(RegisteringPatron.class);
 
     private final PatronIdGenerator patronIdGenerator;
     private final Patrons patronRepository;
 
-    public Try<PatronId> register(@NonNull RegisterPatronCommand command) {
+    public RegisteringPatron(PatronIdGenerator patronIdGenerator, Patrons patronRepository) {
+        this.patronIdGenerator = patronIdGenerator;
+        this.patronRepository = patronRepository;
+    }
+
+    public Try<PatronId> register(RegisterPatronCommand command) {
+        java.util.Objects.requireNonNull(command, "command");
         return Try.of(() -> {
             if (patronRepository.existsBy(command.getEmailAddress())) {
                 throw new EmailAddressAlreadyRegistered(command.getEmailAddress());

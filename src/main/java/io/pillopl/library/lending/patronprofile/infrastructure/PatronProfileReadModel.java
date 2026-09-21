@@ -9,8 +9,6 @@ import io.pillopl.library.lending.patronprofile.model.Hold;
 import io.pillopl.library.lending.patronprofile.model.HoldsView;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -22,10 +20,13 @@ import java.util.UUID;
 import static io.vavr.collection.List.ofAll;
 import static java.util.stream.Collectors.toList;
 
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class PatronProfileReadModel implements PatronProfiles {
 
     private final JdbcTemplate sheets;
+
+    PatronProfileReadModel(JdbcTemplate sheets) {
+        this.sheets = sheets;
+    }
 
     @Override
     public PatronProfile fetchFor(PatronId patronId) {

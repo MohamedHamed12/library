@@ -15,16 +15,19 @@ import io.pillopl.library.lending.patron.model.Patrons;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
 
-@AllArgsConstructor
 public class CheckingOutBookOnHold {
 
   private final FindBookOnHold findBookOnHold;
   private final Patrons patronRepository;
 
-  public Try<Result> checkOut(@NonNull CheckOutBookCommand command) {
+  public CheckingOutBookOnHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    this.findBookOnHold = findBookOnHold;
+    this.patronRepository = patronRepository;
+  }
+
+  public Try<Result> checkOut(CheckOutBookCommand command) {
+    java.util.Objects.requireNonNull(command, "command");
     return Try.of(
         () -> {
           BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());

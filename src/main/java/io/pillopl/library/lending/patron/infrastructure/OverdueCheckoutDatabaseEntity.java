@@ -1,23 +1,18 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-
+import java.util.Objects;
 import java.util.UUID;
 
-@NoArgsConstructor(access = AccessLevel.PACKAGE)
-@EqualsAndHashCode
-@Getter
+import org.springframework.data.annotation.Id;
+
 class OverdueCheckoutDatabaseEntity {
 
-    @Id
-    Long id;
+    @Id Long id;
     UUID patronId;
     UUID bookId;
     UUID libraryBranchId;
+
+    OverdueCheckoutDatabaseEntity() {}
 
     OverdueCheckoutDatabaseEntity(UUID bookId, UUID patronId, UUID libraryBranchId) {
         this.bookId = bookId;
@@ -25,9 +20,44 @@ class OverdueCheckoutDatabaseEntity {
         this.libraryBranchId = libraryBranchId;
     }
 
+    Long getId() {
+        return id;
+    }
+
+    UUID getPatronId() {
+        return patronId;
+    }
+
+    UUID getBookId() {
+        return bookId;
+    }
+
+    UUID getLibraryBranchId() {
+        return libraryBranchId;
+    }
+
     boolean is(UUID patronId, UUID bookId, UUID libraryBranchId) {
-        return  this.patronId.equals(patronId) &&
-                this.bookId.equals(bookId) &&
-                this.libraryBranchId.equals(libraryBranchId);
+        return this.patronId.equals(patronId)
+                && this.bookId.equals(bookId)
+                && this.libraryBranchId.equals(libraryBranchId);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof OverdueCheckoutDatabaseEntity that)) {
+            return false;
+        }
+        return Objects.equals(id, that.id)
+                && Objects.equals(patronId, that.patronId)
+                && Objects.equals(bookId, that.bookId)
+                && Objects.equals(libraryBranchId, that.libraryBranchId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, patronId, bookId, libraryBranchId);
     }
 }

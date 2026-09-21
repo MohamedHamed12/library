@@ -16,7 +16,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,13 +26,24 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
 @RestController
-@AllArgsConstructor
 public class PatronController {
 
     private final RegisteringPatron registeringPatron;
     private final SuspendingPatron suspendingPatron;
     private final ReactivatingPatron reactivatingPatron;
     private final Clock clock;
+
+    public PatronController(
+            RegisteringPatron registeringPatron,
+            SuspendingPatron suspendingPatron,
+            ReactivatingPatron reactivatingPatron,
+            Clock clock
+    ) {
+        this.registeringPatron = registeringPatron;
+        this.suspendingPatron = suspendingPatron;
+        this.reactivatingPatron = reactivatingPatron;
+        this.clock = clock;
+    }
 
     @PostMapping("/patrons")
     public ResponseEntity<Void> registerPatron(

@@ -12,18 +12,22 @@ import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvent
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
-@AllArgsConstructor
-@Slf4j
 public class PlacingOnHold {
+
+  private static final org.slf4j.Logger log =
+      org.slf4j.LoggerFactory.getLogger(PlacingOnHold.class);
 
   private final FindAvailableBook findAvailableBook;
   private final Patrons patronRepository;
 
-  public Try<Result> placeOnHold(@NonNull PlaceOnHoldCommand command) {
+  public PlacingOnHold(FindAvailableBook findAvailableBook, Patrons patronRepository) {
+    this.findAvailableBook = findAvailableBook;
+    this.patronRepository = patronRepository;
+  }
+
+  public Try<Result> placeOnHold(PlaceOnHoldCommand command) {
+    java.util.Objects.requireNonNull(command, "command");
     return Try.of(
             () -> {
               AvailableBook availableBook = find(command.getBookId());

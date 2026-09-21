@@ -23,8 +23,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Value;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.RepresentationModel;
@@ -44,7 +42,6 @@ import static org.springframework.http.ResponseEntity.ok;
 
 @Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
 @RestController
-@AllArgsConstructor
 class PatronProfileController {
 
         private final PatronProfiles patronProfiles;
@@ -52,6 +49,19 @@ class PatronProfileController {
         private final CancelingHold cancelingHold;
         private final ExtendingHold extendingHold;
         private final Clock clock;
+
+        PatronProfileController(
+                        PatronProfiles patronProfiles,
+                        PlacingOnHold placingOnHold,
+                        CancelingHold cancelingHold,
+                        ExtendingHold extendingHold,
+                        Clock clock) {
+                this.patronProfiles = patronProfiles;
+                this.placingOnHold = placingOnHold;
+                this.cancelingHold = cancelingHold;
+                this.extendingHold = extendingHold;
+                this.clock = clock;
+        }
 
         @GetMapping("/profiles/{patronId}")
         ResponseEntity<PatronProfileSummaryResource> patronProfile(
@@ -233,15 +243,14 @@ class PatronProfileController {
         }
 }
 
-@Value
-class PatronProfileSummaryResource
+final class PatronProfileSummaryResource
                 extends RepresentationModel<PatronProfileSummaryResource> {
 
-        UUID patronId;
-        PatronStatus status;
-        int currentHoldsCount;
-        int currentCheckoutsCount;
-        int overdueCheckoutsCount;
+        private final UUID patronId;
+        private final PatronStatus status;
+        private final int currentHoldsCount;
+        private final int currentCheckoutsCount;
+        private final int overdueCheckoutsCount;
 
         PatronProfileSummaryResource(
                         UUID patronId,
@@ -267,28 +276,54 @@ class PatronProfileSummaryResource
                                 .patronProfile(patronId))
                                 .withSelfRel());
         }
-}
 
-@Value
-class Hold {
+        public UUID getPatronId() {
+                return patronId;
+        }
 
-        UUID bookId;
-        Instant till;
+        public PatronStatus getStatus() {
+                return status;
+        }
 
-        Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
-                this.bookId = hold.getBook().getBookId();
-                this.till = hold.getTill();
+        public int getCurrentHoldsCount() {
+                return currentHoldsCount;
+        }
+
+        public int getCurrentCheckoutsCount() {
+                return currentCheckoutsCount;
+        }
+
+        public int getOverdueCheckoutsCount() {
+                return overdueCheckoutsCount;
         }
 }
 
-@Value
-class Checkout {
+record Hold(UUID bookId, Instant till) {
 
-        UUID bookId;
-        Instant till;
+        Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
+                this(hold.getBook().getBookId(), hold.getTill());
+        }
 
-        Checkout(io.pillopl.library.lending.patronprofile.model.Checkout hold) {
-                this.bookId = hold.getBook().getBookId();
-                this.till = hold.getTill();
+        public UUID getBookId() {
+                return bookId;
+        }
+
+        public Instant getTill() {
+                return till;
+        }
+}
+
+record Checkout(UUID bookId, Instant till) {
+
+        Checkout(io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
+                this(checkout.getBook().getBookId(), checkout.getTill());
+        }
+
+        public UUID getBookId() {
+                return bookId;
+        }
+
+        public Instant getTill() {
+                return till;
         }
 }

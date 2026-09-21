@@ -15,16 +15,19 @@ import io.pillopl.library.lending.patron.model.Patrons;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
 
-@AllArgsConstructor
 public class CancelingHold {
 
   private final FindBookOnHold findBookOnHold;
   private final Patrons patronRepository;
 
-  public Try<Result> cancelHold(@NonNull CancelHoldCommand command) {
+  public CancelingHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    this.findBookOnHold = findBookOnHold;
+    this.patronRepository = patronRepository;
+  }
+
+  public Try<Result> cancelHold(CancelHoldCommand command) {
+    java.util.Objects.requireNonNull(command, "command");
     return Try.of(
         () -> {
           BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());

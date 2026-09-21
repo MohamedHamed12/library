@@ -7,20 +7,23 @@ import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
 import io.vavr.control.Try;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
 
-@AllArgsConstructor
-@Slf4j
 public class ReactivatingPatron {
+
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(ReactivatingPatron.class);
 
     private final Patrons patrons;
 
-    public Try<Result> reactivate(@NonNull ReactivatePatronCommand command) {
+    public ReactivatingPatron(Patrons patrons) {
+        this.patrons = patrons;
+    }
+
+    public Try<Result> reactivate(ReactivatePatronCommand command) {
+        java.util.Objects.requireNonNull(command, "command");
         return Try.of(() -> findPatron(command.getPatronId())
                 .reactivate(command.getTimestamp())
                 .fold(

@@ -21,13 +21,13 @@ import io.pillopl.library.lending.book.model.*;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
 class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindBookOnHold {
 
   private final JdbcTemplate jdbcTemplate;
+
+  BookDatabaseRepository(JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+  }
 
   @Override
   public Option<Book> findBy(BookId bookId) {
