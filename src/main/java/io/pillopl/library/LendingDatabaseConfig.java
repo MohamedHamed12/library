@@ -35,11 +35,12 @@ import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
 
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@Slf4j
 class LendingDatabaseConfig extends AbstractJdbcConfiguration {
+
+  private static final org.slf4j.Logger log =
+      org.slf4j.LoggerFactory.getLogger(LendingDatabaseConfig.class);
 
   @Bean
   @DependsOn("lendingFlyway")
