@@ -1,13 +1,13 @@
 package io.pillopl.library.catalogue;
 
-import io.pillopl.library.commons.commands.Result;
-import io.pillopl.library.commons.events.DomainEvents;
-import io.vavr.control.Try;
+import static io.pillopl.library.commons.commands.Result.Rejection;
+import static io.pillopl.library.commons.commands.Result.Success;
+
 import java.time.Clock;
 import java.time.Instant;
 
-import static io.pillopl.library.commons.commands.Result.Rejection;
-import static io.pillopl.library.commons.commands.Result.Success;
+import io.pillopl.library.commons.commands.Result;
+import io.pillopl.library.commons.events.DomainEvents;
 
 public class Catalogue {
 
@@ -21,24 +21,20 @@ public class Catalogue {
         this.clock = clock;
     }
 
-    public Try<Result> addBook(String author, String title, String isbn) {
-        return Try.of(() -> {
-            Book book = new Book(isbn, author, title);
-            database.saveNew(book);
-            return Success;
-        });
+    public Result addBook(String author, String title, String isbn) {
+        Book book = new Book(isbn, author, title);
+        database.saveNew(book);
+        return Success;
     }
 
-    public Try<Result> addBookInstance(String isbn, BookType bookType) {
-        return Try.of(() -> {
-            Instant timestamp = clock.instant();
-            return database
+    public Result addBookInstance(String isbn, BookType bookType) {
+        Instant timestamp = clock.instant();
+        return database
                 .findBy(new ISBN(isbn))
                 .map(book -> BookInstance.instanceOf(book, bookType))
                 .map(bookInstance -> saveAndPublishEvent(bookInstance, timestamp))
                 .map(savedInstance -> Success)
                 .orElse(Rejection);
-        });
     }
 
     private BookInstance saveAndPublishEvent(BookInstance bookInstance, Instant timestamp) {
@@ -46,7 +42,4 @@ public class Catalogue {
         domainEvents.publish(BookInstanceAddedToCatalogue.addedAt(timestamp, bookInstance));
         return bookInstance;
     }
-
-
 }
-

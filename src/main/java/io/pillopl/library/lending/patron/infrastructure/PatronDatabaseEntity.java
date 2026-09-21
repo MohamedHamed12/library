@@ -1,9 +1,5 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.Predicates.instanceOf;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -13,20 +9,24 @@ import org.springframework.data.annotation.Id;
 import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronEvent;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut;
+import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckingOutFailed;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled;
+import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCancelingFailed;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExpired;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtended;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtensionFailed;
+import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldFailed;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookReturned;
+import io.pillopl.library.lending.patron.model.PatronEvent.MaximumNumberOhHoldsReached;
 import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegistered;
+import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patron.model.PatronType;
-import io.vavr.API;
 
 class PatronDatabaseEntity {
 
@@ -52,18 +52,25 @@ class PatronDatabaseEntity {
     }
 
     PatronDatabaseEntity handle(PatronEvent event) {
-        return API.Match(event).of(
-                Case($(instanceOf(BookPlacedOnHoldEvents.class)), this::handle),
-                Case($(instanceOf(BookPlacedOnHold.class)), this::handle),
-                Case($(instanceOf(BookHoldExtended.class)), this::handle),
-                Case($(instanceOf(BookHoldExtensionFailed.class)), this::handle),
-                Case($(instanceOf(BookCheckedOut.class)), this::handle),
-                Case($(instanceOf(BookHoldCanceled.class)), this::handle),
-                Case($(instanceOf(BookHoldExpired.class)), this::handle),
-                Case($(instanceOf(OverdueCheckoutRegistered.class)), this::handle),
-                Case($(instanceOf(BookReturned.class)), this::handle),
-                Case($(instanceOf(PatronSuspended.class)), this::handle),
-                Case($(instanceOf(PatronReactivated.class)), this::handle));
+        return switch (event) {
+            case BookPlacedOnHoldEvents placedOnHoldEvents -> handle(placedOnHoldEvents);
+            case BookPlacedOnHold placedOnHold -> handle(placedOnHold);
+            case BookHoldExtended holdExtended -> handle(holdExtended);
+            case BookHoldExtensionFailed ignored -> this;
+            case BookCheckedOut checkedOut -> handle(checkedOut);
+            case BookHoldCanceled holdCanceled -> handle(holdCanceled);
+            case BookHoldExpired holdExpired -> handle(holdExpired);
+            case OverdueCheckoutRegistered overdueCheckout -> handle(overdueCheckout);
+            case BookReturned returned -> handle(returned);
+            case PatronSuspended suspended -> handle(suspended);
+            case PatronReactivated reactivated -> handle(reactivated);
+            case BookHoldFailed ignored -> this;
+            case BookCheckingOutFailed ignored -> this;
+            case BookHoldCancelingFailed ignored -> this;
+            case MaximumNumberOhHoldsReached ignored -> this;
+            case PatronCreated ignored ->
+                throw new IllegalArgumentException("PatronCreated must create a new patron");
+        };
     }
 
     private PatronDatabaseEntity handle(BookPlacedOnHoldEvents placedOnHoldEvents) {
@@ -88,10 +95,6 @@ class PatronDatabaseEntity {
                 .orElseThrow(() -> new IllegalStateException(
                         "Cannot extend a hold that is missing from patron state"));
         hold.extendTo(event.getHoldTill(), event.getExtensionCount());
-        return this;
-    }
-
-    private PatronDatabaseEntity handle(BookHoldExtensionFailed event) {
         return this;
     }
 

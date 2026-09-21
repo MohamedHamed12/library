@@ -52,7 +52,7 @@ public class PatronController {
     ) {
         PatronId patronId = registeringPatron.register(
                 new RegisterPatronCommand(Instant.now(clock), request.getType(), EmailAddress.of(request.getEmail()))
-        ).get();
+        );
 
         return ResponseEntity
                 .created(uriComponentsBuilder.path("/profiles/{patronId}").buildAndExpand(patronId.getPatronId()).toUri())
@@ -69,7 +69,7 @@ public class PatronController {
                 new PatronId(patronId),
                 request.getReason());
 
-        Result result = suspendingPatron.suspend(command).get();
+        Result result = suspendingPatron.suspend(command);
 
         rejectIfNeeded(
                 result,
@@ -85,7 +85,7 @@ public class PatronController {
                 Instant.now(clock),
                 new PatronId(patronId));
 
-        Result result = reactivatingPatron.reactivate(command).get();
+        Result result = reactivatingPatron.reactivate(command);
 
         rejectIfNeeded(
                 result,

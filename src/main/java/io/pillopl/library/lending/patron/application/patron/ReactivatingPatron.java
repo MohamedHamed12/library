@@ -1,20 +1,18 @@
 package io.pillopl.library.lending.patron.application.patron;
 
-import io.pillopl.library.commons.commands.Result;
-import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
-import io.pillopl.library.lending.patron.model.Patron;
-import io.pillopl.library.lending.patron.model.PatronId;
-import io.pillopl.library.lending.patron.model.Patrons;
-import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
-import io.vavr.control.Try;
-
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
 
-public class ReactivatingPatron {
+import java.util.Objects;
 
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(ReactivatingPatron.class);
+import io.pillopl.library.commons.commands.Result;
+import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
+import io.pillopl.library.lending.patron.model.Patron;
+import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
+import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.Patrons;
+
+public class ReactivatingPatron {
 
     private final Patrons patrons;
 
@@ -22,14 +20,11 @@ public class ReactivatingPatron {
         this.patrons = patrons;
     }
 
-    public Try<Result> reactivate(ReactivatePatronCommand command) {
-        java.util.Objects.requireNonNull(command, "command");
-        return Try.of(() -> findPatron(command.getPatronId())
+    public Result reactivate(ReactivatePatronCommand command) {
+        Objects.requireNonNull(command, "command");
+        return findPatron(command.getPatronId())
                 .reactivate(command.getTimestamp())
-                .fold(
-                        failure -> Rejection,
-                        reactivated -> publish(reactivated)))
-                .onFailure(t -> log.error("Failed to reactivate patron", t));
+                .fold(failure -> Rejection, this::publish);
     }
 
     private Result publish(PatronReactivated reactivated) {
@@ -38,8 +33,6 @@ public class ReactivatingPatron {
     }
 
     private Patron findPatron(PatronId patronId) {
-        return patrons
-                .findBy(patronId)
-                .orElseThrow(() -> new PatronNotFoundException(patronId));
+        return patrons.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
     }
 }

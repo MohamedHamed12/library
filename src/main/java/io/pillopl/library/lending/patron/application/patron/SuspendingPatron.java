@@ -1,20 +1,18 @@
 package io.pillopl.library.lending.patron.application.patron;
 
-import io.pillopl.library.commons.commands.Result;
-import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
-import io.pillopl.library.lending.patron.model.Patron;
-import io.pillopl.library.lending.patron.model.PatronId;
-import io.pillopl.library.lending.patron.model.Patrons;
-import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended;
-import io.vavr.control.Try;
-
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
 
-public class SuspendingPatron {
+import java.util.Objects;
 
-    private static final org.slf4j.Logger log =
-            org.slf4j.LoggerFactory.getLogger(SuspendingPatron.class);
+import io.pillopl.library.commons.commands.Result;
+import io.pillopl.library.lending.patron.application.hold.PatronNotFoundException;
+import io.pillopl.library.lending.patron.model.Patron;
+import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended;
+import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.Patrons;
+
+public class SuspendingPatron {
 
     private final Patrons patrons;
 
@@ -22,14 +20,11 @@ public class SuspendingPatron {
         this.patrons = patrons;
     }
 
-    public Try<Result> suspend(SuspendPatronCommand command) {
-        java.util.Objects.requireNonNull(command, "command");
-        return Try.of(() -> findPatron(command.getPatronId())
+    public Result suspend(SuspendPatronCommand command) {
+        Objects.requireNonNull(command, "command");
+        return findPatron(command.getPatronId())
                 .suspend(command.getReason(), command.getTimestamp())
-                .fold(
-                        failure -> Rejection,
-                        suspended -> publish(suspended)))
-                .onFailure(t -> log.error("Failed to suspend patron", t));
+                .fold(failure -> Rejection, this::publish);
     }
 
     private Result publish(PatronSuspended suspended) {
@@ -38,8 +33,6 @@ public class SuspendingPatron {
     }
 
     private Patron findPatron(PatronId patronId) {
-        return patrons
-                .findBy(patronId)
-                .orElseThrow(() -> new PatronNotFoundException(patronId));
+        return patrons.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
     }
 }

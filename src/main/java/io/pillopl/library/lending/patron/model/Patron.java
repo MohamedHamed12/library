@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model;
 
-import static io.pillopl.library.commons.events.EitherResult.announceFailure;
-import static io.pillopl.library.commons.events.EitherResult.announceSuccess;
+import static io.pillopl.library.commons.commands.Decision.accepted;
+import static io.pillopl.library.commons.commands.Decision.rejected;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut.checkedOutAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookCheckingOutFailed.checkoutFailedAt;
 import static io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled.canceledAt;
@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import io.pillopl.library.commons.commands.Decision;
 import io.pillopl.library.lending.book.model.AvailableBook;
 import io.pillopl.library.lending.book.model.BookOnHold;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
@@ -35,7 +36,6 @@ import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvent
 import io.pillopl.library.lending.patron.model.PatronEvent.MaximumNumberOhHoldsReached;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended;
-import io.vavr.control.Either;
 
 public class Patron {
 
@@ -62,30 +62,30 @@ public class Patron {
     this.suspensionReason = suspensionReason;
   }
 
-  public Either<Rejection, PatronSuspended> suspend(String reason, Instant timestamp) {
+  public Decision<Rejection, PatronSuspended> suspend(String reason, Instant timestamp) {
     if (status == PatronStatus.SUSPENDED) {
-      return announceFailure(withReason("Patron is already suspended"));
+      return rejected(withReason("Patron is already suspended"));
     }
 
     if (reason == null || reason.trim().isEmpty()) {
-      return announceFailure(withReason("Suspension reason must not be blank"));
+      return rejected(withReason("Suspension reason must not be blank"));
     }
 
-    return announceSuccess(PatronSuspended.suspendedAt(timestamp, patron.getPatronId(), reason));
+    return accepted(PatronSuspended.suspendedAt(timestamp, patron.getPatronId(), reason));
   }
 
-  public Either<Rejection, PatronReactivated> reactivate(Instant timestamp) {
+  public Decision<Rejection, PatronReactivated> reactivate(Instant timestamp) {
     if (status == PatronStatus.ACTIVE) {
-      return announceFailure(withReason("Patron is already active"));
+      return rejected(withReason("Patron is already active"));
     }
 
-    return announceSuccess(PatronReactivated.reactivatedAt(timestamp, patron.getPatronId()));
+    return accepted(PatronReactivated.reactivatedAt(timestamp, patron.getPatronId()));
   }
 
-  public Either<BookHoldFailed, BookPlacedOnHoldEvents> placeOnHold(
+  public Decision<BookHoldFailed, BookPlacedOnHoldEvents> placeOnHold(
       AvailableBook book, HoldDuration duration, Instant timestamp) {
     if (isSuspended()) {
-      return announceFailure(
+      return rejected(
           holdFailedAt(
               timestamp,
               withReason("Patron is suspended"),
@@ -105,15 +105,15 @@ public class Patron {
               patron.getPatronId(),
               duration);
       if (patronHolds.maximumHoldsAfterHolding(book)) {
-        return announceSuccess(
+        return accepted(
             events(
                 bookPlacedOnHold,
                 MaximumNumberOhHoldsReached.reachedAt(
                     timestamp, patron, MAX_NUMBER_OF_HOLDS)));
       }
-      return announceSuccess(events(bookPlacedOnHold));
+      return accepted(events(bookPlacedOnHold));
     }
-    return announceFailure(
+    return rejected(
         holdFailedAt(
             timestamp,
             rejection.get(),
@@ -122,7 +122,7 @@ public class Patron {
             patron));
   }
 
-  public Either<BookHoldExtensionFailed, BookHoldExtended> extendHold(
+  public Decision<BookHoldExtensionFailed, BookHoldExtended> extendHold(
       BookOnHold book, NumberOfDays additionalDays, Instant timestamp) {
     Optional<Hold> hold = patronHolds.find(book);
     if (hold.isEmpty()) {
@@ -144,7 +144,7 @@ public class Patron {
     }
 
     Instant newTill = currentHold.getTill().plus(Duration.ofDays(additionalDays.getDays()));
-    return announceSuccess(
+    return accepted(
         extendedAt(
             timestamp,
             book.getBookId(),
@@ -155,9 +155,9 @@ public class Patron {
             currentHold.getExtensionCount() + 1));
   }
 
-  private Either<BookHoldExtensionFailed, BookHoldExtended> extensionFailure(
+  private Decision<BookHoldExtensionFailed, BookHoldExtended> extensionFailure(
       Instant timestamp, BookOnHold book, String reason) {
-    return announceFailure(
+    return rejected(
         extensionFailedAt(
             timestamp,
             withReason(reason),
@@ -174,22 +174,22 @@ public class Patron {
     return isRegular() ? 1 : 2;
   }
 
-  public Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold(
+  public Decision<BookHoldCancelingFailed, BookHoldCanceled> cancelHold(
       BookOnHold book, Instant timestamp) {
     if (patronHolds.a(book)) {
-      return announceSuccess(
+      return accepted(
           canceledAt(timestamp, book.getBookId(), book.getHoldPlacedAt(), patron.getPatronId()));
     }
 
-    return announceFailure(
+    return rejected(
         cancellationFailedAt(
             timestamp, book.getBookId(), book.getHoldPlacedAt(), patron.getPatronId()));
   }
 
-  public Either<BookCheckingOutFailed, BookCheckedOut> checkOut(
+  public Decision<BookCheckingOutFailed, BookCheckedOut> checkOut(
       BookOnHold book, CheckoutDuration duration, Instant timestamp) {
     if (isSuspended()) {
-      return announceFailure(
+      return rejected(
           checkoutFailedAt(
               timestamp,
               withReason("Patron is suspended"),
@@ -199,7 +199,7 @@ public class Patron {
     }
 
     if (patronHolds.a(book)) {
-      return announceSuccess(
+      return accepted(
           checkedOutAt(
               timestamp,
               book.getBookId(),
@@ -208,7 +208,7 @@ public class Patron {
               patron.getPatronId(),
               duration));
     }
-    return announceFailure(
+    return rejected(
         checkoutFailedAt(
             timestamp,
             withReason("book is not on hold by patron"),
@@ -218,11 +218,10 @@ public class Patron {
   }
 
   private Optional<Rejection> patronCanHold(AvailableBook aBook, HoldDuration forDuration) {
-    return placingOnHoldPolicies
-        .stream()
-        .map(policy -> policy.apply(aBook, this, forDuration))
-        .find(Either::isLeft)
-        .map(Either::getLeft);
+    return placingOnHoldPolicies.stream()
+        .map(policy -> policy.evaluate(aBook, this, forDuration))
+        .flatMap(decision -> decision.rejection().stream())
+        .findFirst();
   }
 
   boolean isRegular() {

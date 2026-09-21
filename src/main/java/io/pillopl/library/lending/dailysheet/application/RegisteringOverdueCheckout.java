@@ -7,8 +7,6 @@ import io.pillopl.library.commons.commands.BatchResult;
 import io.pillopl.library.lending.dailysheet.model.DailySheet;
 import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegistered;
 import io.pillopl.library.lending.patron.model.Patrons;
-import io.vavr.control.Try;
-
 
 public class RegisteringOverdueCheckout {
 
@@ -22,21 +20,22 @@ public class RegisteringOverdueCheckout {
     this.clock = clock;
   }
 
-  public Try<BatchResult> registerOverdueCheckouts() {
-    return Try.of(
-        () -> {
-          Instant processingTime = clock.instant();
-          return find.queryForCheckoutsToOverdue(processingTime)
-              .toStreamOfEvents(processingTime)
-              .map(this::publish)
-              .filter(Try::isFailure)
-              .findFirst()
-              .map(handleEventError -> BatchResult.SomeFailed)
-              .orElse(BatchResult.FullSuccess);
-        });
+  public BatchResult registerOverdueCheckouts() {
+    Instant processingTime = clock.instant();
+    boolean someFailed =
+        find.queryForCheckoutsToOverdue(processingTime)
+            .toStreamOfEvents(processingTime)
+            .map(this::publish)
+            .anyMatch(success -> !success);
+    return someFailed ? BatchResult.SomeFailed : BatchResult.FullSuccess;
   }
 
-  private Try<Void> publish(OverdueCheckoutRegistered event) {
-    return Try.run(() -> patronRepository.publish(event));
+  private boolean publish(OverdueCheckoutRegistered event) {
+    try {
+      patronRepository.publish(event);
+      return true;
+    } catch (RuntimeException exception) {
+      return false;
+    }
   }
 }

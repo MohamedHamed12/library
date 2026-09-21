@@ -3,7 +3,10 @@ package io.pillopl.library.lending.patron.application.checkout;
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
 
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.commons.commands.Decision;
 import io.pillopl.library.commons.commands.Result;
 import io.pillopl.library.lending.book.FindBookOnHold;
 import io.pillopl.library.lending.book.model.BookOnHold;
@@ -12,9 +15,6 @@ import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckingOutFailed;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
-import io.vavr.control.Either;
-import io.vavr.control.Try;
-
 
 public class CheckingOutBookOnHold {
 
@@ -26,16 +26,13 @@ public class CheckingOutBookOnHold {
     this.patronRepository = patronRepository;
   }
 
-  public Try<Result> checkOut(CheckOutBookCommand command) {
-    java.util.Objects.requireNonNull(command, "command");
-    return Try.of(
-        () -> {
-          BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());
-          Patron patron = find(command.getPatronId());
-          Either<BookCheckingOutFailed, BookCheckedOut> result =
-              patron.checkOut(bookOnHold, command.getCheckoutDuration(), command.getTimestamp());
-          return result.fold(this::publishEvents, this::publishEvents);
-        });
+  public Result checkOut(CheckOutBookCommand command) {
+    Objects.requireNonNull(command, "command");
+    BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());
+    Patron patron = find(command.getPatronId());
+    Decision<BookCheckingOutFailed, BookCheckedOut> result =
+        patron.checkOut(bookOnHold, command.getCheckoutDuration(), command.getTimestamp());
+    return result.fold(this::publishEvents, this::publishEvents);
   }
 
   private Result publishEvents(BookCheckedOut bookCheckedOut) {

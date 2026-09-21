@@ -1,14 +1,14 @@
 package io.pillopl.library.lending.patron.application.hold;
 
-import io.pillopl.library.commons.commands.Result;
-import io.pillopl.library.lending.book.model.BookDuplicateHoldFound;
-import io.pillopl.library.catalogue.BookId;
-import io.pillopl.library.lending.patron.model.PatronId;
-import io.vavr.control.Try;
-import org.springframework.context.event.EventListener;
-
 import java.time.Clock;
 import java.time.Instant;
+
+import org.springframework.context.event.EventListener;
+
+import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.commons.commands.Result;
+import io.pillopl.library.lending.book.model.BookDuplicateHoldFound;
+import io.pillopl.library.lending.patron.model.PatronId;
 
 public class HandleDuplicateHold {
 
@@ -21,7 +21,7 @@ public class HandleDuplicateHold {
     }
 
     @EventListener
-    public Try<Result> handle(BookDuplicateHoldFound event) {
+    public Result handle(BookDuplicateHoldFound event) {
         return cancelingHold.cancelHold(cancelHoldCommandFrom(event));
     }
 
@@ -32,6 +32,4 @@ public class HandleDuplicateHold {
                 new PatronId(event.getSecondPatronId()),
                 new BookId(event.getBookId()));
     }
-
 }
-

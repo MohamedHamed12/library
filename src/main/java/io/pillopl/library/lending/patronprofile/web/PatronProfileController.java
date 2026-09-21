@@ -157,8 +157,7 @@ class PatronProfileController {
                                 Optional.ofNullable(request.getNumberOfDays()));
 
                 Result result = placingOnHold
-                                .placeOnHold(command)
-                                .get();
+                                .placeOnHold(command);
 
                 rejectIfNeeded(
                                 result,
@@ -182,8 +181,7 @@ class PatronProfileController {
                                 NumberOfDays.of(request.getAdditionalDays()));
 
                 Result result = extendingHold
-                                .extendHold(command)
-                                .get();
+                                .extendHold(command);
 
                 rejectIfNeeded(
                                 result,
@@ -205,8 +203,7 @@ class PatronProfileController {
                                 new BookId(bookId));
 
                 Result result = cancelingHold
-                                .cancelHold(command)
-                                .get();
+                                .cancelHold(command);
 
                 rejectIfNeeded(
                                 result,
