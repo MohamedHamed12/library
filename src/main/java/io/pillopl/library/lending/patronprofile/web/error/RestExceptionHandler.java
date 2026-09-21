@@ -2,12 +2,8 @@ package io.pillopl.library.lending.patronprofile.web.error;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -32,12 +28,17 @@ import io.pillopl.library.lending.patron.application.hold.PatronNotFoundExceptio
 import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
 import io.pillopl.library.lending.patron.model.InvalidEmailAddress;
 
-@Slf4j
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class RestExceptionHandler {
 
+        private static final org.slf4j.Logger log =
+                        org.slf4j.LoggerFactory.getLogger(RestExceptionHandler.class);
+
         private final Clock clock;
+
+        public RestExceptionHandler(Clock clock) {
+                this.clock = clock;
+        }
 
         @ExceptionHandler(InvalidEmailAddress.class)
         public ResponseEntity<ApiErrorResponse> handleInvalidEmailAddress(
@@ -50,7 +51,7 @@ public class RestExceptionHandler {
                                 INVALID_EMAIL_ADDRESS,
                                 "The supplied email address is invalid.",
                                 request,
-                                Collections.singletonList(detail));
+                                List.of(detail));
         }
 
         @ExceptionHandler(EmailAddressAlreadyRegistered.class)
@@ -66,7 +67,7 @@ public class RestExceptionHandler {
                                 EMAIL_ADDRESS_ALREADY_REGISTERED,
                                 "A patron with this email address already exists.",
                                 request,
-                                Collections.singletonList(detail));
+                                List.of(detail));
         }
 
         @ExceptionHandler(ApiException.class)
@@ -76,7 +77,7 @@ public class RestExceptionHandler {
                                 exception.getCode(),
                                 exception.getMessage(),
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -88,7 +89,7 @@ public class RestExceptionHandler {
                                 .stream()
                                 .map(this::toDetail)
                                 .sorted((first, second) -> first.getField().compareTo(second.getField()))
-                                .collect(Collectors.toList());
+                                .toList();
 
                 return response(
                                 HttpStatus.BAD_REQUEST,
@@ -106,7 +107,7 @@ public class RestExceptionHandler {
                                 MALFORMED_REQUEST,
                                 "The request body is malformed.",
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
         @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -121,7 +122,7 @@ public class RestExceptionHandler {
                                 INVALID_PATH_PARAMETER,
                                 "A path or request parameter has an invalid format.",
                                 request,
-                                Collections.singletonList(detail));
+                                List.of(detail));
         }
 
         @ExceptionHandler(Exception.class)
@@ -138,7 +139,7 @@ public class RestExceptionHandler {
                                 INTERNAL_ERROR,
                                 "An unexpected error occurred.",
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
         private ApiErrorDetail toDetail(FieldError error) {
@@ -177,7 +178,7 @@ public class RestExceptionHandler {
                                 PATRON_NOT_FOUND,
                                 "The requested patron was not found.",
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
         @ExceptionHandler(BookNotFoundException.class)
@@ -189,7 +190,7 @@ public class RestExceptionHandler {
                                 BOOK_NOT_FOUND,
                                 "The requested book was not found.",
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
         @ExceptionHandler(HoldNotFoundException.class)
@@ -201,7 +202,7 @@ public class RestExceptionHandler {
                                 HOLD_NOT_FOUND,
                                 "The requested hold was not found.",
                                 request,
-                                Collections.emptyList());
+                                List.of());
         }
 
 }
