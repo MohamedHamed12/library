@@ -1,68 +1,95 @@
 package io.pillopl.library.lending.patron.application.hold;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.HoldDuration;
 import io.pillopl.library.lending.patron.model.NumberOfDays;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.vavr.control.Option;
-import lombok.NonNull;
-import lombok.Value;
 
-import java.time.Instant;
+public final class PlaceOnHoldCommand {
 
-@Value
-public class PlaceOnHoldCommand {
+  private final Instant timestamp;
+  private final PatronId patronId;
+  private final LibraryBranchId libraryId;
+  private final BookId bookId;
+  private final Option<Integer> noOfDays;
 
-    @NonNull
-    Instant timestamp;
+  public PlaceOnHoldCommand(
+      Instant timestamp,
+      PatronId patronId,
+      LibraryBranchId libraryId,
+      BookId bookId,
+      Option<Integer> noOfDays) {
+    this.timestamp = Objects.requireNonNull(timestamp, "timestamp");
+    this.patronId = Objects.requireNonNull(patronId, "patronId");
+    this.libraryId = Objects.requireNonNull(libraryId, "libraryId");
+    this.bookId = Objects.requireNonNull(bookId, "bookId");
+    this.noOfDays = noOfDays;
+  }
 
-    @NonNull
-    PatronId patronId;
+  static PlaceOnHoldCommand closeEnded(
+      Instant timestamp,
+      PatronId patronId,
+      LibraryBranchId libraryBranchId,
+      BookId bookId,
+      int forDays) {
+    return new PlaceOnHoldCommand(
+        timestamp, patronId, libraryBranchId, bookId, Option.of(forDays));
+  }
 
-    @NonNull
-    LibraryBranchId libraryId;
+  static PlaceOnHoldCommand openEnded(
+      Instant timestamp, PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId) {
+    return new PlaceOnHoldCommand(timestamp, patronId, libraryBranchId, bookId, Option.none());
+  }
 
-    @NonNull
-    BookId bookId;
+  public Instant getTimestamp() {
+    return timestamp;
+  }
 
-    Option<Integer> noOfDays;
+  public PatronId getPatronId() {
+    return patronId;
+  }
 
-    static PlaceOnHoldCommand closeEnded(
-            Instant timestamp,
-            PatronId patronId,
-            LibraryBranchId libraryBranchId,
-            BookId bookId,
-            int forDays
-    ) {
-        return new PlaceOnHoldCommand(
-                timestamp,
-                patronId,
-                libraryBranchId,
-                bookId,
-                Option.of(forDays)
-        );
+  public LibraryBranchId getLibraryId() {
+    return libraryId;
+  }
+
+  public BookId getBookId() {
+    return bookId;
+  }
+
+  public Option<Integer> getNoOfDays() {
+    return noOfDays;
+  }
+
+  HoldDuration getHoldDuration() {
+    return noOfDays
+        .map(NumberOfDays::of)
+        .map(days -> HoldDuration.closeEnded(timestamp, days))
+        .getOrElse(() -> HoldDuration.openEnded(timestamp));
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
     }
-
-    static PlaceOnHoldCommand openEnded(
-            Instant timestamp,
-            PatronId patronId,
-            LibraryBranchId libraryBranchId,
-            BookId bookId
-    ) {
-        return new PlaceOnHoldCommand(
-                timestamp,
-                patronId,
-                libraryBranchId,
-                bookId,
-                Option.none()
-        );
+    if (!(other instanceof PlaceOnHoldCommand that)) {
+      return false;
     }
+    return timestamp.equals(that.timestamp)
+        && patronId.equals(that.patronId)
+        && libraryId.equals(that.libraryId)
+        && bookId.equals(that.bookId)
+        && Objects.equals(noOfDays, that.noOfDays);
+  }
 
-    HoldDuration getHoldDuration() {
-        return noOfDays
-                .map(NumberOfDays::of)
-                .map(days -> HoldDuration.closeEnded(timestamp, days))
-                .getOrElse(() -> HoldDuration.openEnded(timestamp));
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(timestamp, patronId, libraryId, bookId, noOfDays);
+  }
 }

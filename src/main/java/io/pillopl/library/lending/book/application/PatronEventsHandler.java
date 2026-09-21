@@ -1,28 +1,37 @@
 package io.pillopl.library.lending.book.application;
 
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.Predicates.instanceOf;
-
 import java.time.Clock;
 
 import org.springframework.context.event.EventListener;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.events.DomainEvents;
-import io.pillopl.library.lending.LendingEvent.*;
+import io.pillopl.library.lending.LendingEvent.BookCheckedOutEvent;
+import io.pillopl.library.lending.LendingEvent.BookHoldCanceledEvent;
+import io.pillopl.library.lending.LendingEvent.BookHoldExpiredEvent;
+import io.pillopl.library.lending.LendingEvent.BookHoldExtendedEvent;
+import io.pillopl.library.lending.LendingEvent.BookPlacedOnHoldEvent;
+import io.pillopl.library.lending.LendingEvent.BookReturnedEvent;
 import io.pillopl.library.lending.PatronReference;
-import io.pillopl.library.lending.book.model.*;
-import io.vavr.API;
+import io.pillopl.library.lending.book.model.AvailableBook;
+import io.pillopl.library.lending.book.model.Book;
+import io.pillopl.library.lending.book.model.BookDuplicateHoldFound;
+import io.pillopl.library.lending.book.model.BookOnHold;
+import io.pillopl.library.lending.book.model.BookRepository;
+import io.pillopl.library.lending.book.model.CheckedOutBook;
 
-import lombok.AllArgsConstructor;
-
-@AllArgsConstructor
 public class PatronEventsHandler {
 
   private final BookRepository bookRepository;
   private final DomainEvents domainEvents;
   private final Clock clock;
+
+  public PatronEventsHandler(
+      BookRepository bookRepository, DomainEvents domainEvents, Clock clock) {
+    this.bookRepository = bookRepository;
+    this.domainEvents = domainEvents;
+    this.clock = clock;
+  }
 
   @EventListener
   void handle(BookPlacedOnHoldEvent bookPlacedOnHold) {
@@ -72,23 +81,20 @@ public class PatronEventsHandler {
         .map(this::saveBook);
   }
 
-  private Book handleBookPlacedOnHold(Book book, BookPlacedOnHoldEvent bookPlacedOnHold) {
-    return API.Match(book)
-        .of(
-            Case(
-                $(instanceOf(AvailableBook.class)),
-                availableBook -> availableBook.handle(bookPlacedOnHold)),
-            Case(
-                $(instanceOf(BookOnHold.class)),
-                bookOnHold -> raiseDuplicateHoldFoundEvent(bookOnHold, bookPlacedOnHold)),
-            Case($(), () -> book));
+  private Book handleBookPlacedOnHold(Book book, BookPlacedOnHoldEvent event) {
+    return switch (book) {
+      case AvailableBook availableBook -> availableBook.handle(event);
+      case BookOnHold bookOnHold -> raiseDuplicateHoldFoundEvent(bookOnHold, event);
+      case CheckedOutBook checkedOutBook -> checkedOutBook;
+    };
   }
 
-  private Book handleBookHoldExtended(Book book, BookHoldExtendedEvent bookHoldExtended) {
-    return API.Match(book)
-        .of(
-            Case($(instanceOf(BookOnHold.class)), onHold -> onHold.handle(bookHoldExtended)),
-            Case($(), () -> book));
+  private Book handleBookHoldExtended(Book book, BookHoldExtendedEvent event) {
+    return switch (book) {
+      case BookOnHold onHold -> onHold.handle(event);
+      case AvailableBook availableBook -> availableBook;
+      case CheckedOutBook checkedOutBook -> checkedOutBook;
+    };
   }
 
   private BookOnHold raiseDuplicateHoldFoundEvent(
@@ -106,33 +112,36 @@ public class PatronEventsHandler {
     return onHold;
   }
 
-  private Book handleBookHoldExpired(Book book, BookHoldExpiredEvent holdExpired) {
-    return API.Match(book)
-        .of(
-            Case($(instanceOf(BookOnHold.class)), onHold -> onHold.handle(holdExpired)),
-            Case($(), () -> book));
+  private Book handleBookHoldExpired(Book book, BookHoldExpiredEvent event) {
+    return switch (book) {
+      case BookOnHold onHold -> onHold.handle(event);
+      case AvailableBook availableBook -> availableBook;
+      case CheckedOutBook checkedOutBook -> checkedOutBook;
+    };
   }
 
-  private Book handleBookHoldCanceled(Book book, BookHoldCanceledEvent holdCanceled) {
-    return API.Match(book)
-        .of(
-            Case($(instanceOf(BookOnHold.class)), onHold -> onHold.handle(holdCanceled)),
-            Case($(), () -> book));
+  private Book handleBookHoldCanceled(Book book, BookHoldCanceledEvent event) {
+    return switch (book) {
+      case BookOnHold onHold -> onHold.handle(event);
+      case AvailableBook availableBook -> availableBook;
+      case CheckedOutBook checkedOutBook -> checkedOutBook;
+    };
   }
 
-  private Book handleBookCheckedOut(Book book, BookCheckedOutEvent bookCheckedOut) {
-    return API.Match(book)
-        .of(
-            Case($(instanceOf(BookOnHold.class)), onHold -> onHold.handle(bookCheckedOut)),
-            Case($(), () -> book));
+  private Book handleBookCheckedOut(Book book, BookCheckedOutEvent event) {
+    return switch (book) {
+      case BookOnHold onHold -> onHold.handle(event);
+      case AvailableBook availableBook -> availableBook;
+      case CheckedOutBook checkedOutBook -> checkedOutBook;
+    };
   }
 
-  private Book handleBookReturned(Book book, BookReturnedEvent bookReturned) {
-    return API.Match(book)
-        .of(
-            Case(
-                $(instanceOf(CheckedOutBook.class)), checkedOut -> checkedOut.handle(bookReturned)),
-            Case($(), () -> book));
+  private Book handleBookReturned(Book book, BookReturnedEvent event) {
+    return switch (book) {
+      case CheckedOutBook checkedOut -> checkedOut.handle(event);
+      case AvailableBook availableBook -> availableBook;
+      case BookOnHold bookOnHold -> bookOnHold;
+    };
   }
 
   private Book saveBook(Book book) {
