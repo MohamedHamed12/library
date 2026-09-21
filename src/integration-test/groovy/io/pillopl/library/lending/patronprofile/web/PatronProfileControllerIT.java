@@ -19,7 +19,6 @@ import io.pillopl.library.lending.patronprofile.model.Hold;
 import io.pillopl.library.lending.patronprofile.model.HoldsView;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
-import io.vavr.control.Try;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -34,7 +33,7 @@ import java.util.UUID;
 
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
-import static io.vavr.collection.List.of;
+import static java.util.List.of;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -397,8 +396,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.failure(
-                                                new IllegalArgumentException()));
+                                .willThrow(new IllegalArgumentException());
 
                 String request = "{"
                                 + "\"bookId\":\"6e1dfec5-5cfe-487e-814e-d70114f5396e\","
@@ -423,7 +421,7 @@ public class PatronProfileControllerIT {
                                 .willReturn(profileWithCurrentActivity());
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.success(Success));
+                                .willReturn(Success);
 
                 mvc.perform(delete(
                                 "/profiles/"
@@ -441,8 +439,7 @@ public class PatronProfileControllerIT {
                                 .willReturn(profileWithCurrentActivity());
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.failure(
-                                                new HoldNotFoundException(bookId)));
+                                .willThrow(new HoldNotFoundException(bookId));
 
                 mvc.perform(delete(holdPath())
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE))
@@ -463,8 +460,7 @@ public class PatronProfileControllerIT {
                                 .willReturn(profileWithCurrentActivity());
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.failure(
-                                                new IllegalStateException()));
+                                .willThrow(new IllegalStateException());
 
                 mvc.perform(delete(
                                 "/profiles/"
@@ -488,8 +484,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.failure(
-                                                new BookNotFoundException(bookId)));
+                                .willThrow(new BookNotFoundException(bookId));
 
                 mvc.perform(post(placeHoldPath())
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -509,8 +504,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.failure(
-                                                new PatronNotFoundException(patronId)));
+                                .willThrow(new PatronNotFoundException(patronId));
 
                 mvc.perform(post(placeHoldPath())
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -529,8 +523,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.failure(
-                                                new HoldNotFoundException(bookId)));
+                                .willThrow(new HoldNotFoundException(bookId));
 
                 mvc.perform(delete(holdPath()))
                                 .andExpect(status().isNotFound())
@@ -547,7 +540,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.success(Rejection));
+                                .willReturn(Rejection);
 
                 mvc.perform(delete(holdPath()))
                                 .andExpect(status().isConflict())
@@ -564,9 +557,8 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(cancelingHold.cancelHold(any()))
-                                .willReturn(Try.failure(
-                                                new IllegalStateException(
-                                                                "Internal implementation detail")));
+                                .willThrow(new IllegalStateException(
+                                                "Internal implementation detail"));
 
                 mvc.perform(delete(holdPath()))
                                 .andExpect(status().isInternalServerError())
@@ -620,7 +612,7 @@ public class PatronProfileControllerIT {
         @Test
         public void shouldPlaceBookOnHold() throws Exception {
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.success(Success));
+                                .willReturn(Success);
                 mvc.perform(post(placeHoldPath())
                                 .accept(MediaTypes.HAL_FORMS_JSON_VALUE)
                                 .contentType(MediaType.APPLICATION_JSON)
@@ -631,7 +623,7 @@ public class PatronProfileControllerIT {
         @Test
         public void shouldAllowMissingNumberOfDays() throws Exception {
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.success(Success));
+                                .willReturn(Success);
 
                 String request = "{"
                                 + "\"bookId\":\"6e1dfec5-5cfe-487e-814e-d70114f5396e\","
@@ -746,7 +738,7 @@ public class PatronProfileControllerIT {
                         throws Exception {
 
                 given(placingOnHold.placeOnHold(any()))
-                                .willReturn(Try.success(Rejection));
+                                .willReturn(Rejection);
                 mvc.perform(post(placeHoldPath())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(validPlaceHoldRequest()))

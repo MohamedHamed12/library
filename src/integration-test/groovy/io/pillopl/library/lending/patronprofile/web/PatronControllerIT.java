@@ -9,7 +9,6 @@ import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
 import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
-import io.vavr.control.Try;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +62,7 @@ public class PatronControllerIT {
         @Test
         public void shouldRegisterRegularPatronAndReturn201WithLocation() throws Exception {
                 given(registeringPatron.register(any()))
-                                .willReturn(Try.success(patronId));
+                                .willReturn(patronId);
 
                 String request = "{" +
                                 "\"type\":\"Regular\"," +
@@ -80,7 +79,7 @@ public class PatronControllerIT {
         @Test
         public void shouldRegisterResearcherPatronAndReturn201WithLocation() throws Exception {
                 given(registeringPatron.register(any()))
-                                .willReturn(Try.success(patronId));
+                                .willReturn(patronId);
 
                 String request = "{" +
                                 "\"type\":\"Researcher\"," +
@@ -125,7 +124,7 @@ public class PatronControllerIT {
         @Test
         public void shouldReturn400WhenEmailIsInvalid() throws Exception {
                 given(registeringPatron.register(any()))
-                                .willReturn(Try.success(patronId));
+                                .willReturn(patronId);
 
                 String request = "{" +
                                 "\"type\":\"Regular\"," +
@@ -143,7 +142,7 @@ public class PatronControllerIT {
         @Test
         public void shouldReturn409WhenEmailIsAlreadyRegistered() throws Exception {
                 given(registeringPatron.register(any()))
-                                .willReturn(Try.failure(new EmailAddressAlreadyRegistered(EmailAddress.of("duplicate@example.test"))));
+                                .willThrow(new EmailAddressAlreadyRegistered(EmailAddress.of("duplicate@example.test")));
 
                 String request = "{" +
                                 "\"type\":\"Regular\"," +
