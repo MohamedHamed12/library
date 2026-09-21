@@ -125,7 +125,7 @@ class PatronProfileController {
             .getCurrentCheckouts()
             .stream()
             .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
-            .collect(toList());
+            .toList();
     return ResponseEntity.ok(
         CollectionModel.of(
             checkouts,
