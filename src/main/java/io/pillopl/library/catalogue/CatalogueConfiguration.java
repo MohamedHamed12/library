@@ -31,8 +31,8 @@ public class CatalogueConfiguration {
     @Bean
     CommandLineRunner init(Catalogue catalogue) {
         return args -> {
-            catalogue.addBook("Joshua Bloch", "Effective Java", "0321125215").get();
-            catalogue.addBookInstance("0321125215", BookType.Restricted).get();
+            catalogue.addBook("Joshua Bloch", "Effective Java", "0321125215");
+            catalogue.addBookInstance("0321125215", BookType.Restricted);
         };
     }
 }

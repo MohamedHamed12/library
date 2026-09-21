@@ -80,11 +80,12 @@ class PatronProfileController {
                                 .getCurrentCheckouts()
                                 .size();
 
-                int overdueCheckoutsCount = profile
+                int overdueCheckoutsCount = (int) profile
                                 .getCurrentCheckouts()
                                 .getCurrentCheckouts()
+                                .stream()
                                 .filter(checkout -> checkout.getTill().isBefore(now))
-                                .size();
+                                .count();
 
                 return ok(new PatronProfileSummaryResource(
                                 patronId,
