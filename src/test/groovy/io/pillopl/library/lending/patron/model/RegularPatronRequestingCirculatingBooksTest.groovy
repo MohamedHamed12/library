@@ -2,7 +2,7 @@ package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.AvailableBook
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Instant
@@ -23,7 +23,7 @@ class RegularPatronRequestingCirculatingBooksTest
 
     def 'a regular patron cannot place on hold more than 5 books'() {
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWithHolds(holds)
                             .placeOnHold(
                                     circulatingBook(),
@@ -32,9 +32,9 @@ class RegularPatronRequestingCirculatingBooksTest
                             )
 
         then:
-            hold.isLeft()
+            hold.rejection().isPresent()
 
-            BookHoldFailed event = hold.getLeft()
+            BookHoldFailed event = hold.rejection().orElseThrow()
 
             event.reason.contains(
                     'patron cannot hold more books'
@@ -49,7 +49,7 @@ class RegularPatronRequestingCirculatingBooksTest
             AvailableBook book = circulatingBook()
 
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWithHolds(holds)
                             .placeOnHold(
                                     book,
@@ -58,7 +58,7 @@ class RegularPatronRequestingCirculatingBooksTest
                             )
 
         then:
-            hold.isRight()
+            hold.success().isPresent()
 
         where:
             holds << [0, 1, 2, 3, 4]
@@ -69,7 +69,7 @@ class RegularPatronRequestingCirculatingBooksTest
             LibraryBranchId libraryBranchId = anyBranch()
 
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWithOverdueCheckouts(
                             libraryBranchId,
                             books
@@ -82,9 +82,9 @@ class RegularPatronRequestingCirculatingBooksTest
                     )
 
         then:
-            hold.isLeft()
+            hold.rejection().isPresent()
 
-            BookHoldFailed event = hold.getLeft()
+            BookHoldFailed event = hold.rejection().orElseThrow()
 
             event.reason.contains(
                     'cannot place on hold when there are overdue checkouts'
@@ -107,7 +107,7 @@ class RegularPatronRequestingCirculatingBooksTest
             LibraryBranchId differentBranch = anyBranch()
 
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWith3_OverdueCheckoutsAt(
                             branch
                     ).placeOnHold(
@@ -117,7 +117,7 @@ class RegularPatronRequestingCirculatingBooksTest
                     )
 
         then:
-            hold.isRight()
+            hold.success().isPresent()
     }
 
     def 'a regular patron can place on hold books when he does not have 2 overdues'() {
@@ -125,7 +125,7 @@ class RegularPatronRequestingCirculatingBooksTest
             AvailableBook book = circulatingBook()
 
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWithOverdueCheckouts(
                             anyBranch(),
                             books
@@ -136,7 +136,7 @@ class RegularPatronRequestingCirculatingBooksTest
                     )
 
         then:
-            hold.isRight()
+            hold.success().isPresent()
 
         where:
             books << [

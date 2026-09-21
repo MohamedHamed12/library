@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import static PatronFixture.researcherPatronWithHolds
@@ -16,14 +16,14 @@ class ResearcherPatronRequestingCirculatingBookTest extends Specification {
         Instant.parse('2026-07-21T10:15:30Z')
     def 'a researcher patron can hold any number of circulating books'() {
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = researcherPatronWithHolds(holds)
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold = researcherPatronWithHolds(holds)
         .placeOnHold(
                 circulatingBook(),
                 openEnded(HOLD_TIME),
                 HOLD_TIME
         )
         then:
-            hold.isRight()
+            hold.success().isPresent()
         where:
             holds << [0, 1, 2, 3, 4, 5, 100000]
 

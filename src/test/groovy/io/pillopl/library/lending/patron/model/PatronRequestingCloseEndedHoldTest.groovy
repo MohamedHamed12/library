@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.AvailableBook
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Duration
@@ -25,10 +25,10 @@ class PatronRequestingCloseEndedHoldTest extends Specification {
         given:
             AvailableBook aBook = circulatingAvailableBook()
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(3)), from)
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold = patron.placeOnHold(aBook, HoldDuration.closeEnded(from, NumberOfDays.of(3)), from)
         then:
-            hold.isRight()
-            verifyAll(hold.get()) {
+            hold.success().isPresent()
+            verifyAll(hold.success().orElseThrow()) {
                 BookPlacedOnHold bookPlacedOnHold = it.bookPlacedOnHold
                 assert bookPlacedOnHold.libraryBranchId == aBook.libraryBranch.libraryBranchId
                 assert bookPlacedOnHold.bookId == aBook.bookInformation.bookId.bookId

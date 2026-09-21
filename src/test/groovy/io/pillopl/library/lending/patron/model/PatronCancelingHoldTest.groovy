@@ -2,7 +2,7 @@ package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.BookFixture
 import io.pillopl.library.lending.book.model.BookOnHold
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Instant
@@ -23,10 +23,10 @@ class PatronCancelingHoldTest extends Specification {
         and:
             Patron patron = regularPatronWithHold(forBook)
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
+            Decision<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
-            cancelHold.isRight()
-            verifyAll(cancelHold.get()) {
+            cancelHold.success().isPresent()
+            verifyAll(cancelHold.success().orElseThrow()) {
                 assert it.libraryBranchId == forBook.getHoldPlacedAt().libraryBranchId
                 assert it.bookId == forBook.bookInformation.bookId.bookId
             }
@@ -39,9 +39,9 @@ class PatronCancelingHoldTest extends Specification {
         and:
             Patron patron = regularPatron()
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
+            Decision<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
-            cancelHold.isLeft()
+            cancelHold.rejection().isPresent()
 
     }
 
@@ -53,9 +53,9 @@ class PatronCancelingHoldTest extends Specification {
         and:
             Patron differentPatron = regularPatronWithHold(forBook)
         when:
-            Either<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
+            Decision<BookHoldCancelingFailed, BookHoldCanceled> cancelHold = patron.cancelHold(forBook, CANCEL_TIME)
         then:
-            cancelHold.isLeft()
+            cancelHold.rejection().isPresent()
 
     }
 

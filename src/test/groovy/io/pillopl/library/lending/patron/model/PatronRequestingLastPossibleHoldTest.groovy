@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.AvailableBook
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Instant
@@ -22,7 +22,7 @@ class PatronRequestingLastPossibleHoldTest
             AvailableBook book = circulatingBook()
 
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatronWithHolds(4)
                             .placeOnHold(
                                     book,
@@ -31,13 +31,13 @@ class PatronRequestingLastPossibleHoldTest
                             )
 
         then:
-            hold.isRight()
+            hold.success().isPresent()
 
-            verifyAll(hold.get()) {
+            verifyAll(hold.success().orElseThrow()) {
                 assert maximumNumberOhHoldsReached.isDefined()
 
                 MaximumNumberOhHoldsReached event =
-                        maximumNumberOhHoldsReached.get()
+                        maximumNumberOhHoldsReached.orElseThrow()
 
                 assert event.numberOfHolds == 5
             }

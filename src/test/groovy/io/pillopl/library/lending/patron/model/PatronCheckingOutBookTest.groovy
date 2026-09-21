@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.BookOnHold
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Duration
@@ -24,10 +24,10 @@ class PatronCheckingOutBookTest extends Specification {
 
     def 'patron cannot check out book which is not placed on hold'() {
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = regularPatron().checkOut(bookOnHold(), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
+            Decision<BookCheckingOutFailed, BookCheckedOut> checkOut = regularPatron().checkOut(bookOnHold(), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
         then:
-		checkOut.isLeft()
-            BookCheckingOutFailed e = checkOut.getLeft()
+		checkOut.rejection().isPresent()
+            BookCheckingOutFailed e = checkOut.rejection().orElseThrow()
             e.reason.contains("book is not on hold by patron")
     }
 
@@ -38,9 +38,9 @@ class PatronCheckingOutBookTest extends Specification {
         and:
             Patron patron = regularPatronWith(onHold)
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
+            Decision<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold(onHold.bookId, onHold.libraryBranchId), maxDuration(CHECKOUT_TIME), CHECKOUT_TIME)
         then:
-		checkOut.isRight()
+		checkOut.success().isPresent()
     }
 
     def 'patron can checkout up to 60 days'() {
@@ -51,10 +51,10 @@ class PatronCheckingOutBookTest extends Specification {
         and:
             BookOnHold bookOnHold = bookOnHold(onHold.bookId, onHold.libraryBranchId)
         when:
-            Either<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold, forNoOfDays(CHECKOUT_TIME, checkoutDays), CHECKOUT_TIME)
+            Decision<BookCheckingOutFailed, BookCheckedOut> checkOut = patron.checkOut(bookOnHold, forNoOfDays(CHECKOUT_TIME, checkoutDays), CHECKOUT_TIME)
         then:
-		checkOut.isRight()
-            verifyAll(checkOut.get()) {
+		checkOut.success().isPresent()
+            verifyAll(checkOut.success().orElseThrow()) {
                 assert it.libraryBranchId == bookOnHold.holdPlacedAt.libraryBranchId
                 assert it.bookId == bookOnHold.bookInformation.bookId.bookId
                 assert it.till == CHECKOUT_TIME.plus(Duration.ofDays(checkoutDays))
