@@ -4,7 +4,7 @@ import io.pillopl.library.catalogue.BookId
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
-import io.vavr.collection.List
+import java.util.List
 import spock.lang.Specification
 
 import java.time.Instant
