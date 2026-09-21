@@ -1,5 +1,30 @@
 package io.pillopl.library.lending.patronprofile.web;
 
+import static java.util.stream.Collectors.toList;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.afford;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+import static org.springframework.http.ResponseEntity.ok;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import jakarta.validation.Valid;
+
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import io.micrometer.core.annotation.Timed;
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.commands.Result;
@@ -17,311 +42,279 @@ import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.web.error.ApiErrorCode;
 import io.pillopl.library.lending.patronprofile.web.error.ApiException;
-import jakarta.validation.Valid;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.RepresentationModel;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 
-import static java.util.stream.Collectors.toList;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.afford;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-import static org.springframework.http.ResponseEntity.ok;
-
-@Timed(percentiles = { 0.5, 0.75, 0.95, 0.99 })
+@Timed(percentiles = {0.5, 0.75, 0.95, 0.99})
 @RestController
 class PatronProfileController {
 
-        private final PatronProfiles patronProfiles;
-        private final PlacingOnHold placingOnHold;
-        private final CancelingHold cancelingHold;
-        private final ExtendingHold extendingHold;
-        private final Clock clock;
+  private final PatronProfiles patronProfiles;
+  private final PlacingOnHold placingOnHold;
+  private final CancelingHold cancelingHold;
+  private final ExtendingHold extendingHold;
+  private final Clock clock;
 
-        PatronProfileController(
-                        PatronProfiles patronProfiles,
-                        PlacingOnHold placingOnHold,
-                        CancelingHold cancelingHold,
-                        ExtendingHold extendingHold,
-                        Clock clock) {
-                this.patronProfiles = patronProfiles;
-                this.placingOnHold = placingOnHold;
-                this.cancelingHold = cancelingHold;
-                this.extendingHold = extendingHold;
-                this.clock = clock;
-        }
+  PatronProfileController(
+      PatronProfiles patronProfiles,
+      PlacingOnHold placingOnHold,
+      CancelingHold cancelingHold,
+      ExtendingHold extendingHold,
+      Clock clock) {
+    this.patronProfiles = patronProfiles;
+    this.placingOnHold = placingOnHold;
+    this.cancelingHold = cancelingHold;
+    this.extendingHold = extendingHold;
+    this.clock = clock;
+  }
 
-        @GetMapping("/profiles/{patronId}")
-        ResponseEntity<PatronProfileSummaryResource> patronProfile(
-                        @PathVariable UUID patronId) {
+  @GetMapping("/profiles/{patronId}")
+  ResponseEntity<PatronProfileSummaryResource> patronProfile(@PathVariable UUID patronId) {
 
-                PatronProfile profile = patronProfiles.fetchFor(new PatronId(patronId));
+    PatronProfile profile = patronProfiles.fetchFor(new PatronId(patronId));
 
-                Instant now = clock.instant();
-                int currentHoldsCount = profile
-                                .getHoldsView()
-                                .getCurrentHolds()
-                                .size();
+    Instant now = clock.instant();
+    int currentHoldsCount = profile.getHoldsView().getCurrentHolds().size();
 
-                int currentCheckoutsCount = profile
-                                .getCurrentCheckouts()
-                                .getCurrentCheckouts()
-                                .size();
+    int currentCheckoutsCount = profile.getCurrentCheckouts().getCurrentCheckouts().size();
 
-                int overdueCheckoutsCount = (int) profile
-                                .getCurrentCheckouts()
-                                .getCurrentCheckouts()
-                                .stream()
-                                .filter(checkout -> checkout.getTill().isBefore(now))
-                                .count();
+    int overdueCheckoutsCount =
+        (int)
+            profile.getCurrentCheckouts().getCurrentCheckouts().stream()
+                .filter(checkout -> checkout.getTill().isBefore(now))
+                .count();
 
-                return ok(new PatronProfileSummaryResource(
-                                patronId,
-                                profile.getStatus(),
-                                currentHoldsCount,
-                                currentCheckoutsCount,
-                                overdueCheckoutsCount));
-        }
+    return ok(
+        new PatronProfileSummaryResource(
+            patronId,
+            profile.getStatus(),
+            currentHoldsCount,
+            currentCheckoutsCount,
+            overdueCheckoutsCount));
+  }
 
-        @GetMapping("/profiles/{patronId}/holds/")
-        ResponseEntity<CollectionModel<EntityModel<Hold>>> findHolds(@PathVariable UUID patronId) {
-                List<EntityModel<Hold>> holds = patronProfiles.fetchFor(new PatronId(patronId))
-                                .getHoldsView()
-                                .getCurrentHolds()
-                                .stream()
-                                .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
-                                .collect(toList());
-                return ResponseEntity.ok(CollectionModel.of(holds,
-                                linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
+  @GetMapping("/profiles/{patronId}/holds/")
+  ResponseEntity<CollectionModel<EntityModel<Hold>>> findHolds(@PathVariable UUID patronId) {
+    List<EntityModel<Hold>> holds =
+        patronProfiles.fetchFor(new PatronId(patronId)).getHoldsView().getCurrentHolds().stream()
+            .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
+            .collect(toList());
+    return ResponseEntity.ok(
+        CollectionModel.of(
+            holds,
+            linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
+  }
 
-        }
+  @GetMapping("/profiles/{patronId}/holds/{bookId}")
+  ResponseEntity<EntityModel<Hold>> findHold(
+      @PathVariable UUID patronId, @PathVariable UUID bookId) {
+    return patronProfiles
+        .fetchFor(new PatronId(patronId))
+        .findHold(new BookId(bookId))
+        .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
+        .orElseThrow(
+            () ->
+                ApiException.notFound(
+                    ApiErrorCode.HOLD_NOT_FOUND, "The requested hold was not found."));
+  }
 
-        @GetMapping("/profiles/{patronId}/holds/{bookId}")
-        ResponseEntity<EntityModel<Hold>> findHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-                return patronProfiles.fetchFor(new PatronId(patronId))
-                                .findHold(new BookId(bookId))
-                                .map(hold -> ok(resourceWithLinkToHoldSelf(patronId, hold)))
-                                .orElseThrow(() -> ApiException.notFound(
-                                                ApiErrorCode.HOLD_NOT_FOUND,
-                                                "The requested hold was not found."));
+  @GetMapping("/profiles/{patronId}/checkouts/")
+  ResponseEntity<CollectionModel<EntityModel<Checkout>>> findCheckouts(
+      @PathVariable UUID patronId) {
+    List<EntityModel<Checkout>> checkouts =
+        patronProfiles
+            .fetchFor(new PatronId(patronId))
+            .getCurrentCheckouts()
+            .getCurrentCheckouts()
+            .stream()
+            .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
+            .collect(toList());
+    return ResponseEntity.ok(
+        CollectionModel.of(
+            checkouts,
+            linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
+  }
 
-        }
+  @GetMapping("/profiles/{patronId}/checkouts/{bookId}")
+  ResponseEntity<EntityModel<Checkout>> findCheckout(
+      @PathVariable UUID patronId, @PathVariable UUID bookId) {
+    return patronProfiles
+        .fetchFor(new PatronId(patronId))
+        .findCheckout(new BookId(bookId))
+        .map(checkout -> ok(resourceWithLinkToCheckoutSelf(patronId, checkout)))
+        .orElseThrow(
+            () ->
+                ApiException.notFound(
+                    ApiErrorCode.CHECKOUT_NOT_FOUND, "The requested checkout was not found."));
+  }
 
-        @GetMapping("/profiles/{patronId}/checkouts/")
-        ResponseEntity<CollectionModel<EntityModel<Checkout>>> findCheckouts(@PathVariable UUID patronId) {
-                List<EntityModel<Checkout>> checkouts = patronProfiles.fetchFor(new PatronId(patronId))
-                                .getCurrentCheckouts()
-                                .getCurrentCheckouts()
-                                .stream()
-                                .map(checkout -> resourceWithLinkToCheckoutSelf(patronId, checkout))
-                                .collect(toList());
-                return ResponseEntity.ok(CollectionModel.of(checkouts,
-                                linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withSelfRel()));
-        }
+  @PostMapping("/profiles/{patronId}/holds")
+  ResponseEntity<Void> placeHold(
+      @PathVariable UUID patronId, @Valid @RequestBody PlaceHoldRequest request) {
+    Instant now = clock.instant();
 
-        @GetMapping("/profiles/{patronId}/checkouts/{bookId}")
-        ResponseEntity<EntityModel<Checkout>> findCheckout(@PathVariable UUID patronId, @PathVariable UUID bookId) {
-                return patronProfiles
-                                .fetchFor(new PatronId(patronId))
-                                .findCheckout(new BookId(bookId))
-                                .map(checkout -> ok(resourceWithLinkToCheckoutSelf(
-                                                patronId,
-                                                checkout)))
-                                .orElseThrow(() -> ApiException.notFound(
-                                                ApiErrorCode.CHECKOUT_NOT_FOUND,
-                                                "The requested checkout was not found."));
-        }
+    PlaceOnHoldCommand command =
+        new PlaceOnHoldCommand(
+            now,
+            new PatronId(patronId),
+            new LibraryBranchId(request.getLibraryBranchId()),
+            new BookId(request.getBookId()),
+            Optional.ofNullable(request.getNumberOfDays()));
 
-        @PostMapping("/profiles/{patronId}/holds")
-        ResponseEntity<Void> placeHold(
-                        @PathVariable UUID patronId,
-                        @Valid @RequestBody PlaceHoldRequest request) {
-                Instant now = clock.instant();
+    Result result = placingOnHold.placeOnHold(command);
 
-                PlaceOnHoldCommand command = new PlaceOnHoldCommand(
-                                now,
-                                new PatronId(patronId),
-                                new LibraryBranchId(request.getLibraryBranchId()),
-                                new BookId(request.getBookId()),
-                                Optional.ofNullable(request.getNumberOfDays()));
+    rejectIfNeeded(
+        result, ApiErrorCode.HOLD_NOT_ALLOWED, "The patron cannot place this book on hold.");
 
-                Result result = placingOnHold
-                                .placeOnHold(command);
+    return ResponseEntity.ok().build();
+  }
 
-                rejectIfNeeded(
-                                result,
-                                ApiErrorCode.HOLD_NOT_ALLOWED,
-                                "The patron cannot place this book on hold.");
+  @PostMapping("/profiles/{patronId}/holds/{bookId}/extension")
+  ResponseEntity<Void> extendHold(
+      @PathVariable UUID patronId,
+      @PathVariable UUID bookId,
+      @Valid @RequestBody ExtendHoldRequest request) {
+    Instant now = clock.instant();
 
-                return ResponseEntity.ok().build();
-        }
+    ExtendHoldCommand command =
+        new ExtendHoldCommand(
+            now,
+            new PatronId(patronId),
+            new BookId(bookId),
+            NumberOfDays.of(request.getAdditionalDays()));
 
-        @PostMapping("/profiles/{patronId}/holds/{bookId}/extension")
-        ResponseEntity<Void> extendHold(
-                        @PathVariable UUID patronId,
-                        @PathVariable UUID bookId,
-                        @Valid @RequestBody ExtendHoldRequest request) {
-                Instant now = clock.instant();
+    Result result = extendingHold.extendHold(command);
 
-                ExtendHoldCommand command = new ExtendHoldCommand(
-                                now,
-                                new PatronId(patronId),
-                                new BookId(bookId),
-                                NumberOfDays.of(request.getAdditionalDays()));
+    rejectIfNeeded(
+        result,
+        ApiErrorCode.HOLD_EXTENSION_NOT_ALLOWED,
+        "The hold cannot be extended in its current state.");
 
-                Result result = extendingHold
-                                .extendHold(command);
+    return ResponseEntity.ok().build();
+  }
 
-                rejectIfNeeded(
-                                result,
-                                ApiErrorCode.HOLD_EXTENSION_NOT_ALLOWED,
-                                "The hold cannot be extended in its current state.");
+  @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
+  ResponseEntity<Void> cancelHold(@PathVariable UUID patronId, @PathVariable UUID bookId) {
+    Instant now = clock.instant();
 
-                return ResponseEntity.ok().build();
-        }
+    CancelHoldCommand command =
+        new CancelHoldCommand(now, new PatronId(patronId), new BookId(bookId));
 
-        @DeleteMapping("/profiles/{patronId}/holds/{bookId}")
-        ResponseEntity<Void> cancelHold(
-                        @PathVariable UUID patronId,
-                        @PathVariable UUID bookId) {
-                Instant now = clock.instant();
+    Result result = cancelingHold.cancelHold(command);
 
-                CancelHoldCommand command = new CancelHoldCommand(
-                                now,
-                                new PatronId(patronId),
-                                new BookId(bookId));
+    rejectIfNeeded(
+        result,
+        ApiErrorCode.HOLD_CANCELLATION_NOT_ALLOWED,
+        "The hold cannot be canceled in its current state.");
 
-                Result result = cancelingHold
-                                .cancelHold(command);
+    return ResponseEntity.noContent().build();
+  }
 
-                rejectIfNeeded(
-                                result,
-                                ApiErrorCode.HOLD_CANCELLATION_NOT_ALLOWED,
-                                "The hold cannot be canceled in its current state.");
+  private EntityModel<Hold> resourceWithLinkToHoldSelf(
+      UUID patronId, io.pillopl.library.lending.patronprofile.model.Hold hold) {
+    return EntityModel.of(
+        new Hold(hold),
+        linkTo(
+                methodOn(PatronProfileController.class)
+                    .findHold(patronId, hold.getBook().getBookId()))
+            .withSelfRel()
+            .andAffordance(
+                afford(
+                    methodOn(PatronProfileController.class)
+                        .cancelHold(patronId, hold.getBook().getBookId()))));
+  }
 
-                return ResponseEntity.noContent().build();
-        }
+  private EntityModel<Checkout> resourceWithLinkToCheckoutSelf(
+      UUID patronId, io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
+    return EntityModel.of(
+        new Checkout(checkout),
+        linkTo(
+                methodOn(PatronProfileController.class)
+                    .findCheckout(patronId, checkout.getBook().getBookId()))
+            .withSelfRel());
+  }
 
-        private EntityModel<Hold> resourceWithLinkToHoldSelf(UUID patronId,
-                        io.pillopl.library.lending.patronprofile.model.Hold hold) {
-                return EntityModel.of(
-                                new Hold(hold),
-                                linkTo(methodOn(PatronProfileController.class).findHold(patronId,
-                                                hold.getBook().getBookId()))
-                                                .withSelfRel()
-                                                .andAffordance(afford(methodOn(PatronProfileController.class)
-                                                                .cancelHold(patronId, hold.getBook().getBookId()))));
-        }
-
-        private EntityModel<Checkout> resourceWithLinkToCheckoutSelf(UUID patronId,
-                        io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
-                return EntityModel.of(
-                                new Checkout(checkout),
-                                linkTo(methodOn(PatronProfileController.class).findCheckout(patronId,
-                                                checkout.getBook().getBookId()))
-                                                .withSelfRel());
-        }
-
-        private void rejectIfNeeded(Result result, ApiErrorCode code, String message) {
-                if (result == Result.Rejection) {
-                        throw ApiException.conflict(code, message);
-                }
-        }
+  private void rejectIfNeeded(Result result, ApiErrorCode code, String message) {
+    if (result == Result.Rejection) {
+      throw ApiException.conflict(code, message);
+    }
+  }
 }
 
-final class PatronProfileSummaryResource
-                extends RepresentationModel<PatronProfileSummaryResource> {
+final class PatronProfileSummaryResource extends RepresentationModel<PatronProfileSummaryResource> {
 
-        private final UUID patronId;
-        private final PatronStatus status;
-        private final int currentHoldsCount;
-        private final int currentCheckoutsCount;
-        private final int overdueCheckoutsCount;
+  private final UUID patronId;
+  private final PatronStatus status;
+  private final int currentHoldsCount;
+  private final int currentCheckoutsCount;
+  private final int overdueCheckoutsCount;
 
-        PatronProfileSummaryResource(
-                        UUID patronId,
-                        PatronStatus status,
-                        int currentHoldsCount,
-                        int currentCheckoutsCount,
-                        int overdueCheckoutsCount) {
+  PatronProfileSummaryResource(
+      UUID patronId,
+      PatronStatus status,
+      int currentHoldsCount,
+      int currentCheckoutsCount,
+      int overdueCheckoutsCount) {
 
-                this.patronId = patronId;
-                this.status = status;
-                this.currentHoldsCount = currentHoldsCount;
-                this.currentCheckoutsCount = currentCheckoutsCount;
-                this.overdueCheckoutsCount = overdueCheckoutsCount;
-                add(linkTo(methodOn(PatronProfileController.class)
-                                .findHolds(patronId))
-                                .withRel("holds"));
+    this.patronId = patronId;
+    this.status = status;
+    this.currentHoldsCount = currentHoldsCount;
+    this.currentCheckoutsCount = currentCheckoutsCount;
+    this.overdueCheckoutsCount = overdueCheckoutsCount;
+    add(linkTo(methodOn(PatronProfileController.class).findHolds(patronId)).withRel("holds"));
 
-                add(linkTo(methodOn(PatronProfileController.class)
-                                .findCheckouts(patronId))
-                                .withRel("checkouts"));
+    add(
+        linkTo(methodOn(PatronProfileController.class).findCheckouts(patronId))
+            .withRel("checkouts"));
 
-                add(linkTo(methodOn(PatronProfileController.class)
-                                .patronProfile(patronId))
-                                .withSelfRel());
-        }
+    add(linkTo(methodOn(PatronProfileController.class).patronProfile(patronId)).withSelfRel());
+  }
 
-        public UUID getPatronId() {
-                return patronId;
-        }
+  public UUID getPatronId() {
+    return patronId;
+  }
 
-        public PatronStatus getStatus() {
-                return status;
-        }
+  public PatronStatus getStatus() {
+    return status;
+  }
 
-        public int getCurrentHoldsCount() {
-                return currentHoldsCount;
-        }
+  public int getCurrentHoldsCount() {
+    return currentHoldsCount;
+  }
 
-        public int getCurrentCheckoutsCount() {
-                return currentCheckoutsCount;
-        }
+  public int getCurrentCheckoutsCount() {
+    return currentCheckoutsCount;
+  }
 
-        public int getOverdueCheckoutsCount() {
-                return overdueCheckoutsCount;
-        }
+  public int getOverdueCheckoutsCount() {
+    return overdueCheckoutsCount;
+  }
 }
 
 record Hold(UUID bookId, Instant till) {
 
-        Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
-                this(hold.getBook().getBookId(), hold.getTill());
-        }
+  Hold(io.pillopl.library.lending.patronprofile.model.Hold hold) {
+    this(hold.getBook().getBookId(), hold.getTill());
+  }
 
-        public UUID getBookId() {
-                return bookId;
-        }
+  public UUID getBookId() {
+    return bookId;
+  }
 
-        public Instant getTill() {
-                return till;
-        }
+  public Instant getTill() {
+    return till;
+  }
 }
 
 record Checkout(UUID bookId, Instant till) {
 
-        Checkout(io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
-                this(checkout.getBook().getBookId(), checkout.getTill());
-        }
+  Checkout(io.pillopl.library.lending.patronprofile.model.Checkout checkout) {
+    this(checkout.getBook().getBookId(), checkout.getTill());
+  }
 
-        public UUID getBookId() {
-                return bookId;
-        }
+  public UUID getBookId() {
+    return bookId;
+  }
 
-        public Instant getTill() {
-                return till;
-        }
+  public Instant getTill() {
+    return till;
+  }
 }

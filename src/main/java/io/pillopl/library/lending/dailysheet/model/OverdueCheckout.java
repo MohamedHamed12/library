@@ -8,8 +8,7 @@ import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegistered;
 import io.pillopl.library.lending.patron.model.PatronId;
 
-public record OverdueCheckout(
-    BookId checkedOutBook, PatronId patron, LibraryBranchId library) {
+public record OverdueCheckout(BookId checkedOutBook, PatronId patron, LibraryBranchId library) {
 
   public OverdueCheckout {
     Objects.requireNonNull(checkedOutBook, "checkedOutBook");

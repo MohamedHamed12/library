@@ -1,139 +1,138 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import io.pillopl.library.commons.events.DomainEvents;
-import io.pillopl.library.catalogue.BookId;
-import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import io.pillopl.library.lending.patron.model.*;
-import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
-import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-import org.springframework.dao.DuplicateKeyException;
+import static java.util.stream.Collectors.*;
 
-import java.time.Instant;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static java.util.stream.Collectors.*;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+
+import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.commons.events.DomainEvents;
+import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
+import io.pillopl.library.lending.patron.model.*;
+import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 
 class PatronsDatabaseRepository implements Patrons {
 
-    private final PatronEntityRepository patronEntityRepository;
-    private final DomainModelMapper domainModelMapper;
-    private final DomainEvents domainEvents;
+  private final PatronEntityRepository patronEntityRepository;
+  private final DomainModelMapper domainModelMapper;
+  private final DomainEvents domainEvents;
 
-    PatronsDatabaseRepository(
-            PatronEntityRepository patronEntityRepository,
-            DomainModelMapper domainModelMapper,
-            DomainEvents domainEvents
-    ) {
-        this.patronEntityRepository = patronEntityRepository;
-        this.domainModelMapper = domainModelMapper;
-        this.domainEvents = domainEvents;
+  PatronsDatabaseRepository(
+      PatronEntityRepository patronEntityRepository,
+      DomainModelMapper domainModelMapper,
+      DomainEvents domainEvents) {
+    this.patronEntityRepository = patronEntityRepository;
+    this.domainModelMapper = domainModelMapper;
+    this.domainEvents = domainEvents;
+  }
+
+  @Override
+  public Optional<Patron> findBy(PatronId patronId) {
+    return Optional.ofNullable(patronEntityRepository.findByPatronId(patronId.getPatronId()))
+        .map(domainModelMapper::map);
+  }
+
+  @Override
+  public boolean existsBy(EmailAddress emailAddress) {
+    return patronEntityRepository.existsByEmailAddress(emailAddress.value());
+  }
+
+  @Override
+  public Patron publish(PatronEvent domainEvent) {
+    Patron result =
+        domainEvent instanceof PatronCreated patronCreated
+            ? createNewPatron(patronCreated)
+            : handleNextEvent(domainEvent);
+    domainEvents.publish(domainEvent.normalize());
+    return result;
+  }
+
+  private Patron createNewPatron(PatronCreated domainEvent) {
+    try {
+      PatronDatabaseEntity entity =
+          patronEntityRepository.save(
+              new PatronDatabaseEntity(
+                  domainEvent.patronId(),
+                  domainEvent.getPatronType(),
+                  domainEvent.getEmailAddress()));
+      return domainModelMapper.map(entity);
+    } catch (DuplicateKeyException exception) {
+      throw new EmailAddressAlreadyRegistered(domainEvent.getEmailAddress());
     }
+  }
 
-    @Override
-    public Optional<Patron> findBy(PatronId patronId) {
-        return Optional.ofNullable(patronEntityRepository
-                .findByPatronId(patronId.getPatronId()))
-                .map(domainModelMapper::map);
-    }
-
-    @Override
-    public boolean existsBy(EmailAddress emailAddress){
-        return patronEntityRepository.existsByEmailAddress(emailAddress.value());
-    }
-
-    @Override
-    public Patron publish(PatronEvent domainEvent) {
-        Patron result = domainEvent instanceof PatronCreated patronCreated
-                ? createNewPatron(patronCreated)
-                : handleNextEvent(domainEvent);
-        domainEvents.publish(domainEvent.normalize());
-        return result;
-    }
-
-    private Patron createNewPatron(PatronCreated domainEvent) {
-        try {
-            PatronDatabaseEntity entity = patronEntityRepository
-                    .save(new PatronDatabaseEntity(
-                            domainEvent.patronId(),
-                            domainEvent.getPatronType(),
-                            domainEvent.getEmailAddress()));
-            return domainModelMapper.map(entity);
-        } catch (DuplicateKeyException exception) {
-            throw new EmailAddressAlreadyRegistered(domainEvent.getEmailAddress());
-        }
-    }                      
-        
-    private Patron handleNextEvent(PatronEvent domainEvent) {
-        PatronDatabaseEntity entity = patronEntityRepository.findByPatronId(domainEvent.patronId().getPatronId());
-        entity = entity.handle(domainEvent);
-        entity = patronEntityRepository.save(entity);
-        return domainModelMapper.map(entity);
-    }
-
+  private Patron handleNextEvent(PatronEvent domainEvent) {
+    PatronDatabaseEntity entity =
+        patronEntityRepository.findByPatronId(domainEvent.patronId().getPatronId());
+    entity = entity.handle(domainEvent);
+    entity = patronEntityRepository.save(entity);
+    return domainModelMapper.map(entity);
+  }
 }
 
 interface PatronEntityRepository extends CrudRepository<PatronDatabaseEntity, Long> {
 
-    @Query("SELECT p.* FROM patron_database_entity p where p.patron_id = :patronId")
-    PatronDatabaseEntity findByPatronId(@Param("patronId") UUID patronId);
+  @Query("SELECT p.* FROM patron_database_entity p where p.patron_id = :patronId")
+  PatronDatabaseEntity findByPatronId(@Param("patronId") UUID patronId);
 
-    @Query("SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END " +
-        "FROM patron_database_entity WHERE email_address = :emailAddress")
-    boolean existsByEmailAddress(@Param("emailAddress") String emailAddress);
+  @Query(
+      "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END "
+          + "FROM patron_database_entity WHERE email_address = :emailAddress")
+  boolean existsByEmailAddress(@Param("emailAddress") String emailAddress);
 }
 
 class DomainModelMapper {
 
-    private final PatronFactory patronFactory;
+  private final PatronFactory patronFactory;
 
-    DomainModelMapper(PatronFactory patronFactory) {
-        this.patronFactory = patronFactory;
-    }
+  DomainModelMapper(PatronFactory patronFactory) {
+    this.patronFactory = patronFactory;
+  }
 
-    Patron map(PatronDatabaseEntity entity) {
-        return patronFactory.create(
-                entity.patronType,
-                new PatronId(entity.patronId),
-                EmailAddress.of(entity.emailAddress),
-                mapPatronHolds(entity),
-                mapPatronOverdueCheckouts(entity),
-                PatronStatus.valueOf(entity.status),
-                entity.suspensionReason
-        );
-    }
+  Patron map(PatronDatabaseEntity entity) {
+    return patronFactory.create(
+        entity.patronType,
+        new PatronId(entity.patronId),
+        EmailAddress.of(entity.emailAddress),
+        mapPatronHolds(entity),
+        mapPatronOverdueCheckouts(entity),
+        PatronStatus.valueOf(entity.status),
+        entity.suspensionReason);
+  }
 
-    Map<LibraryBranchId, Set<BookId>> mapPatronOverdueCheckouts(PatronDatabaseEntity patronDatabaseEntity) {
-        return
-                patronDatabaseEntity
-                        .checkouts
-                        .stream()
-                        .collect(groupingBy(OverdueCheckoutDatabaseEntity::getLibraryBranchId, toSet()))
-                        .entrySet()
-                        .stream()
-                        .collect(toMap(
-                                (Entry<UUID, Set<OverdueCheckoutDatabaseEntity>> entry) -> new LibraryBranchId(entry.getKey()), entry -> entry
-                                        .getValue()
-                                        .stream()
-                                        .map(entity -> (new BookId(entity.bookId)))
-                                        .collect(toSet())));
-    }
+  Map<LibraryBranchId, Set<BookId>> mapPatronOverdueCheckouts(
+      PatronDatabaseEntity patronDatabaseEntity) {
+    return patronDatabaseEntity.checkouts.stream()
+        .collect(groupingBy(OverdueCheckoutDatabaseEntity::getLibraryBranchId, toSet()))
+        .entrySet()
+        .stream()
+        .collect(
+            toMap(
+                (Entry<UUID, Set<OverdueCheckoutDatabaseEntity>> entry) ->
+                    new LibraryBranchId(entry.getKey()),
+                entry ->
+                    entry.getValue().stream()
+                        .map(entity -> (new BookId(entity.bookId)))
+                        .collect(toSet())));
+  }
 
-    Set<PatronHoldSnapshot> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
-        return patronDatabaseEntity
-                .booksOnHold
-                .stream()
-                .map(entity -> new PatronHoldSnapshot(
-                        new BookId(entity.bookId),
-                        new LibraryBranchId(entity.libraryBranchId),
-                        entity.till,
-                        entity.extensionCount))
-                .collect(toSet());
-    }
-
+  Set<PatronHoldSnapshot> mapPatronHolds(PatronDatabaseEntity patronDatabaseEntity) {
+    return patronDatabaseEntity.booksOnHold.stream()
+        .map(
+            entity ->
+                new PatronHoldSnapshot(
+                    new BookId(entity.bookId),
+                    new LibraryBranchId(entity.libraryBranchId),
+                    entity.till,
+                    entity.extensionCount))
+        .collect(toSet());
+  }
 }

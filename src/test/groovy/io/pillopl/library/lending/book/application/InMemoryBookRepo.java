@@ -10,15 +10,15 @@ import io.pillopl.library.lending.book.model.BookRepository;
 
 class InMemoryBookRepo implements BookRepository {
 
-    Map<BookId, Book> books = new HashMap<>();
+  Map<BookId, Book> books = new HashMap<>();
 
-    @Override
-    public Optional<Book> findBy(BookId bookId) {
-        return Optional.ofNullable(books.get(bookId));
-    }
+  @Override
+  public Optional<Book> findBy(BookId bookId) {
+    return Optional.ofNullable(books.get(bookId));
+  }
 
-    @Override
-    public void save(Book book) {
-        books.put(book.bookId(), book);
-    }
+  @Override
+  public void save(Book book) {
+    books.put(book.bookId(), book);
+  }
 }

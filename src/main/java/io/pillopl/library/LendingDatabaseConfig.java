@@ -35,7 +35,6 @@ import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
 
-
 @Configuration
 class LendingDatabaseConfig extends AbstractJdbcConfiguration {
 

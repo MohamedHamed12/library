@@ -52,6 +52,8 @@ public class ExtendingHold {
   }
 
   private Patron find(PatronId patronId) {
-    return patronRepository.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
+    return patronRepository
+        .findBy(patronId)
+        .orElseThrow(() -> new PatronNotFoundException(patronId));
   }
 }

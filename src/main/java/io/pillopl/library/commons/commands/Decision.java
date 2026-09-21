@@ -15,8 +15,7 @@ public sealed interface Decision<F, S> permits Decision.Rejected, Decision.Accep
   }
 
   <T> T fold(
-      Function<? super F, ? extends T> onRejected,
-      Function<? super S, ? extends T> onAccepted);
+      Function<? super F, ? extends T> onRejected, Function<? super S, ? extends T> onAccepted);
 
   Optional<F> rejection();
 
@@ -30,8 +29,7 @@ public sealed interface Decision<F, S> permits Decision.Rejected, Decision.Accep
 
     @Override
     public <T> T fold(
-        Function<? super F, ? extends T> onRejected,
-        Function<? super S, ? extends T> onAccepted) {
+        Function<? super F, ? extends T> onRejected, Function<? super S, ? extends T> onAccepted) {
       return onRejected.apply(failure);
     }
 
@@ -54,8 +52,7 @@ public sealed interface Decision<F, S> permits Decision.Rejected, Decision.Accep
 
     @Override
     public <T> T fold(
-        Function<? super F, ? extends T> onRejected,
-        Function<? super S, ? extends T> onAccepted) {
+        Function<? super F, ? extends T> onRejected, Function<? super S, ? extends T> onAccepted) {
       return onAccepted.apply(value);
     }
 

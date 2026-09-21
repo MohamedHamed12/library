@@ -43,8 +43,7 @@ public final class PlaceOnHoldCommand {
 
   static PlaceOnHoldCommand openEnded(
       Instant timestamp, PatronId patronId, LibraryBranchId libraryBranchId, BookId bookId) {
-    return new PlaceOnHoldCommand(
-        timestamp, patronId, libraryBranchId, bookId, Optional.empty());
+    return new PlaceOnHoldCommand(timestamp, patronId, libraryBranchId, bookId, Optional.empty());
   }
 
   public Instant getTimestamp() {

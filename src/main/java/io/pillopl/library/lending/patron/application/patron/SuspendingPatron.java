@@ -14,25 +14,25 @@ import io.pillopl.library.lending.patron.model.Patrons;
 
 public class SuspendingPatron {
 
-    private final Patrons patrons;
+  private final Patrons patrons;
 
-    public SuspendingPatron(Patrons patrons) {
-        this.patrons = patrons;
-    }
+  public SuspendingPatron(Patrons patrons) {
+    this.patrons = patrons;
+  }
 
-    public Result suspend(SuspendPatronCommand command) {
-        Objects.requireNonNull(command, "command");
-        return findPatron(command.getPatronId())
-                .suspend(command.getReason(), command.getTimestamp())
-                .fold(failure -> Rejection, this::publish);
-    }
+  public Result suspend(SuspendPatronCommand command) {
+    Objects.requireNonNull(command, "command");
+    return findPatron(command.getPatronId())
+        .suspend(command.getReason(), command.getTimestamp())
+        .fold(failure -> Rejection, this::publish);
+  }
 
-    private Result publish(PatronSuspended suspended) {
-        patrons.publish(suspended);
-        return Success;
-    }
+  private Result publish(PatronSuspended suspended) {
+    patrons.publish(suspended);
+    return Success;
+  }
 
-    private Patron findPatron(PatronId patronId) {
-        return patrons.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
-    }
+  private Patron findPatron(PatronId patronId) {
+    return patrons.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
+  }
 }

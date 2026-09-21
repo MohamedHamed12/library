@@ -1,7 +1,10 @@
 package io.pillopl.library.lending.patron.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import io.pillopl.library.catalogue.BookId;
@@ -9,9 +12,6 @@ import io.pillopl.library.catalogue.BookType;
 import io.pillopl.library.commons.events.DomainEvent;
 import io.pillopl.library.lending.LendingEvent;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 public sealed interface PatronEvent extends DomainEvent {
 
@@ -31,7 +31,11 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record PatronCreated(
-      UUID eventId, Instant when, UUID patronIdValue, PatronType patronType, EmailAddress emailAddress)
+      UUID eventId,
+      Instant when,
+      UUID patronIdValue,
+      PatronType patronType,
+      EmailAddress emailAddress)
       implements PatronEvent {
 
     public PatronCreated {
@@ -715,8 +719,7 @@ public sealed interface PatronEvent extends DomainEvent {
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
-    public BookHoldCanceled(
-        Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+    public BookHoldCanceled(Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
       this(UUID.randomUUID(), when, patronIdValue, bookId, libraryBranchId);
     }
 

@@ -16,11 +16,7 @@ public final class BookDuplicateHoldFound implements DomainEvent {
   private final UUID bookId;
 
   public BookDuplicateHoldFound(
-      Instant when,
-      UUID firstPatronId,
-      UUID secondPatronId,
-      UUID libraryBranchId,
-      UUID bookId) {
+      Instant when, UUID firstPatronId, UUID secondPatronId, UUID libraryBranchId, UUID bookId) {
     this.when = Objects.requireNonNull(when, "when");
     this.firstPatronId = Objects.requireNonNull(firstPatronId, "firstPatronId");
     this.secondPatronId = Objects.requireNonNull(secondPatronId, "secondPatronId");

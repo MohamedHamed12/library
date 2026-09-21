@@ -45,10 +45,14 @@ public class PlacingOnHold {
   }
 
   private AvailableBook find(BookId id) {
-    return findAvailableBook.findAvailableBookBy(id).orElseThrow(() -> new BookNotFoundException(id));
+    return findAvailableBook
+        .findAvailableBookBy(id)
+        .orElseThrow(() -> new BookNotFoundException(id));
   }
 
   private Patron find(PatronId patronId) {
-    return patronRepository.findBy(patronId).orElseThrow(() -> new PatronNotFoundException(patronId));
+    return patronRepository
+        .findBy(patronId)
+        .orElseThrow(() -> new PatronNotFoundException(patronId));
   }
 }

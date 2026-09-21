@@ -108,18 +108,13 @@ public class Patron {
         return accepted(
             events(
                 bookPlacedOnHold,
-                MaximumNumberOhHoldsReached.reachedAt(
-                    timestamp, patron, MAX_NUMBER_OF_HOLDS)));
+                MaximumNumberOhHoldsReached.reachedAt(timestamp, patron, MAX_NUMBER_OF_HOLDS)));
       }
       return accepted(events(bookPlacedOnHold));
     }
     return rejected(
         holdFailedAt(
-            timestamp,
-            rejection.get(),
-            book.getBookId(),
-            book.getLibraryBranch(),
-            patron));
+            timestamp, rejection.get(), book.getBookId(), book.getLibraryBranch(), patron));
   }
 
   public Decision<BookHoldExtensionFailed, BookHoldExtended> extendHold(
@@ -159,11 +154,7 @@ public class Patron {
       Instant timestamp, BookOnHold book, String reason) {
     return rejected(
         extensionFailedAt(
-            timestamp,
-            withReason(reason),
-            book.getBookId(),
-            book.getHoldPlacedAt(),
-            patron));
+            timestamp, withReason(reason), book.getBookId(), book.getHoldPlacedAt(), patron));
   }
 
   private int maxExtensionDays() {

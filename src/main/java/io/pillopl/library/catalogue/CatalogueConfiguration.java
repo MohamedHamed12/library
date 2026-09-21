@@ -1,7 +1,7 @@
 package io.pillopl.library.catalogue;
 
-import io.pillopl.library.commons.events.DomainEvents;
-import io.pillopl.library.commons.events.publisher.DomainEventsConfig;
+import java.time.Clock;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -10,29 +10,30 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.time.Clock;
+import io.pillopl.library.commons.events.DomainEvents;
+import io.pillopl.library.commons.events.publisher.DomainEventsConfig;
 
 @Configuration
 @EnableAutoConfiguration
 @Import({CatalogueDatabaseConfig.class, DomainEventsConfig.class})
 public class CatalogueConfiguration {
 
-    @Bean
-    Catalogue catalogue(CatalogueDatabase catalogueDatabase, DomainEvents domainEvents, Clock clock) {
-        return new Catalogue(catalogueDatabase, domainEvents, clock);
-    }
+  @Bean
+  Catalogue catalogue(CatalogueDatabase catalogueDatabase, DomainEvents domainEvents, Clock clock) {
+    return new Catalogue(catalogueDatabase, domainEvents, clock);
+  }
 
-    @Bean
-    CatalogueDatabase catalogueDatabase(JdbcTemplate jdbcTemplate) {
-        return new CatalogueDatabase(jdbcTemplate);
-    }
+  @Bean
+  CatalogueDatabase catalogueDatabase(JdbcTemplate jdbcTemplate) {
+    return new CatalogueDatabase(jdbcTemplate);
+  }
 
-    @Profile("local")
-    @Bean
-    CommandLineRunner init(Catalogue catalogue) {
-        return args -> {
-            catalogue.addBook("Joshua Bloch", "Effective Java", "0321125215");
-            catalogue.addBookInstance("0321125215", BookType.Restricted);
-        };
-    }
+  @Profile("local")
+  @Bean
+  CommandLineRunner init(Catalogue catalogue) {
+    return args -> {
+      catalogue.addBook("Joshua Bloch", "Effective Java", "0321125215");
+      catalogue.addBookInstance("0321125215", BookType.Restricted);
+    };
+  }
 }
