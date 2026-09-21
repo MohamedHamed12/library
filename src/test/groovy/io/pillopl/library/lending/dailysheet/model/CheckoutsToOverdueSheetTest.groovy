@@ -30,7 +30,7 @@ class CheckoutsToOverdueSheetTest extends Specification {
         given:
             CheckoutsToOverdueSheet sheet = sheet(patronId, anotherPatronId, bookId, anotherBookId, libraryBranchId, anotherLibraryBranchId)
         expect:
-            sheet.toStreamOfEvents(PROCESSING_TIME).with {
+            sheet.toStreamOfEvents(PROCESSING_TIME).toList().with {
 
                 PatronEvent.OverdueCheckoutRegistered first = it.get(0) as PatronEvent.OverdueCheckoutRegistered
                 first.patronId == patronId.patronId

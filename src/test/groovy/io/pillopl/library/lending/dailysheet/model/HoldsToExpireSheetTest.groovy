@@ -30,7 +30,7 @@ class HoldsToExpireSheetTest extends Specification {
         given:
             HoldsToExpireSheet sheet = sheet(patronId, anotherPatronId, bookId, anotherBookId, libraryBranchId, anotherLibraryBranchId)
         expect:
-            sheet.toStreamOfEvents(PROCESSING_TIME).with {
+            sheet.toStreamOfEvents(PROCESSING_TIME).toList().with {
 
                 PatronEvent.BookHoldExpired first = it.get(0) as PatronEvent.BookHoldExpired
                 first.patronId == patronId.patronId

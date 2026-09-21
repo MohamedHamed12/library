@@ -31,7 +31,7 @@ class ReactivatingPatronTest extends Specification {
         then:
             result == Result.Success
             1 * repository.publish({ PatronReactivated event ->
-                event.patronId == patronId && event.when == now
+                event.getPatronId() == patronId.getPatronId() && event.getWhen() == now
             }) >> regularPatron(patronId)
     }
 

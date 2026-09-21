@@ -31,9 +31,9 @@ class SuspendingPatronTest extends Specification {
         then:
             result == Result.Success
             1 * repository.publish({ PatronSuspended event ->
-                event.patronId == patronId &&
-                        event.when == now &&
-                        event.reason == "Policy violation"
+                event.getPatronId() == patronId.getPatronId() &&
+                        event.getWhen() == now &&
+                        event.getReason() == "Policy violation"
             }) >> regularPatron(patronId)
     }
 

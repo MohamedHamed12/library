@@ -32,10 +32,10 @@ class RegisteringPatronTest extends Specification {
             1 * repository.existsBy(emailAddress) >> false
             result == patronId
             1 * repository.publish({ PatronCreated created ->
-                created.patronId == patronId &&
-                        created.when == now &&
-                        created.patronType == Regular &&
-                        created.emailAddress == emailAddress
+                created.getPatronId() == patronId.getPatronId() &&
+                        created.getWhen() == now &&
+                        created.getPatronType() == Regular &&
+                        created.getEmailAddress() == emailAddress
             }) >> regularPatron(patronId)
     }
 
