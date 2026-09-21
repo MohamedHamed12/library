@@ -1,26 +1,27 @@
 package io.pillopl.library.lending.dailysheet.model;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegistered;
 import io.vavr.collection.List;
 import io.vavr.collection.Stream;
-import lombok.NonNull;
-import lombok.Value;
 
-import java.time.Instant;
+public record CheckoutsToOverdueSheet(List<OverdueCheckout> checkouts) {
 
-@Value
-public class CheckoutsToOverdueSheet {
+  public CheckoutsToOverdueSheet {
+    Objects.requireNonNull(checkouts, "checkouts");
+  }
 
-    @NonNull
-    List<OverdueCheckout> checkouts;
+  public List<OverdueCheckout> getCheckouts() {
+    return checkouts;
+  }
 
-    public Stream<OverdueCheckoutRegistered> toStreamOfEvents(Instant processingTime) {
-        return checkouts.toStream()
-                .map(checkout -> checkout.toEvent(processingTime));
-    }
+  public Stream<OverdueCheckoutRegistered> toStreamOfEvents(Instant processingTime) {
+    return checkouts.toStream().map(checkout -> checkout.toEvent(processingTime));
+  }
 
-    public int count() {
-        return checkouts.size();
-    }
-
+  public int count() {
+    return checkouts.size();
+  }
 }

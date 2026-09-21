@@ -1,64 +1,65 @@
 package io.pillopl.library.lending.patron.model;
 
-import io.vavr.control.Option;
-import lombok.Value;
-
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
-@Value
-public class HoldDuration {
+import io.vavr.control.Option;
 
-    Instant from;
-    Instant to;
+public final class HoldDuration {
 
-    private HoldDuration(Instant from, Instant to) {
-        if (from == null) {
-            throw new IllegalArgumentException(
-                    "Hold duration start time cannot be null"
-            );
-        }
+  private final Instant from;
+  private final Instant to;
 
-        if (to != null && to.isBefore(from)) {
-            throw new IllegalStateException(
-                    "Close-ended duration must be valid"
-            );
-        }
-
-        this.from = from;
-        this.to = to;
+  private HoldDuration(Instant from, Instant to) {
+    if (from == null) {
+      throw new IllegalArgumentException("Hold duration start time cannot be null");
     }
-
-    boolean isOpenEnded() {
-        return getTo().isEmpty();
+    if (to != null && to.isBefore(from)) {
+      throw new IllegalStateException("Close-ended duration must be valid");
     }
+    this.from = from;
+    this.to = to;
+  }
 
-    Option<Instant> getTo() {
-        return Option.of(to);
+  public Instant getFrom() {
+    return from;
+  }
+
+  boolean isOpenEnded() {
+    return getTo().isEmpty();
+  }
+
+  Option<Instant> getTo() {
+    return Option.of(to);
+  }
+
+  public static HoldDuration openEnded(Instant from) {
+    return new HoldDuration(from, null);
+  }
+
+  public static HoldDuration closeEnded(Instant from, NumberOfDays days) {
+    Instant till = from.plus(Duration.ofDays(days.getDays()));
+    return new HoldDuration(from, till);
+  }
+
+  public static HoldDuration closeEnded(Instant from, int days) {
+    return closeEnded(from, NumberOfDays.of(days));
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
     }
-
-    public static HoldDuration openEnded(Instant from) {
-        return new HoldDuration(from, null);
+    if (!(other instanceof HoldDuration that)) {
+      return false;
     }
+    return from.equals(that.from) && Objects.equals(to, that.to);
+  }
 
-    public static HoldDuration closeEnded(
-            Instant from,
-            NumberOfDays days
-    ) {
-        Instant till = from.plus(
-                Duration.ofDays(days.getDays())
-        );
-
-        return new HoldDuration(from, till);
-    }
-
-    public static HoldDuration closeEnded(
-            Instant from,
-            int days
-    ) {
-        return closeEnded(
-                from,
-                NumberOfDays.of(days)
-        );
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(from, to);
+  }
 }

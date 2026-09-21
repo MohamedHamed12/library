@@ -1,13 +1,16 @@
 package io.pillopl.library.lending.patronprofile.model;
 
+import java.util.Objects;
+
 import io.vavr.collection.List;
-import lombok.NonNull;
-import lombok.Value;
 
-@Value
-public class HoldsView {
+public record HoldsView(List<Hold> currentHolds) {
 
-    @NonNull
-    List<Hold> currentHolds;
+  public HoldsView {
+    Objects.requireNonNull(currentHolds, "currentHolds");
+  }
 
+  public List<Hold> getCurrentHolds() {
+    return currentHolds;
+  }
 }

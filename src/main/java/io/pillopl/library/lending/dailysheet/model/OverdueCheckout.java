@@ -1,20 +1,35 @@
 package io.pillopl.library.lending.dailysheet.model;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.OverdueCheckoutRegistered;
 import io.pillopl.library.lending.patron.model.PatronId;
-import lombok.Value;
 
-import java.time.Instant;
+public record OverdueCheckout(
+    BookId checkedOutBook, PatronId patron, LibraryBranchId library) {
 
-@Value
-public class OverdueCheckout {
-    private final BookId checkedOutBook;
-    private final PatronId patron;
-    private final LibraryBranchId library;
+  public OverdueCheckout {
+    Objects.requireNonNull(checkedOutBook, "checkedOutBook");
+    Objects.requireNonNull(patron, "patron");
+    Objects.requireNonNull(library, "library");
+  }
 
-    OverdueCheckoutRegistered toEvent(Instant processingTime) {
-        return OverdueCheckoutRegistered.registeredAt(processingTime, this.patron, this.checkedOutBook, this.library);
-    }
+  public BookId getCheckedOutBook() {
+    return checkedOutBook;
+  }
+
+  public PatronId getPatron() {
+    return patron;
+  }
+
+  public LibraryBranchId getLibrary() {
+    return library;
+  }
+
+  OverdueCheckoutRegistered toEvent(Instant processingTime) {
+    return OverdueCheckoutRegistered.registeredAt(processingTime, patron, checkedOutBook, library);
+  }
 }

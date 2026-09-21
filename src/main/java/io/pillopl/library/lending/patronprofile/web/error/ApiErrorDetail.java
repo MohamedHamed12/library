@@ -1,10 +1,12 @@
 package io.pillopl.library.lending.patronprofile.web.error;
 
-import lombok.Value;
+public record ApiErrorDetail(String field, String message) {
 
-@Value
-public class ApiErrorDetail {
+  public String getField() {
+    return field;
+  }
 
-    String field;
-    String message;
+  public String getMessage() {
+    return message;
+  }
 }

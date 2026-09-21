@@ -1,20 +1,34 @@
 package io.pillopl.library.lending.dailysheet.model;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExpired;
 import io.pillopl.library.lending.patron.model.PatronId;
-import lombok.Value;
 
-import java.time.Instant;
+public record ExpiredHold(BookId heldBook, PatronId patron, LibraryBranchId library) {
 
-@Value
-public class ExpiredHold {
-    private final BookId heldBook;
-    private final PatronId patron;
-    private final LibraryBranchId library;
+  public ExpiredHold {
+    Objects.requireNonNull(heldBook, "heldBook");
+    Objects.requireNonNull(patron, "patron");
+    Objects.requireNonNull(library, "library");
+  }
 
-    BookHoldExpired toEvent(Instant processingTime) {
-        return BookHoldExpired.expiredAt(processingTime, this.heldBook, this.patron, this.library);
-    }
+  public BookId getHeldBook() {
+    return heldBook;
+  }
+
+  public PatronId getPatron() {
+    return patron;
+  }
+
+  public LibraryBranchId getLibrary() {
+    return library;
+  }
+
+  BookHoldExpired toEvent(Instant processingTime) {
+    return BookHoldExpired.expiredAt(processingTime, heldBook, patron, library);
+  }
 }

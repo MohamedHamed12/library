@@ -1,6 +1,7 @@
 package io.pillopl.library.lending.book.model;
 
 import java.time.Instant;
+import java.util.Objects;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.catalogue.BookType;
@@ -13,26 +14,26 @@ import io.pillopl.library.lending.LendingEvent.BookReturnedEvent;
 import io.pillopl.library.lending.PatronReference;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.Value;
-
-@Value
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
-@EqualsAndHashCode(of = "bookInformation")
 public final class BookOnHold implements Book {
 
-  @NonNull BookInformation bookInformation;
+  private final BookInformation bookInformation;
+  private final LibraryBranchId holdPlacedAt;
+  private final PatronReference byPatron;
+  private final Instant holdTill;
+  private final Version version;
 
-  @NonNull LibraryBranchId holdPlacedAt;
-
-  @NonNull PatronReference byPatron;
-
-  Instant holdTill;
-
-  @NonNull Version version;
+  BookOnHold(
+      BookInformation bookInformation,
+      LibraryBranchId holdPlacedAt,
+      PatronReference byPatron,
+      Instant holdTill,
+      Version version) {
+    this.bookInformation = Objects.requireNonNull(bookInformation, "bookInformation");
+    this.holdPlacedAt = Objects.requireNonNull(holdPlacedAt, "holdPlacedAt");
+    this.byPatron = Objects.requireNonNull(byPatron, "byPatron");
+    this.holdTill = holdTill;
+    this.version = Objects.requireNonNull(version, "version");
+  }
 
   public BookOnHold(
       BookId bookId,
@@ -42,6 +43,28 @@ public final class BookOnHold implements Book {
       Instant holdTill,
       Version version) {
     this(new BookInformation(bookId, type), libraryBranchId, patronId, holdTill, version);
+  }
+
+  @Override
+  public BookInformation getBookInformation() {
+    return bookInformation;
+  }
+
+  public LibraryBranchId getHoldPlacedAt() {
+    return holdPlacedAt;
+  }
+
+  public PatronReference getByPatron() {
+    return byPatron;
+  }
+
+  public Instant getHoldTill() {
+    return holdTill;
+  }
+
+  @Override
+  public Version getVersion() {
+    return version;
   }
 
   public AvailableBook handle(BookReturnedEvent bookReturned) {
@@ -78,5 +101,18 @@ public final class BookOnHold implements Book {
 
   public boolean by(PatronReference patronId) {
     return byPatron.getPatronId().equals(patronId.getPatronId());
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    return other instanceof BookOnHold that && bookInformation.equals(that.bookInformation);
+  }
+
+  @Override
+  public int hashCode() {
+    return bookInformation.hashCode();
   }
 }
