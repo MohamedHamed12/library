@@ -30,25 +30,25 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record PatronCreated(
-      UUID eventId, Instant when, UUID patronId, PatronType patronType, EmailAddress emailAddress)
+      UUID eventId, Instant when, UUID patronIdValue, PatronType patronType, EmailAddress emailAddress)
       implements PatronEvent {
 
     public PatronCreated {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(patronType, "patronType");
       Objects.requireNonNull(emailAddress, "emailAddress");
     }
 
     public PatronCreated(
-        Instant when, UUID patronId, PatronType patronType, EmailAddress emailAddress) {
-      this(UUID.randomUUID(), when, patronId, patronType, emailAddress);
+        Instant when, UUID patronIdValue, PatronType patronType, EmailAddress emailAddress) {
+      this(UUID.randomUUID(), when, patronIdValue, patronType, emailAddress);
     }
 
     public static PatronCreated createdAt(
-        Instant timestamp, PatronId patronId, PatronType type, EmailAddress emailAddress) {
-      return new PatronCreated(timestamp, patronId.getPatronId(), type, emailAddress);
+        Instant timestamp, PatronId patronIdValue, PatronType type, EmailAddress emailAddress) {
+      return new PatronCreated(timestamp, patronIdValue.getPatronId(), type, emailAddress);
     }
 
     @Override
@@ -63,7 +63,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public PatronType getPatronType() {
@@ -78,7 +78,7 @@ public sealed interface PatronEvent extends DomainEvent {
   record BookPlacedOnHold(
       UUID eventId,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       BookType bookType,
       UUID libraryBranchId,
@@ -89,7 +89,7 @@ public sealed interface PatronEvent extends DomainEvent {
     public BookPlacedOnHold {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(bookType, "bookType");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
@@ -98,7 +98,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     public BookPlacedOnHold(
         Instant when,
-        UUID patronId,
+        UUID patronIdValue,
         UUID bookId,
         BookType bookType,
         UUID libraryBranchId,
@@ -107,7 +107,7 @@ public sealed interface PatronEvent extends DomainEvent {
       this(
           UUID.randomUUID(),
           when,
-          patronId,
+          patronIdValue,
           bookId,
           bookType,
           libraryBranchId,
@@ -120,11 +120,11 @@ public sealed interface PatronEvent extends DomainEvent {
         BookId bookId,
         BookType bookType,
         LibraryBranchId libraryBranchId,
-        PatronId patronId,
+        PatronId patronIdValue,
         HoldDuration holdDuration) {
       return new BookPlacedOnHold(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           bookType,
           libraryBranchId.getLibraryBranchId(),
@@ -144,7 +144,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -173,23 +173,23 @@ public sealed interface PatronEvent extends DomainEvent {
 
   record BookPlacedOnHoldEvents(
       UUID eventId,
-      UUID patronId,
+      UUID patronIdValue,
       BookPlacedOnHold bookPlacedOnHold,
       Option<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached)
       implements PatronEvent {
 
     public BookPlacedOnHoldEvents {
       Objects.requireNonNull(eventId, "eventId");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookPlacedOnHold, "bookPlacedOnHold");
       Objects.requireNonNull(maximumNumberOhHoldsReached, "maximumNumberOhHoldsReached");
     }
 
     public BookPlacedOnHoldEvents(
-        UUID patronId,
+        UUID patronIdValue,
         BookPlacedOnHold bookPlacedOnHold,
         Option<MaximumNumberOhHoldsReached> maximumNumberOhHoldsReached) {
-      this(UUID.randomUUID(), patronId, bookPlacedOnHold, maximumNumberOhHoldsReached);
+      this(UUID.randomUUID(), patronIdValue, bookPlacedOnHold, maximumNumberOhHoldsReached);
     }
 
     @Override
@@ -199,7 +199,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public BookPlacedOnHold getBookPlacedOnHold() {
@@ -237,16 +237,16 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record MaximumNumberOhHoldsReached(
-      UUID eventId, Instant when, UUID patronId, int numberOfHolds) implements PatronEvent {
+      UUID eventId, Instant when, UUID patronIdValue, int numberOfHolds) implements PatronEvent {
 
     public MaximumNumberOhHoldsReached {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
     }
 
-    public MaximumNumberOhHoldsReached(Instant when, UUID patronId, int numberOfHolds) {
-      this(UUID.randomUUID(), when, patronId, numberOfHolds);
+    public MaximumNumberOhHoldsReached(Instant when, UUID patronIdValue, int numberOfHolds) {
+      this(UUID.randomUUID(), when, patronIdValue, numberOfHolds);
     }
 
     public static MaximumNumberOhHoldsReached reachedAt(
@@ -267,7 +267,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public int getNumberOfHolds() {
@@ -278,7 +278,7 @@ public sealed interface PatronEvent extends DomainEvent {
   record BookCheckedOut(
       UUID eventId,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       BookType bookType,
       UUID libraryBranchId,
@@ -288,7 +288,7 @@ public sealed interface PatronEvent extends DomainEvent {
     public BookCheckedOut {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(bookType, "bookType");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
@@ -297,12 +297,12 @@ public sealed interface PatronEvent extends DomainEvent {
 
     public BookCheckedOut(
         Instant when,
-        UUID patronId,
+        UUID patronIdValue,
         UUID bookId,
         BookType bookType,
         UUID libraryBranchId,
         Instant till) {
-      this(UUID.randomUUID(), when, patronId, bookId, bookType, libraryBranchId, till);
+      this(UUID.randomUUID(), when, patronIdValue, bookId, bookType, libraryBranchId, till);
     }
 
     public static BookCheckedOut checkedOutAt(
@@ -310,11 +310,11 @@ public sealed interface PatronEvent extends DomainEvent {
         BookId bookId,
         BookType bookType,
         LibraryBranchId libraryBranchId,
-        PatronId patronId,
+        PatronId patronIdValue,
         CheckoutDuration checkoutDuration) {
       return new BookCheckedOut(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           bookType,
           libraryBranchId.getLibraryBranchId(),
@@ -333,7 +333,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -358,7 +358,7 @@ public sealed interface PatronEvent extends DomainEvent {
   record BookReturned(
       UUID eventId,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       BookType bookType,
       UUID libraryBranchId)
@@ -367,15 +367,15 @@ public sealed interface PatronEvent extends DomainEvent {
     public BookReturned {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(bookType, "bookType");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookReturned(
-        Instant when, UUID patronId, UUID bookId, BookType bookType, UUID libraryBranchId) {
-      this(UUID.randomUUID(), when, patronId, bookId, bookType, libraryBranchId);
+        Instant when, UUID patronIdValue, UUID bookId, BookType bookType, UUID libraryBranchId) {
+      this(UUID.randomUUID(), when, patronIdValue, bookId, bookType, libraryBranchId);
     }
 
     @Override
@@ -390,7 +390,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -412,7 +412,7 @@ public sealed interface PatronEvent extends DomainEvent {
       UUID eventId,
       String reason,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       UUID libraryBranchId)
       implements PatronEvent {
@@ -421,14 +421,14 @@ public sealed interface PatronEvent extends DomainEvent {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(reason, "reason");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookHoldFailed(
-        String reason, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), reason, when, patronId, bookId, libraryBranchId);
+        String reason, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), reason, when, patronIdValue, bookId, libraryBranchId);
     }
 
     static BookHoldFailed holdFailedAt(
@@ -461,7 +461,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public UUID getBookId() {
@@ -477,7 +477,7 @@ public sealed interface PatronEvent extends DomainEvent {
       UUID eventId,
       String reason,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       UUID libraryBranchId)
       implements PatronEvent {
@@ -486,14 +486,14 @@ public sealed interface PatronEvent extends DomainEvent {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(reason, "reason");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookCheckingOutFailed(
-        String reason, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), reason, when, patronId, bookId, libraryBranchId);
+        String reason, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), reason, when, patronIdValue, bookId, libraryBranchId);
     }
 
     static BookCheckingOutFailed checkoutFailedAt(
@@ -526,7 +526,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public UUID getBookId() {
@@ -541,7 +541,7 @@ public sealed interface PatronEvent extends DomainEvent {
   record BookHoldExtended(
       UUID eventId,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       UUID libraryBranchId,
       Instant previousHoldTill,
@@ -552,7 +552,7 @@ public sealed interface PatronEvent extends DomainEvent {
     public BookHoldExtended {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
       Objects.requireNonNull(previousHoldTill, "previousHoldTill");
@@ -561,7 +561,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     public BookHoldExtended(
         Instant when,
-        UUID patronId,
+        UUID patronIdValue,
         UUID bookId,
         UUID libraryBranchId,
         Instant previousHoldTill,
@@ -570,7 +570,7 @@ public sealed interface PatronEvent extends DomainEvent {
       this(
           UUID.randomUUID(),
           when,
-          patronId,
+          patronIdValue,
           bookId,
           libraryBranchId,
           previousHoldTill,
@@ -582,13 +582,13 @@ public sealed interface PatronEvent extends DomainEvent {
         Instant timestamp,
         BookId bookId,
         LibraryBranchId libraryBranchId,
-        PatronId patronId,
+        PatronId patronIdValue,
         Instant previousHoldTill,
         Instant holdTill,
         int extensionCount) {
       return new BookHoldExtended(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           libraryBranchId.getLibraryBranchId(),
           previousHoldTill,
@@ -608,7 +608,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -639,7 +639,7 @@ public sealed interface PatronEvent extends DomainEvent {
       UUID eventId,
       String reason,
       Instant when,
-      UUID patronId,
+      UUID patronIdValue,
       UUID bookId,
       UUID libraryBranchId)
       implements PatronEvent {
@@ -648,14 +648,14 @@ public sealed interface PatronEvent extends DomainEvent {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(reason, "reason");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookHoldExtensionFailed(
-        String reason, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), reason, when, patronId, bookId, libraryBranchId);
+        String reason, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), reason, when, patronIdValue, bookId, libraryBranchId);
     }
 
     static BookHoldExtensionFailed extensionFailedAt(
@@ -688,7 +688,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public UUID getBookId() {
@@ -701,27 +701,27 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record BookHoldCanceled(
-      UUID eventId, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId)
+      UUID eventId, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId)
       implements PatronEvent, LendingEvent.BookHoldCanceledEvent {
 
     public BookHoldCanceled {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookHoldCanceled(
-        Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), when, patronId, bookId, libraryBranchId);
+        Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), when, patronIdValue, bookId, libraryBranchId);
     }
 
     public static BookHoldCanceled canceledAt(
-        Instant timestamp, BookId bookId, LibraryBranchId libraryBranchId, PatronId patronId) {
+        Instant timestamp, BookId bookId, LibraryBranchId libraryBranchId, PatronId patronIdValue) {
       return new BookHoldCanceled(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           libraryBranchId.getLibraryBranchId());
     }
@@ -738,7 +738,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -753,27 +753,27 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record BookHoldCancelingFailed(
-      UUID eventId, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId)
+      UUID eventId, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId)
       implements PatronEvent {
 
     public BookHoldCancelingFailed {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public BookHoldCancelingFailed(
-        Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), when, patronId, bookId, libraryBranchId);
+        Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), when, patronIdValue, bookId, libraryBranchId);
     }
 
     static BookHoldCancelingFailed cancellationFailedAt(
-        Instant timestamp, BookId bookId, LibraryBranchId libraryBranchId, PatronId patronId) {
+        Instant timestamp, BookId bookId, LibraryBranchId libraryBranchId, PatronId patronIdValue) {
       return new BookHoldCancelingFailed(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           libraryBranchId.getLibraryBranchId());
     }
@@ -790,7 +790,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public UUID getBookId() {
@@ -803,26 +803,26 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record BookHoldExpired(
-      UUID eventId, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId)
+      UUID eventId, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId)
       implements PatronEvent, LendingEvent.BookHoldExpiredEvent {
 
     public BookHoldExpired {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
-    public BookHoldExpired(Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), when, patronId, bookId, libraryBranchId);
+    public BookHoldExpired(Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), when, patronIdValue, bookId, libraryBranchId);
     }
 
     public static BookHoldExpired expiredAt(
-        Instant timestamp, BookId bookId, PatronId patronId, LibraryBranchId libraryBranchId) {
+        Instant timestamp, BookId bookId, PatronId patronIdValue, LibraryBranchId libraryBranchId) {
       return new BookHoldExpired(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           libraryBranchId.getLibraryBranchId());
     }
@@ -839,7 +839,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     @Override
@@ -854,27 +854,27 @@ public sealed interface PatronEvent extends DomainEvent {
   }
 
   record OverdueCheckoutRegistered(
-      UUID eventId, Instant when, UUID patronId, UUID bookId, UUID libraryBranchId)
+      UUID eventId, Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId)
       implements PatronEvent {
 
     public OverdueCheckoutRegistered {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(bookId, "bookId");
       Objects.requireNonNull(libraryBranchId, "libraryBranchId");
     }
 
     public OverdueCheckoutRegistered(
-        Instant when, UUID patronId, UUID bookId, UUID libraryBranchId) {
-      this(UUID.randomUUID(), when, patronId, bookId, libraryBranchId);
+        Instant when, UUID patronIdValue, UUID bookId, UUID libraryBranchId) {
+      this(UUID.randomUUID(), when, patronIdValue, bookId, libraryBranchId);
     }
 
     public static OverdueCheckoutRegistered registeredAt(
-        Instant timestamp, PatronId patronId, BookId bookId, LibraryBranchId libraryBranchId) {
+        Instant timestamp, PatronId patronIdValue, BookId bookId, LibraryBranchId libraryBranchId) {
       return new OverdueCheckoutRegistered(
           timestamp,
-          patronId.getPatronId(),
+          patronIdValue.getPatronId(),
           bookId.getBookId(),
           libraryBranchId.getLibraryBranchId());
     }
@@ -891,7 +891,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public UUID getBookId() {
@@ -903,23 +903,23 @@ public sealed interface PatronEvent extends DomainEvent {
     }
   }
 
-  record PatronSuspended(UUID eventId, Instant when, UUID patronId, String reason)
+  record PatronSuspended(UUID eventId, Instant when, UUID patronIdValue, String reason)
       implements PatronEvent {
 
     public PatronSuspended {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
       Objects.requireNonNull(reason, "reason");
     }
 
-    public PatronSuspended(Instant when, UUID patronId, String reason) {
-      this(UUID.randomUUID(), when, patronId, reason);
+    public PatronSuspended(Instant when, UUID patronIdValue, String reason) {
+      this(UUID.randomUUID(), when, patronIdValue, reason);
     }
 
     public static PatronSuspended suspendedAt(
-        Instant timestamp, PatronId patronId, String reason) {
-      return new PatronSuspended(timestamp, patronId.getPatronId(), reason);
+        Instant timestamp, PatronId patronIdValue, String reason) {
+      return new PatronSuspended(timestamp, patronIdValue.getPatronId(), reason);
     }
 
     @Override
@@ -934,7 +934,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
 
     public String getReason() {
@@ -942,20 +942,20 @@ public sealed interface PatronEvent extends DomainEvent {
     }
   }
 
-  record PatronReactivated(UUID eventId, Instant when, UUID patronId) implements PatronEvent {
+  record PatronReactivated(UUID eventId, Instant when, UUID patronIdValue) implements PatronEvent {
 
     public PatronReactivated {
       Objects.requireNonNull(eventId, "eventId");
       Objects.requireNonNull(when, "when");
-      Objects.requireNonNull(patronId, "patronId");
+      Objects.requireNonNull(patronIdValue, "patronIdValue");
     }
 
-    public PatronReactivated(Instant when, UUID patronId) {
-      this(UUID.randomUUID(), when, patronId);
+    public PatronReactivated(Instant when, UUID patronIdValue) {
+      this(UUID.randomUUID(), when, patronIdValue);
     }
 
-    public static PatronReactivated reactivatedAt(Instant timestamp, PatronId patronId) {
-      return new PatronReactivated(timestamp, patronId.getPatronId());
+    public static PatronReactivated reactivatedAt(Instant timestamp, PatronId patronIdValue) {
+      return new PatronReactivated(timestamp, patronIdValue.getPatronId());
     }
 
     @Override
@@ -970,7 +970,7 @@ public sealed interface PatronEvent extends DomainEvent {
 
     @Override
     public UUID getPatronId() {
-      return patronId;
+      return patronIdValue;
     }
   }
 }
