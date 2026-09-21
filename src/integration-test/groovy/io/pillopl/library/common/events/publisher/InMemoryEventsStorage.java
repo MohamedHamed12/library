@@ -1,29 +1,30 @@
 package io.pillopl.library.common.events.publisher;
 
-import io.pillopl.library.commons.events.DomainEvent;
-import io.pillopl.library.commons.events.publisher.EventsStorage;
-import io.vavr.collection.List;
-
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
+import io.pillopl.library.commons.events.DomainEvent;
+import io.pillopl.library.commons.events.publisher.EventsStorage;
 
 public class InMemoryEventsStorage implements EventsStorage {
 
-    //it's not thread safe, enough for testing
-    private final java.util.List<DomainEvent> eventList = Collections.synchronizedList(new ArrayList<>());
+    // it's not thread safe, enough for testing
+    private final List<DomainEvent> eventList =
+        Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    synchronized public void save(DomainEvent event) {
+    public synchronized void save(DomainEvent event) {
         eventList.add(event);
     }
 
     @Override
-    synchronized public List<DomainEvent> toPublish() {
-        return List.ofAll(eventList);
+    public synchronized List<DomainEvent> toPublish() {
+        return List.copyOf(eventList);
     }
 
     @Override
-    synchronized public void published(List<DomainEvent> events) {
-        eventList.removeAll(events.asJava());
+    public synchronized void published(List<DomainEvent> events) {
+        eventList.removeAll(events);
     }
 }
