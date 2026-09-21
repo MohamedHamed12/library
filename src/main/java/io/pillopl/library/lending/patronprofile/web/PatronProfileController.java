@@ -1,6 +1,5 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-import static java.util.stream.Collectors.toList;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.afford;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -96,7 +95,7 @@ class PatronProfileController {
     List<EntityModel<Hold>> holds =
         patronProfiles.fetchFor(new PatronId(patronId)).getHoldsView().getCurrentHolds().stream()
             .map(hold -> resourceWithLinkToHoldSelf(patronId, hold))
-            .collect(toList());
+            .toList();
     return ResponseEntity.ok(
         CollectionModel.of(
             holds,
