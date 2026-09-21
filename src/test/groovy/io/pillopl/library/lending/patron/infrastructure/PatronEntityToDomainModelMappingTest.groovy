@@ -5,10 +5,10 @@ import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.EmailAddress
 import io.pillopl.library.lending.patron.model.Patron
 import io.pillopl.library.lending.patron.model.PatronFactory
+import io.pillopl.library.lending.patron.model.PatronHoldSnapshot
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.PatronStatus
 import io.pillopl.library.lending.patron.model.PatronType
-import io.vavr.Tuple4
 import spock.lang.Specification
 
 import java.time.Instant
@@ -34,26 +34,35 @@ class PatronEntityToDomainModelMappingTest extends Specification {
 
     def 'should map patron holds including expiration and extension count'() {
         given:
-            HoldDatabaseEntity first = new HoldDatabaseEntity(bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId, anyDate)
+            HoldDatabaseEntity first =
+                    new HoldDatabaseEntity(
+                            bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId, anyDate)
             first.extensionCount = 1
             PatronDatabaseEntity entity = patronEntity(patronId, Regular, [
                     first,
-                    new HoldDatabaseEntity(anotherBookId.bookId, patronId.patronId, anotherBranchId.libraryBranchId, anyDate)])
+                    new HoldDatabaseEntity(
+                            anotherBookId.bookId,
+                            patronId.patronId,
+                            anotherBranchId.libraryBranchId,
+                            anyDate)])
         when:
-            Set<Tuple4<BookId, LibraryBranchId, Instant, Integer>> patronHolds = domainModelMapper.mapPatronHolds(entity)
+            Set<PatronHoldSnapshot> patronHolds = domainModelMapper.mapPatronHolds(entity)
         then:
             patronHolds.size() == 2
-            patronHolds.find { it._1 == bookId }._3 == anyDate
-            patronHolds.find { it._1 == bookId }._4 == 1
+            patronHolds.find { it.bookId() == bookId }.till() == anyDate
+            patronHolds.find { it.bookId() == bookId }.extensionCount() == 1
     }
 
     def 'should map patron overdue checkouts'() {
         given:
             PatronDatabaseEntity entity = patronEntity(patronId, Regular, [], [
-                    new OverdueCheckoutDatabaseEntity(bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId),
-                    new OverdueCheckoutDatabaseEntity(anotherBookId.bookId, patronId.patronId, anotherBranchId.libraryBranchId)])
+                    new OverdueCheckoutDatabaseEntity(
+                            bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId),
+                    new OverdueCheckoutDatabaseEntity(
+                            anotherBookId.bookId, patronId.patronId, anotherBranchId.libraryBranchId)])
         when:
-            Map<LibraryBranchId, Set<BookId>> overdueCheckouts = domainModelMapper.mapPatronOverdueCheckouts(entity)
+            Map<LibraryBranchId, Set<BookId>> overdueCheckouts =
+                    domainModelMapper.mapPatronOverdueCheckouts(entity)
         then:
             overdueCheckouts.get(libraryBranchId).size() == 1
             overdueCheckouts.get(anotherBranchId).size() == 1
@@ -71,18 +80,19 @@ class PatronEntityToDomainModelMappingTest extends Specification {
                     closeEnded(anyDate, 3),
                     anyDate)
         then:
-            result.isLeft()
+            result.rejection().isPresent()
     }
 
-
-    PatronDatabaseEntity patronEntity(PatronId patronId,
-                                      PatronType type,
-                                      List<HoldDatabaseEntity> holds = emptyList(),
-                                      List<OverdueCheckoutDatabaseEntity> overdueCheckouts = emptyList()) {
-        PatronDatabaseEntity entity = new PatronDatabaseEntity(patronId, type, EmailAddress.of("mapped@example.test"))
+    PatronDatabaseEntity patronEntity(
+            PatronId patronId,
+            PatronType type,
+            List<HoldDatabaseEntity> holds = emptyList(),
+            List<OverdueCheckoutDatabaseEntity> overdueCheckouts = emptyList()) {
+        PatronDatabaseEntity entity =
+                new PatronDatabaseEntity(
+                        patronId, type, EmailAddress.of("mapped@example.test"))
         entity.booksOnHold = holds as Set
         entity.checkouts = overdueCheckouts as Set
         return entity
     }
-
 }
