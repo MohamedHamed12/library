@@ -44,7 +44,7 @@ class FindBookOnHoldInDatabaseIT extends Specification {
         and:
             bookEntityRepository.save(bookOnHold)
         then:
-            bookEntityRepository.findBookOnHold(bookId, patronId).isDefined()
+            bookEntityRepository.findBookOnHold(bookId, patronId).isPresent()
     }
 
     PatronEvent.BookPlacedOnHold placedOnHoldBy(PatronId patronId) {

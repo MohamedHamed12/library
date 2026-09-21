@@ -62,7 +62,7 @@ class PatronDatabaseRepositoryIT extends Specification {
             patron.placeOnHold(
                     circulatingAvailableBookAt(libraryBranchId),
                     HoldDuration.closeEnded(NOW, 5),
-                    NOW).isLeft()
+                    NOW).rejection().isPresent()
     }
 
     def 'reactivated patron can place hold after reload'() {
@@ -77,7 +77,7 @@ class PatronDatabaseRepositoryIT extends Specification {
             patron.placeOnHold(
                     circulatingAvailableBookAt(libraryBranchId),
                     HoldDuration.closeEnded(NOW, 5),
-                    NOW).isRight()
+                    NOW).success().isPresent()
     }
 
     BookPlacedOnHoldEvents placedOnHold() {

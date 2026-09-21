@@ -38,7 +38,7 @@ class FindAvailableBookInDatabaseIT extends Specification {
         when:
             bookEntityRepository.save(availableBook)
         then:
-            bookEntityRepository.findAvailableBookBy(bookId).isDefined()
+            bookEntityRepository.findAvailableBookBy(bookId).isPresent()
         when:
             BookOnHold bookOnHold = availableBook.handle(placedOnHold())
         and:
