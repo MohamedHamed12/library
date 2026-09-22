@@ -1,45 +1,37 @@
 package io.pillopl.library.lending.patron.application.hold;
 
 import static io.pillopl.library.commons.commands.Result.Success;
-import static io.vavr.API.*;
-import static io.vavr.Patterns.$Left;
-import static io.vavr.Patterns.$Right;
+
+import java.util.Objects;
 
 import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.commons.commands.Decision;
 import io.pillopl.library.commons.commands.Result;
 import io.pillopl.library.lending.book.FindAvailableBook;
 import io.pillopl.library.lending.book.model.AvailableBook;
-import io.pillopl.library.lending.patron.model.*;
+import io.pillopl.library.lending.patron.model.Patron;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldFailed;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHoldEvents;
-import io.vavr.control.Either;
-import io.vavr.control.Try;
+import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.Patrons;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-
-@AllArgsConstructor
-@Slf4j
 public class PlacingOnHold {
 
   private final FindAvailableBook findAvailableBook;
   private final Patrons patronRepository;
 
-  public Try<Result> placeOnHold(@NonNull PlaceOnHoldCommand command) {
-    return Try.of(
-            () -> {
-              AvailableBook availableBook = find(command.getBookId());
-              Patron patron = find(command.getPatronId());
-              Either<BookHoldFailed, BookPlacedOnHoldEvents> result =
-                  patron.placeOnHold(
-                      availableBook, command.getHoldDuration(), command.getTimestamp());
-              return Match(result)
-                  .of(
-                      Case($Left($()), this::publishEvents),
-                      Case($Right($()), this::publishEvents));
-            })
-        .onFailure(t -> log.error("Failed to place a hold", t));
+  public PlacingOnHold(FindAvailableBook findAvailableBook, Patrons patronRepository) {
+    this.findAvailableBook = findAvailableBook;
+    this.patronRepository = patronRepository;
+  }
+
+  public Result placeOnHold(PlaceOnHoldCommand command) {
+    Objects.requireNonNull(command, "command");
+    AvailableBook availableBook = find(command.getBookId());
+    Patron patron = find(command.getPatronId());
+    Decision<BookHoldFailed, BookPlacedOnHoldEvents> result =
+        patron.placeOnHold(availableBook, command.getHoldDuration(), command.getTimestamp());
+    return result.fold(this::publishEvents, this::publishEvents);
   }
 
   private Result publishEvents(BookPlacedOnHoldEvents placedOnHold) {
@@ -55,12 +47,12 @@ public class PlacingOnHold {
   private AvailableBook find(BookId id) {
     return findAvailableBook
         .findAvailableBookBy(id)
-        .getOrElseThrow(() -> new BookNotFoundException(id));
+        .orElseThrow(() -> new BookNotFoundException(id));
   }
 
   private Patron find(PatronId patronId) {
     return patronRepository
         .findBy(patronId)
-        .getOrElseThrow(() -> new PatronNotFoundException(patronId));
+        .orElseThrow(() -> new PatronNotFoundException(patronId));
   }
 }

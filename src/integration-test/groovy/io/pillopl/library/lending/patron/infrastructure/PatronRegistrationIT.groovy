@@ -10,7 +10,6 @@ import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles
 import io.pillopl.library.lending.patronprofile.model.PatronProfile
-import io.vavr.control.Try
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
@@ -36,10 +35,9 @@ class PatronRegistrationIT extends Specification {
 
     def 'should register regular patron and load from repository and profile read model'() {
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("regular@example.test")))
+            PatronId result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("regular@example.test")))
         then:
-            result.isSuccess()
-            PatronId patronId = result.get()
+            PatronId patronId = result
             patronId != null
         and:
             Patron loaded = patrons.findBy(patronId).get()
@@ -51,10 +49,9 @@ class PatronRegistrationIT extends Specification {
 
     def 'should register researcher patron and load from repository'() {
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("researcher@example.test")))
+            PatronId result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("researcher@example.test")))
         then:
-            result.isSuccess()
-            PatronId patronId = result.get()
+            PatronId patronId = result
             patronId != null
         and:
             Patron loaded = patrons.findBy(patronId).get()
@@ -65,18 +62,16 @@ class PatronRegistrationIT extends Specification {
         given:
             registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("duplicate@example.test")))
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("Duplicate@Example.Test")))
+            registeringPatron.register(new RegisterPatronCommand(NOW, Researcher, EmailAddress.of("Duplicate@Example.Test")))
         then:
-            result.isFailure()
-            result.getCause() instanceof EmailAddressAlreadyRegistered
+            thrown(EmailAddressAlreadyRegistered)
     }
 
     def 'should round-trip normalized email through persistence'() {
         when:
-            Try<PatronId> result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("  Patron.White.Space@Example.test  ")))
+            PatronId result = registeringPatron.register(new RegisterPatronCommand(NOW, Regular, EmailAddress.of("  Patron.White.Space@Example.test  ")))
         then:
-            result.isSuccess()
-            PatronId patronId = result.get()
+            PatronId patronId = result
             Patron loaded = patrons.findBy(patronId).get()
             loaded != null
         and:

@@ -1,45 +1,54 @@
 package io.pillopl.library.lending.patron.model;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.book.model.BookOnHold;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import lombok.NonNull;
-import lombok.Value;
 
-import java.time.Instant;
+record Hold(BookId bookId, LibraryBranchId libraryBranchId, Instant till, int extensionCount) {
 
-@Value
-class Hold {
-
-    @NonNull BookId bookId;
-    @NonNull LibraryBranchId libraryBranchId;
-    Instant till;
-    int extensionCount;
-
-    Hold(BookId bookId, LibraryBranchId libraryBranchId) {
-        this(bookId, libraryBranchId, null, 0);
+  Hold {
+    Objects.requireNonNull(bookId, "bookId");
+    Objects.requireNonNull(libraryBranchId, "libraryBranchId");
+    if (extensionCount < 0) {
+      throw new IllegalArgumentException("Extension count cannot be negative");
     }
+  }
 
-    Hold(BookId bookId, LibraryBranchId libraryBranchId, Instant till, int extensionCount) {
-        if (extensionCount < 0) {
-            throw new IllegalArgumentException("Extension count cannot be negative");
-        }
-        this.bookId = bookId;
-        this.libraryBranchId = libraryBranchId;
-        this.till = till;
-        this.extensionCount = extensionCount;
-    }
+  Hold(BookId bookId, LibraryBranchId libraryBranchId) {
+    this(bookId, libraryBranchId, null, 0);
+  }
 
-    boolean matches(@NonNull BookOnHold bookOnHold) {
-        return bookId.equals(bookOnHold.getBookId())
-                && libraryBranchId.equals(bookOnHold.getHoldPlacedAt());
-    }
+  BookId getBookId() {
+    return bookId;
+  }
 
-    boolean isOpenEnded() {
-        return till == null;
-    }
+  LibraryBranchId getLibraryBranchId() {
+    return libraryBranchId;
+  }
 
-    boolean isCurrentAt(@NonNull Instant timestamp) {
-        return till != null && timestamp.isBefore(till);
-    }
+  Instant getTill() {
+    return till;
+  }
+
+  int getExtensionCount() {
+    return extensionCount;
+  }
+
+  boolean matches(BookOnHold bookOnHold) {
+    Objects.requireNonNull(bookOnHold, "bookOnHold");
+    return bookId.equals(bookOnHold.getBookId())
+        && libraryBranchId.equals(bookOnHold.getHoldPlacedAt());
+  }
+
+  boolean isOpenEnded() {
+    return till == null;
+  }
+
+  boolean isCurrentAt(Instant timestamp) {
+    Objects.requireNonNull(timestamp, "timestamp");
+    return till != null && timestamp.isBefore(till);
+  }
 }

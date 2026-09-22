@@ -1,13 +1,15 @@
 package io.pillopl.library.catalogue;
 
-import lombok.NonNull;
-import lombok.Value;
-
+import java.util.Objects;
 import java.util.UUID;
 
-@Value
-public class BookId {
+public record BookId(UUID bookId) {
 
-    @NonNull
-    UUID bookId;
+  public BookId {
+    Objects.requireNonNull(bookId, "bookId");
+  }
+
+  public UUID getBookId() {
+    return bookId;
+  }
 }

@@ -1,20 +1,13 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Value;
 
-@Value
-public class SuspendPatronRequest {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    @NotBlank(message = "reason is required")
-    String reason;
+public record SuspendPatronRequest(
+    @JsonProperty("reason") @NotBlank(message = "reason is required") String reason) {
 
-    @JsonCreator
-    public SuspendPatronRequest(
-            @JsonProperty("reason") String reason
-    ) {
-        this.reason = reason;
-    }
+  public String getReason() {
+    return reason;
+  }
 }

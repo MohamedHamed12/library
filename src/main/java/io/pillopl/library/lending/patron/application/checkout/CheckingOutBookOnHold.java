@@ -2,13 +2,11 @@ package io.pillopl.library.lending.patron.application.checkout;
 
 import static io.pillopl.library.commons.commands.Result.Rejection;
 import static io.pillopl.library.commons.commands.Result.Success;
-import static io.vavr.API.$;
-import static io.vavr.API.Case;
-import static io.vavr.API.Match;
-import static io.vavr.Patterns.$Left;
-import static io.vavr.Patterns.$Right;
+
+import java.util.Objects;
 
 import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.commons.commands.Decision;
 import io.pillopl.library.commons.commands.Result;
 import io.pillopl.library.lending.book.FindBookOnHold;
 import io.pillopl.library.lending.book.model.BookOnHold;
@@ -17,28 +15,24 @@ import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckingOutFailed;
 import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
-import io.vavr.control.Either;
-import io.vavr.control.Try;
 
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
-
-@AllArgsConstructor
 public class CheckingOutBookOnHold {
 
   private final FindBookOnHold findBookOnHold;
   private final Patrons patronRepository;
 
-  public Try<Result> checkOut(@NonNull CheckOutBookCommand command) {
-    return Try.of(
-        () -> {
-          BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());
-          Patron patron = find(command.getPatronId());
-          Either<BookCheckingOutFailed, BookCheckedOut> result =
-              patron.checkOut(bookOnHold, command.getCheckoutDuration(), command.getTimestamp());
-          return Match(result)
-              .of(Case($Left($()), this::publishEvents), Case($Right($()), this::publishEvents));
-        });
+  public CheckingOutBookOnHold(FindBookOnHold findBookOnHold, Patrons patronRepository) {
+    this.findBookOnHold = findBookOnHold;
+    this.patronRepository = patronRepository;
+  }
+
+  public Result checkOut(CheckOutBookCommand command) {
+    Objects.requireNonNull(command, "command");
+    BookOnHold bookOnHold = find(command.getBookId(), command.getPatronId());
+    Patron patron = find(command.getPatronId());
+    Decision<BookCheckingOutFailed, BookCheckedOut> result =
+        patron.checkOut(bookOnHold, command.getCheckoutDuration(), command.getTimestamp());
+    return result.fold(this::publishEvents, this::publishEvents);
   }
 
   private Result publishEvents(BookCheckedOut bookCheckedOut) {
@@ -54,7 +48,7 @@ public class CheckingOutBookOnHold {
   private BookOnHold find(BookId id, PatronId patronId) {
     return findBookOnHold
         .findBookOnHold(id, patronId)
-        .getOrElseThrow(
+        .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     "Cannot find book on hold with Id: " + id.getBookId()));
@@ -63,7 +57,7 @@ public class CheckingOutBookOnHold {
   private Patron find(PatronId patronId) {
     return patronRepository
         .findBy(patronId)
-        .getOrElseThrow(
+        .orElseThrow(
             () ->
                 new IllegalArgumentException(
                     "Patron with given Id does not exists: " + patronId.getPatronId()));

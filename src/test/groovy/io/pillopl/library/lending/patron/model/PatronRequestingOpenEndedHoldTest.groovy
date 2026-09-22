@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.AvailableBook
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Instant
@@ -25,10 +25,10 @@ class PatronRequestingOpenEndedHoldTest extends Specification {
         and:
             Patron researcherPatron = researcherPatronWithPolicy(patronId, onlyResearcherPatronsCanPlaceOpenEndedHolds)
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = researcherPatron.placeOnHold(aBook, HoldDuration.openEnded(from), from)
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold = researcherPatron.placeOnHold(aBook, HoldDuration.openEnded(from), from)
         then:
-            hold.isRight()
-            verifyAll(hold.get()) {
+            hold.success().isPresent()
+            verifyAll(hold.success().orElseThrow()) {
                 BookPlacedOnHold bookPlacedOnHold = it.bookPlacedOnHold
                 assert bookPlacedOnHold.libraryBranchId == aBook.libraryBranch.libraryBranchId
                 assert bookPlacedOnHold.patronId == patronId.patronId
@@ -47,10 +47,10 @@ class PatronRequestingOpenEndedHoldTest extends Specification {
         and:
             Patron regularPatron = regularPatronWithPolicy(patronId, onlyResearcherPatronsCanPlaceOpenEndedHolds)
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold = regularPatron.placeOnHold(aBook, HoldDuration.openEnded(from), from)
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold = regularPatron.placeOnHold(aBook, HoldDuration.openEnded(from), from)
         then:
-            hold.isLeft()
-            verifyAll(hold.getLeft()) {
+            hold.rejection().isPresent()
+            verifyAll(hold.rejection().orElseThrow()) {
                 assert it.reason.contains("regular patron cannot place open ended holds")
                 assert it.libraryBranchId == aBook.libraryBranch.libraryBranchId
                 assert it.patronId == patronId.patronId

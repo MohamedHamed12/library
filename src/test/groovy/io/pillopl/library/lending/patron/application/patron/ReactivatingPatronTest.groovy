@@ -5,11 +5,10 @@ import io.pillopl.library.lending.patron.application.hold.PatronNotFoundExceptio
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronReactivated
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
-import io.vavr.control.Option
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Instant
+import java.util.Optional
 
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
@@ -26,14 +25,13 @@ class ReactivatingPatronTest extends Specification {
             ReactivatingPatron reactivatingPatron = new ReactivatingPatron(repository)
             ReactivatePatronCommand command = new ReactivatePatronCommand(now, patronId)
         and:
-            repository.findBy(patronId) >> Option.of(suspendedRegularPatron(patronId))
+            repository.findBy(patronId) >> Optional.of(suspendedRegularPatron(patronId))
         when:
-            Try<Result> result = reactivatingPatron.reactivate(command)
+            Result result = reactivatingPatron.reactivate(command)
         then:
-            result.isSuccess()
-            result.get() == Result.Success
+            result == Result.Success
             1 * repository.publish({ PatronReactivated event ->
-                event.patronId == patronId.patronId && event.when == now
+                event.getPatronId() == patronId.getPatronId() && event.getWhen() == now
             }) >> regularPatron(patronId)
     }
 
@@ -42,12 +40,11 @@ class ReactivatingPatronTest extends Specification {
             ReactivatingPatron reactivatingPatron = new ReactivatingPatron(repository)
             ReactivatePatronCommand command = new ReactivatePatronCommand(now, patronId)
         and:
-            repository.findBy(patronId) >> Option.of(regularPatron(patronId))
+            repository.findBy(patronId) >> Optional.of(regularPatron(patronId))
         when:
-            Try<Result> result = reactivatingPatron.reactivate(command)
+            Result result = reactivatingPatron.reactivate(command)
         then:
-            result.isSuccess()
-            result.get() == Result.Rejection
+            result == Result.Rejection
             0 * repository.publish(_)
     }
 
@@ -56,12 +53,11 @@ class ReactivatingPatronTest extends Specification {
             ReactivatingPatron reactivatingPatron = new ReactivatingPatron(repository)
             ReactivatePatronCommand command = new ReactivatePatronCommand(now, patronId)
         and:
-            repository.findBy(patronId) >> Option.none()
+            repository.findBy(patronId) >> Optional.empty()
         when:
-            Try<Result> result = reactivatingPatron.reactivate(command)
+            reactivatingPatron.reactivate(command)
         then:
-            result.isFailure()
-            result.getCause() instanceof PatronNotFoundException
+            thrown(PatronNotFoundException)
             0 * repository.publish(_)
     }
 }

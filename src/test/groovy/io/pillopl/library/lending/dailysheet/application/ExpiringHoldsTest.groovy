@@ -7,7 +7,6 @@ import io.pillopl.library.lending.dailysheet.model.HoldsToExpireSheet
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Clock
@@ -17,7 +16,6 @@ import java.time.ZoneOffset
 import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
-import static io.vavr.collection.List.of
 
 class ExpiringHoldsTest extends Specification {
 
@@ -31,29 +29,22 @@ class ExpiringHoldsTest extends Specification {
     ExpiringHolds expiring = new ExpiringHolds(dailySheet, repository, clock)
 
     def setup() {
-        dailySheet.queryForHoldsToExpireSheet(_ as Instant) >> expiredHoldsBy(patronWithExpiringHolds, anotherPatronWithExpiringHolds)
+        dailySheet.queryForHoldsToExpireSheet(_ as Instant) >>
+                expiredHoldsBy(patronWithExpiringHolds, anotherPatronWithExpiringHolds)
     }
 
     def 'should return success if all holds were marked as expired'() {
         given:
             holdsWillBeExpiredSuccessfullyForBothPatrons()
-        when:
-            Try<BatchResult> result = expiring.expireHolds()
-        then:
-            result.isSuccess()
-            result.get() == BatchResult.FullSuccess
-
+        expect:
+            expiring.expireHolds() == BatchResult.FullSuccess
     }
 
-    def 'should return an error (but should not fail) if at least one operation failed'() {
+    def 'should return an error if at least one operation failed'() {
         given:
             expiringHoldWillFailForSecondPatron()
-        when:
-            Try<BatchResult> result = expiring.expireHolds()
-        then:
-            result.isSuccess()
-            result.get() == BatchResult.SomeFailed
-
+        expect:
+            expiring.expireHolds() == BatchResult.SomeFailed
     }
 
     void expiringHoldWillFailForSecondPatron() {
@@ -65,13 +56,8 @@ class ExpiringHoldsTest extends Specification {
     }
 
     HoldsToExpireSheet expiredHoldsBy(PatronId patronId, PatronId anotherPatronId) {
-        return new HoldsToExpireSheet(
-                of(
-                        new ExpiredHold(anyBookId(), patronId, anyBranch()),
-                        new ExpiredHold(anyBookId(), anotherPatronId, anyBranch())
-                ))
+        return new HoldsToExpireSheet(List.of(
+                new ExpiredHold(anyBookId(), patronId, anyBranch()),
+                new ExpiredHold(anyBookId(), anotherPatronId, anyBranch())))
     }
-
-
 }
-

@@ -1,15 +1,16 @@
 package io.pillopl.library.lending.patronprofile.model;
 
-import io.pillopl.library.catalogue.BookId;
-import lombok.Value;
-
 import java.time.Instant;
 
-@Value
-public class Checkout {
+import io.pillopl.library.catalogue.BookId;
 
-    private final BookId book;
+public record Checkout(BookId book, Instant till) {
 
-    private final Instant till;
+  public BookId getBook() {
+    return book;
+  }
 
+  public Instant getTill() {
+    return till;
+  }
 }

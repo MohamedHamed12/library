@@ -5,13 +5,12 @@ import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Instant
 
-import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyEmailAddress
+import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
 
@@ -28,13 +27,15 @@ class RegisteringPatronTest extends Specification {
             RegisteringPatron registeringPatron = new RegisteringPatron(idGenerator, repository)
             RegisterPatronCommand command = new RegisterPatronCommand(now, Regular, emailAddress)
         when:
-            Try<PatronId> result = registeringPatron.register(command)
+            PatronId result = registeringPatron.register(command)
         then:
             1 * repository.existsBy(emailAddress) >> false
-            result.isSuccess()
-            result.get() == patronId
+            result == patronId
             1 * repository.publish({ PatronCreated created ->
-                created.patronId == patronId.patronId && created.when == now && created.patronType == Regular && created.emailAddress == emailAddress
+                created.getPatronId() == patronId.getPatronId() &&
+                        created.getWhen() == now &&
+                        created.getPatronType() == Regular &&
+                        created.getEmailAddress() == emailAddress
             }) >> regularPatron(patronId)
     }
 
@@ -43,11 +44,10 @@ class RegisteringPatronTest extends Specification {
             RegisteringPatron registeringPatron = new RegisteringPatron(idGenerator, repository)
             RegisterPatronCommand command = new RegisterPatronCommand(now, Regular, emailAddress)
         when:
-            Try<PatronId> result = registeringPatron.register(command)
+            registeringPatron.register(command)
         then:
             1 * repository.existsBy(emailAddress) >> true
-            result.isFailure()
-            result.getCause() instanceof EmailAddressAlreadyRegistered
+            thrown(EmailAddressAlreadyRegistered)
             0 * repository.publish(_)
     }
 }

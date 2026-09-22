@@ -1,27 +1,28 @@
 package io.pillopl.library.lending.patron.model;
 
-import io.pillopl.library.catalogue.BookId;
-import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import lombok.NonNull;
-import lombok.Value;
-
-import java.util.Map;
-import java.util.Set;
-
 import static java.util.Collections.emptySet;
 
-@Value
-class OverdueCheckouts {
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-    static int MAX_COUNT_OF_OVERDUE_RESOURCES = 2;
+import io.pillopl.library.catalogue.BookId;
+import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 
-    @NonNull Map<LibraryBranchId, Set<BookId>> overdueCheckouts;
+record OverdueCheckouts(Map<LibraryBranchId, Set<BookId>> overdueCheckouts) {
 
-    int countAt(@NonNull LibraryBranchId libraryBranchId) {
-        return overdueCheckouts.getOrDefault(libraryBranchId, emptySet()).size();
-    }
+  static int MAX_COUNT_OF_OVERDUE_RESOURCES = 2;
 
+  OverdueCheckouts {
+    Objects.requireNonNull(overdueCheckouts, "overdueCheckouts");
+  }
+
+  Map<LibraryBranchId, Set<BookId>> getOverdueCheckouts() {
+    return overdueCheckouts;
+  }
+
+  int countAt(LibraryBranchId libraryBranchId) {
+    Objects.requireNonNull(libraryBranchId, "libraryBranchId");
+    return overdueCheckouts.getOrDefault(libraryBranchId, emptySet()).size();
+  }
 }
-
-
-

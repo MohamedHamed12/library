@@ -1,13 +1,15 @@
 package io.pillopl.library.lending.patronprofile.model;
 
-import io.vavr.collection.List;
-import lombok.NonNull;
-import lombok.Value;
+import java.util.List;
+import java.util.Objects;
 
-@Value
-public class CheckoutsView {
+public record CheckoutsView(List<Checkout> currentCheckouts) {
 
-    @NonNull
-    List<Checkout> currentCheckouts;
+  public CheckoutsView {
+    Objects.requireNonNull(currentCheckouts, "currentCheckouts");
+  }
 
+  public List<Checkout> getCurrentCheckouts() {
+    return currentCheckouts;
+  }
 }

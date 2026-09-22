@@ -1,14 +1,27 @@
 package io.pillopl.library.lending.patron.application.patron;
 
-import io.pillopl.library.lending.patron.model.PatronId;
-import lombok.NonNull;
-import lombok.Value;
-
 import java.time.Instant;
+import java.util.Objects;
 
-@Value
-public class SuspendPatronCommand {
-    @NonNull Instant timestamp;
-    @NonNull PatronId patronId;
-    @NonNull String reason;
+import io.pillopl.library.lending.patron.model.PatronId;
+
+public record SuspendPatronCommand(Instant timestamp, PatronId patronId, String reason) {
+
+  public SuspendPatronCommand {
+    Objects.requireNonNull(timestamp, "timestamp");
+    Objects.requireNonNull(patronId, "patronId");
+    Objects.requireNonNull(reason, "reason");
+  }
+
+  public Instant getTimestamp() {
+    return timestamp;
+  }
+
+  public PatronId getPatronId() {
+    return patronId;
+  }
+
+  public String getReason() {
+    return reason;
+  }
 }

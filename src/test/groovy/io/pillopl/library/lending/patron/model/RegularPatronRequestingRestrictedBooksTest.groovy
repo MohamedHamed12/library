@@ -1,7 +1,7 @@
 package io.pillopl.library.lending.patron.model
 
 
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import static PatronEvent.BookHoldFailed
@@ -18,7 +18,7 @@ class RegularPatronRequestingRestrictedBooksTest
 
     def 'a regular patron cannot place restricted book on hold'() {
         when:
-            Either<BookHoldFailed, BookPlacedOnHoldEvents> hold =
+            Decision<BookHoldFailed, BookPlacedOnHoldEvents> hold =
                     regularPatron().placeOnHold(
                             restrictedBook(),
                             openEnded(HOLD_TIME),
@@ -26,6 +26,6 @@ class RegularPatronRequestingRestrictedBooksTest
                     )
 
         then:
-            hold.isLeft()
+            hold.rejection().isPresent()
     }
 }

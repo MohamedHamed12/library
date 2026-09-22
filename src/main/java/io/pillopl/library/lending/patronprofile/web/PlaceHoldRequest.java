@@ -1,35 +1,29 @@
 package io.pillopl.library.lending.patronprofile.web;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
+
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Value;
 
-@Value
-public class PlaceHoldRequest {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    @NotNull(message = "bookId is required")
-    UUID bookId;
+public record PlaceHoldRequest(
+    @JsonProperty("bookId") @NotNull(message = "bookId is required") UUID bookId,
+    @JsonProperty("libraryBranchId") @NotNull(message = "libraryBranchId is required")
+        UUID libraryBranchId,
+    @JsonProperty("numberOfDays")
+        @Min(value = 1, message = "numberOfDays must be greater than or equal to 1")
+        Integer numberOfDays) {
 
-    @NotNull(message = "libraryBranchId is required")
-    UUID libraryBranchId;
+  public UUID getBookId() {
+    return bookId;
+  }
 
-    @Min(
-        value = 1,
-        message = "numberOfDays must be greater than or equal to 1"
-    )
-    Integer numberOfDays;
+  public UUID getLibraryBranchId() {
+    return libraryBranchId;
+  }
 
-    @JsonCreator
-    public PlaceHoldRequest(
-        @JsonProperty("bookId") UUID bookId,
-        @JsonProperty("libraryBranchId") UUID libraryBranchId,
-        @JsonProperty("numberOfDays") Integer numberOfDays
-    ) {
-        this.bookId = bookId;
-        this.libraryBranchId = libraryBranchId;
-        this.numberOfDays = numberOfDays;
-    }
+  public Integer getNumberOfDays() {
+    return numberOfDays;
+  }
 }

@@ -2,7 +2,7 @@ package io.pillopl.library.lending.patron.model
 
 import io.pillopl.library.lending.book.model.AvailableBook
 import io.pillopl.library.lending.book.model.BookOnHold
-import io.vavr.control.Either
+import io.pillopl.library.commons.commands.Decision
 import spock.lang.Specification
 
 import java.time.Instant
@@ -28,12 +28,12 @@ class PatronTest extends Specification {
             Patron patron = regularPatron()
 
         when:
-            Either<Rejection, PatronSuspended> result = patron.suspend("Repeated late returns", TIMESTAMP)
+            Decision<Rejection, PatronSuspended> result = patron.suspend("Repeated late returns", TIMESTAMP)
 
         then:
-            result.isRight()
-            result.get() instanceof PatronSuspended
-            result.get().reason == "Repeated late returns"
+            result.success().isPresent()
+            result.success().orElseThrow() instanceof PatronSuspended
+            result.success().orElseThrow().reason == "Repeated late returns"
     }
 
     def 'already suspended patron cannot be suspended again'() {
@@ -41,10 +41,10 @@ class PatronTest extends Specification {
             Patron patron = suspendedRegularPatron()
 
         when:
-            Either<Rejection, PatronSuspended> result = patron.suspend("Another reason", TIMESTAMP)
+            Decision<Rejection, PatronSuspended> result = patron.suspend("Another reason", TIMESTAMP)
 
         then:
-            result.isLeft()
+            result.rejection().isPresent()
     }
 
     def 'patron cannot be suspended with blank reason'() {
@@ -52,8 +52,8 @@ class PatronTest extends Specification {
             Patron patron = regularPatron()
 
         expect:
-            patron.suspend("", TIMESTAMP).isLeft()
-            patron.suspend("   ", TIMESTAMP).isLeft()
+            patron.suspend("", TIMESTAMP).rejection().isPresent()
+            patron.suspend("   ", TIMESTAMP).rejection().isPresent()
     }
 
     def 'suspended patron cannot place a hold'() {
@@ -62,13 +62,13 @@ class PatronTest extends Specification {
             AvailableBook book = circulatingBook()
 
         when:
-            Either<BookHoldFailed, PatronEvent.BookPlacedOnHoldEvents> result =
+            Decision<BookHoldFailed, PatronEvent.BookPlacedOnHoldEvents> result =
                     patron.placeOnHold(book, closeEnded(TIMESTAMP, 3), TIMESTAMP)
 
         then:
-            result.isLeft()
-            result.getLeft() instanceof BookHoldFailed
-            result.getLeft().reason.contains("suspended")
+            result.rejection().isPresent()
+            result.rejection().orElseThrow() instanceof BookHoldFailed
+            result.rejection().orElseThrow().reason.contains("suspended")
     }
 
     def 'suspended patron cannot check out a held book'() {
@@ -77,13 +77,13 @@ class PatronTest extends Specification {
             Patron patron = suspendedRegularPatronWithHold(book)
 
         when:
-            Either<BookCheckingOutFailed, PatronEvent.BookCheckedOut> result =
+            Decision<BookCheckingOutFailed, PatronEvent.BookCheckedOut> result =
                     patron.checkOut(book, maxDuration(TIMESTAMP), TIMESTAMP)
 
         then:
-            result.isLeft()
-            result.getLeft() instanceof BookCheckingOutFailed
-            result.getLeft().reason.contains("suspended")
+            result.rejection().isPresent()
+            result.rejection().orElseThrow() instanceof BookCheckingOutFailed
+            result.rejection().orElseThrow().reason.contains("suspended")
     }
 
     def 'suspended patron can be reactivated'() {
@@ -91,11 +91,11 @@ class PatronTest extends Specification {
             Patron patron = suspendedRegularPatron()
 
         when:
-            Either<Rejection, PatronReactivated> result = patron.reactivate(TIMESTAMP)
+            Decision<Rejection, PatronReactivated> result = patron.reactivate(TIMESTAMP)
 
         then:
-            result.isRight()
-            result.get() instanceof PatronReactivated
+            result.success().isPresent()
+            result.success().orElseThrow() instanceof PatronReactivated
     }
 
     def 'active patron cannot be reactivated'() {
@@ -103,9 +103,9 @@ class PatronTest extends Specification {
             Patron patron = regularPatron()
 
         when:
-            Either<Rejection, PatronReactivated> result = patron.reactivate(TIMESTAMP)
+            Decision<Rejection, PatronReactivated> result = patron.reactivate(TIMESTAMP)
 
         then:
-            result.isLeft()
+            result.rejection().isPresent()
     }
 }

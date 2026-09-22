@@ -1,52 +1,83 @@
 package io.pillopl.library.catalogue;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
-import lombok.Value;
+import java.util.Objects;
 
-@Value
-@EqualsAndHashCode(of = "bookIsbn")
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
-class Book {
+final class Book {
 
-    @NonNull
-    private ISBN bookIsbn;
-    @NonNull
-    private Title title;
-    @NonNull
-    private Author author;
+  private final ISBN bookIsbn;
+  private final Title title;
+  private final Author author;
 
-    Book(String isbn, String author, String title) {
-        this(new ISBN(isbn), new Title(title), new Author(author));
+  Book(ISBN bookIsbn, Title title, Author author) {
+    this.bookIsbn = Objects.requireNonNull(bookIsbn, "bookIsbn");
+    this.title = Objects.requireNonNull(title, "title");
+    this.author = Objects.requireNonNull(author, "author");
+  }
+
+  Book(String isbn, String author, String title) {
+    this(new ISBN(isbn), new Title(title), new Author(author));
+  }
+
+  ISBN getBookIsbn() {
+    return bookIsbn;
+  }
+
+  Title getTitle() {
+    return title;
+  }
+
+  Author getAuthor() {
+    return author;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
     }
+    if (!(other instanceof Book that)) {
+      return false;
+    }
+    return bookIsbn.equals(that.bookIsbn);
+  }
+
+  @Override
+  public int hashCode() {
+    return bookIsbn.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "Book(bookIsbn=" + bookIsbn + ", title=" + title + ", author=" + author + ")";
+  }
 }
 
+record Title(String title) {
 
-@Value
-class Title {
-
-    @NonNull String title;
-
-    Title(String title) {
-        if (title.isEmpty()) {
-            throw new IllegalArgumentException("Title cannot be empty");
-        }
-        this.title = title.trim();
+  Title {
+    Objects.requireNonNull(title, "title");
+    if (title.isEmpty()) {
+      throw new IllegalArgumentException("Title cannot be empty");
     }
+    title = title.trim();
+  }
 
+  String getTitle() {
+    return title;
+  }
 }
 
-@Value
-class Author {
+record Author(String name) {
 
-    @NonNull String name;
-
-    Author(String name) {
-        if (name.isEmpty()) {
-            throw new IllegalArgumentException("Author cannot be empty");
-        }
-        this.name = name.trim();
+  Author {
+    Objects.requireNonNull(name, "name");
+    if (name.isEmpty()) {
+      throw new IllegalArgumentException("Author cannot be empty");
     }
+    name = name.trim();
+  }
+
+  String getName() {
+    return name;
+  }
 }

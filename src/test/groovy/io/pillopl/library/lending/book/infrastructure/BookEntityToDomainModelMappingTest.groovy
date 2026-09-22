@@ -75,14 +75,15 @@ class BookEntityToDomainModelMappingTest extends Specification {
 
     BookDatabaseEntity bookEntity(BookState state) {
         new BookDatabaseEntity(
-                book_id: bookId.bookId,
-                book_type: Circulating,
-                book_state: state,
-                available_at_branch: libraryBranchId.libraryBranchId,
-                on_hold_at_branch: anotherBranchId.libraryBranchId,
-                on_hold_by_patron: patronId.patronId,
-                on_hold_till: holdTill,
-                checked_out_at_branch: yetAnotherBranchId.libraryBranchId,
-                checked_out_by_patron: anotherPatronId.patronId)
+                bookId.bookId,
+                Circulating,
+                state,
+                libraryBranchId.libraryBranchId,
+                anotherBranchId.libraryBranchId,
+                patronId.patronId,
+                holdTill,
+                yetAnotherBranchId.libraryBranchId,
+                anotherPatronId.patronId,
+                0)
     }
 }

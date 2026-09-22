@@ -1,12 +1,12 @@
 package io.pillopl.library.commons.aggregates;
 
-import lombok.Value;
+public record Version(int version) {
 
-@Value
-public class Version {
-    int version;
+  public int getVersion() {
+    return version;
+  }
 
-    public static Version zero() {
-        return new Version(0);
-    }
+  public static Version zero() {
+    return new Version(0);
+  }
 }

@@ -1,21 +1,30 @@
 package io.pillopl.library.lending.patron.model;
 
-import lombok.NonNull;
-import lombok.Value;
-
 import static io.pillopl.library.lending.patron.model.PatronType.Regular;
 
-@Value
-class PatronInformation {
+import java.util.Objects;
 
-    @NonNull PatronId patronId;
+record PatronInformation(PatronId patronId, PatronType type, EmailAddress emailAddress) {
 
-    @NonNull PatronType type;
+  PatronInformation {
+    Objects.requireNonNull(patronId, "patronId");
+    Objects.requireNonNull(type, "type");
+    Objects.requireNonNull(emailAddress, "emailAddress");
+  }
 
-    @NonNull EmailAddress emailAddress;
+  PatronId getPatronId() {
+    return patronId;
+  }
 
-    boolean isRegular() {
-        return type.equals(Regular);
-    }
+  PatronType getType() {
+    return type;
+  }
+
+  EmailAddress getEmailAddress() {
+    return emailAddress;
+  }
+
+  boolean isRegular() {
+    return type.equals(Regular);
+  }
 }
-

@@ -1,27 +1,27 @@
 package io.pillopl.library.lending.dailysheet.model;
 
-import io.pillopl.library.lending.patron.model.PatronEvent;
-import io.vavr.collection.List;
-import io.vavr.collection.Stream;
-import lombok.NonNull;
-import lombok.Value;
-
 import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
-@Value
-public class HoldsToExpireSheet {
+import io.pillopl.library.lending.patron.model.PatronEvent;
 
-    @NonNull
-    List<ExpiredHold> expiredHolds;
+public record HoldsToExpireSheet(List<ExpiredHold> expiredHolds) {
 
-    public Stream<PatronEvent.BookHoldExpired> toStreamOfEvents(Instant processingTime) {
-        return expiredHolds
-                .toStream()
-                .map(expiredHold -> expiredHold.toEvent(processingTime));
-    }
+  public HoldsToExpireSheet {
+    Objects.requireNonNull(expiredHolds, "expiredHolds");
+  }
 
-    public int count() {
-        return expiredHolds.size();
-    }
+  public List<ExpiredHold> getExpiredHolds() {
+    return expiredHolds;
+  }
 
+  public Stream<PatronEvent.BookHoldExpired> toStreamOfEvents(Instant processingTime) {
+    return expiredHolds.stream().map(expiredHold -> expiredHold.toEvent(processingTime));
+  }
+
+  public int count() {
+    return expiredHolds.size();
+  }
 }

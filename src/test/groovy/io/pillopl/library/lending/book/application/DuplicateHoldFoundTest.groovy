@@ -9,7 +9,7 @@ import io.pillopl.library.lending.book.model.BookRepository
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
-import io.vavr.control.Option
+import java.util.Optional
 import spock.lang.Specification
 
 import java.time.Clock
@@ -61,6 +61,6 @@ class DuplicateHoldFoundTest extends Specification {
     }
 
     void bookIsAlreadyOnHold() {
-        bookRepository.findBy(bookOnHold.bookId) >> Option.of(bookOnHold)
+        bookRepository.findBy(bookOnHold.bookId) >> Optional.of(bookOnHold)
     }
 }

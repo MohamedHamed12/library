@@ -7,7 +7,6 @@ import io.pillopl.library.lending.dailysheet.model.OverdueCheckout
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Clock
@@ -18,7 +17,6 @@ import static io.pillopl.library.lending.book.model.BookFixture.anyBookId
 import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixture.anyBranch
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
-import static io.vavr.collection.List.of
 
 class RegisteringOverdueCheckoutsTest extends Specification {
 
@@ -32,30 +30,22 @@ class RegisteringOverdueCheckoutsTest extends Specification {
             new RegisteringOverdueCheckout(dailySheet, repository, clock)
 
     def setup() {
-        dailySheet.queryForCheckoutsToOverdue(_ as Instant) >> overdueCheckoutsBy(patronWithOverdueCheckouts, anotherPatronWithOverdueCheckouts)
+        dailySheet.queryForCheckoutsToOverdue(_ as Instant) >>
+                overdueCheckoutsBy(patronWithOverdueCheckouts, anotherPatronWithOverdueCheckouts)
     }
-
 
     def 'should return success if all checkouts were marked as overdue'() {
         given:
             checkoutsWillBeMarkedAsOverdueForBothPatrons()
-        when:
-            Try<BatchResult> result = registeringOverdueCheckout.registerOverdueCheckouts()
-        then:
-            result.isSuccess()
-            result.get() == BatchResult.FullSuccess
-
+        expect:
+            registeringOverdueCheckout.registerOverdueCheckouts() == BatchResult.FullSuccess
     }
 
-    def 'should return an error (but should not fail) if at least one operation failed'() {
+    def 'should return an error if at least one operation failed'() {
         given:
             registeringOverdueCheckoutWillFailForSecondPatron()
-        when:
-            Try<BatchResult> result = registeringOverdueCheckout.registerOverdueCheckouts()
-        then:
-            result.isSuccess()
-            result.get() == BatchResult.SomeFailed
-
+        expect:
+            registeringOverdueCheckout.registerOverdueCheckouts() == BatchResult.SomeFailed
     }
 
     void registeringOverdueCheckoutWillFailForSecondPatron() {
@@ -67,14 +57,8 @@ class RegisteringOverdueCheckoutsTest extends Specification {
     }
 
     CheckoutsToOverdueSheet overdueCheckoutsBy(PatronId patronId, PatronId anotherPatronId) {
-        return new CheckoutsToOverdueSheet(
-                of(
-                        new OverdueCheckout(anyBookId(), patronId, anyBranch()),
-                        new OverdueCheckout(anyBookId(), anotherPatronId, anyBranch()),
-
-                ))
+        return new CheckoutsToOverdueSheet(List.of(
+                new OverdueCheckout(anyBookId(), patronId, anyBranch()),
+                new OverdueCheckout(anyBookId(), anotherPatronId, anyBranch())))
     }
-
-
 }
-

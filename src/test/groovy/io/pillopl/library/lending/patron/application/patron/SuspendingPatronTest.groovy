@@ -5,11 +5,10 @@ import io.pillopl.library.lending.patron.application.hold.PatronNotFoundExceptio
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronSuspended
 import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.Patrons
-import io.vavr.control.Option
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Instant
+import java.util.Optional
 
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronFixture.regularPatron
@@ -26,14 +25,15 @@ class SuspendingPatronTest extends Specification {
             SuspendingPatron suspendingPatron = new SuspendingPatron(repository)
             SuspendPatronCommand command = new SuspendPatronCommand(now, patronId, "Policy violation")
         and:
-            repository.findBy(patronId) >> Option.of(regularPatron(patronId))
+            repository.findBy(patronId) >> Optional.of(regularPatron(patronId))
         when:
-            Try<Result> result = suspendingPatron.suspend(command)
+            Result result = suspendingPatron.suspend(command)
         then:
-            result.isSuccess()
-            result.get() == Result.Success
+            result == Result.Success
             1 * repository.publish({ PatronSuspended event ->
-                event.patronId == patronId.patronId && event.when == now && event.reason == "Policy violation"
+                event.getPatronId() == patronId.getPatronId() &&
+                        event.getWhen() == now &&
+                        event.getReason() == "Policy violation"
             }) >> regularPatron(patronId)
     }
 
@@ -42,12 +42,11 @@ class SuspendingPatronTest extends Specification {
             SuspendingPatron suspendingPatron = new SuspendingPatron(repository)
             SuspendPatronCommand command = new SuspendPatronCommand(now, patronId, "Another reason")
         and:
-            repository.findBy(patronId) >> Option.of(suspendedRegularPatron())
+            repository.findBy(patronId) >> Optional.of(suspendedRegularPatron())
         when:
-            Try<Result> result = suspendingPatron.suspend(command)
+            Result result = suspendingPatron.suspend(command)
         then:
-            result.isSuccess()
-            result.get() == Result.Rejection
+            result == Result.Rejection
             0 * repository.publish(_)
     }
 
@@ -56,12 +55,11 @@ class SuspendingPatronTest extends Specification {
             SuspendingPatron suspendingPatron = new SuspendingPatron(repository)
             SuspendPatronCommand command = new SuspendPatronCommand(now, patronId, "Policy violation")
         and:
-            repository.findBy(patronId) >> Option.none()
+            repository.findBy(patronId) >> Optional.empty()
         when:
-            Try<Result> result = suspendingPatron.suspend(command)
+            suspendingPatron.suspend(command)
         then:
-            result.isFailure()
-            result.getCause() instanceof PatronNotFoundException
+            thrown(PatronNotFoundException)
             0 * repository.publish(_)
     }
 }

@@ -26,8 +26,6 @@
         <tomcat.version>11.0.25</tomcat.version>
         <spock.version>2.4-groovy-5.0</spock.version>
         <archunit.version>1.4.2</archunit.version>
-        <vavr.version>1.0.1</vavr.version>
-        <lombok.version>1.18.48</lombok.version>
         <spring-modulith.version>2.1.1</spring-modulith.version>
         <spotless.version>3.2.0</spotless.version>
         <google-java-format.version>1.34.1</google-java-format.version>
@@ -77,19 +75,6 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.vavr</groupId>
-            <artifactId>vavr</artifactId>
-            <version>${vavr.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -176,20 +161,6 @@
 
     <build>
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>

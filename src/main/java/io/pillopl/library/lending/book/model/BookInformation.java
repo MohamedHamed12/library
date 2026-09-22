@@ -1,17 +1,22 @@
 package io.pillopl.library.lending.book.model;
 
+import java.util.Objects;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.catalogue.BookType;
-import lombok.NonNull;
-import lombok.Value;
 
-@Value
-public class BookInformation {
+public record BookInformation(BookId bookId, BookType bookType) {
 
-    @NonNull
-    BookId bookId;
+  public BookInformation {
+    Objects.requireNonNull(bookId, "bookId");
+    Objects.requireNonNull(bookType, "bookType");
+  }
 
-    @NonNull
-    BookType bookType;
+  public BookId getBookId() {
+    return bookId;
+  }
+
+  public BookType getBookType() {
+    return bookType;
+  }
 }

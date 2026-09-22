@@ -1,11 +1,12 @@
 package io.pillopl.library.lending.book.model;
 
+import java.util.Optional;
+
 import io.pillopl.library.catalogue.BookId;
-import io.vavr.control.Option;
 
 public interface BookRepository {
 
-    Option<Book> findBy(BookId bookId);
+  Optional<Book> findBy(BookId bookId);
 
-    void save(Book book);
+  void save(Book book);
 }

@@ -10,7 +10,7 @@ import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.HoldDuration
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
-import io.vavr.control.Option
+import java.util.Optional
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import spock.lang.Specification
@@ -61,8 +61,8 @@ class OptimisticLockingBookAggregateIT extends Specification {
     }
 
     Book loadPersistedBook(BookId bookId) {
-        Option<Book> loaded = bookEntityRepository.findBy(bookId)
-        Book book = loaded.getOrElseThrow({
+        Optional<Book> loaded = bookEntityRepository.findBy(bookId)
+        Book book = loaded.orElseThrow({
             new IllegalStateException("should have been persisted")
         })
         return book

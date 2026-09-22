@@ -2,13 +2,12 @@ package io.pillopl.library.catalogue
 
 import io.pillopl.library.commons.commands.Result
 import io.pillopl.library.commons.events.DomainEvents
-import io.vavr.control.Option
-import io.vavr.control.Try
 import spock.lang.Specification
 
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Optional
 
 import static io.pillopl.library.catalogue.BookFixture.DDD_ISBN_STR
 import static io.pillopl.library.catalogue.BookType.Restricted
@@ -26,12 +25,8 @@ class AddBookToCatalogueTest extends Specification {
     def 'should add a new book to catalogue'() {
         given:
             databaseWorks()
-        when:
-            Try<Result> result = catalogue.addBook("Eric Evans", "DDD", DDD_ISBN_STR)
-        then:
-            result.isSuccess()
-            result.get() == Result.Success
-
+        expect:
+            catalogue.addBook("Eric Evans", "DDD", DDD_ISBN_STR) == Result.Success
     }
 
     def 'should add a new book instance to catalogue'() {
@@ -40,13 +35,11 @@ class AddBookToCatalogueTest extends Specification {
         and:
             thereIsBookWith(DDD_ISBN_STR)
         when:
-            Try<Result> result = catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
+            Result result = catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
         then:
-            result.isSuccess()
-            result.get() == Result.Success
+            result == Result.Success
         and:
             1 * domainEvents.publish(_ as BookInstanceAddedToCatalogue)
-
     }
 
     def 'should reject adding a new book instance to catalogue when book isbn does not exist'() {
@@ -55,33 +48,31 @@ class AddBookToCatalogueTest extends Specification {
         and:
             thereIsNoBookWith(DDD_ISBN_STR)
         when:
-            Try<Result> result = catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
+            Result result = catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
         then:
-            result.isSuccess()
-            result.get() == Result.Rejection
+            result == Result.Rejection
         and:
             0 * domainEvents.publish(_ as BookInstanceAddedToCatalogue)
-
     }
 
-    def 'should fail when adding a book if database fails'() {
+    def 'should propagate failure when adding a book if database fails'() {
         given:
             databaseDoesNotWork()
         when:
-            Try<Result> result = catalogue.addBook("Eric Evans", "DDD", DDD_ISBN_STR)
+            catalogue.addBook("Eric Evans", "DDD", DDD_ISBN_STR)
         then:
-            result.isFailure()
+            thrown(IllegalStateException)
     }
 
-    def 'should fail when adding a book instance if database fails'() {
+    def 'should propagate failure when adding a book instance if database fails'() {
         given:
             databaseDoesNotWork()
         and:
             thereIsBookWith(DDD_ISBN_STR)
         when:
-            Try<Result> result = catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
+            catalogue.addBookInstance(DDD_ISBN_STR, Restricted)
         then:
-            result.isFailure()
+            thrown(IllegalStateException)
         and:
             0 * domainEvents.publish(_ as BookInstanceAddedToCatalogue)
     }
@@ -89,20 +80,18 @@ class AddBookToCatalogueTest extends Specification {
     void databaseWorks() {
         catalogueDatabase.saveNew(_ as Book) >> null
         catalogueDatabase.saveNew(_ as BookInstance) >> null
-
     }
 
     void databaseDoesNotWork() {
-        catalogueDatabase.saveNew(_ as Book) >> { (new IllegalStateException()) }
-        catalogueDatabase.saveNew(_ as BookInstance) >> { (new IllegalStateException()) }
-
+        catalogueDatabase.saveNew(_ as Book) >> { throw new IllegalStateException() }
+        catalogueDatabase.saveNew(_ as BookInstance) >> { throw new IllegalStateException() }
     }
 
     void thereIsBookWith(String isbn) {
-        catalogueDatabase.findBy(new ISBN(isbn)) >> Option.of(BookFixture.DDD)
+        catalogueDatabase.findBy(new ISBN(isbn)) >> Optional.of(BookFixture.DDD)
     }
 
     void thereIsNoBookWith(String isbn) {
-        catalogueDatabase.findBy(new ISBN(isbn)) >> Option.none()
+        catalogueDatabase.findBy(new ISBN(isbn)) >> Optional.empty()
     }
 }

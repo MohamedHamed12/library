@@ -4,7 +4,7 @@ import io.pillopl.library.catalogue.BookId
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
 import io.pillopl.library.lending.patron.model.PatronEvent
 import io.pillopl.library.lending.patron.model.PatronId
-import io.vavr.collection.List
+import java.util.List
 import spock.lang.Specification
 
 import java.time.Instant
@@ -29,22 +29,21 @@ class CheckoutsToOverdueSheetTest extends Specification {
     def 'should transform sheet into stream of OverdueCheckoutRegistered events'() {
         given:
             CheckoutsToOverdueSheet sheet = sheet(patronId, anotherPatronId, bookId, anotherBookId, libraryBranchId, anotherLibraryBranchId)
-        expect:
-            sheet.toStreamOfEvents(PROCESSING_TIME).with {
+        when:
+            def events = sheet.toStreamOfEvents(PROCESSING_TIME).toList()
+        then:
+            PatronEvent.OverdueCheckoutRegistered first = events.get(0) as PatronEvent.OverdueCheckoutRegistered
+            first.patronId == patronId.patronId
+            first.bookId == bookId.bookId
+            first.libraryBranchId == libraryBranchId.libraryBranchId
+            first.eventId != null
 
-                PatronEvent.OverdueCheckoutRegistered first = it.get(0) as PatronEvent.OverdueCheckoutRegistered
-                first.patronId == patronId.patronId
-                first.bookId == bookId.bookId
-                first.libraryBranchId == libraryBranchId.libraryBranchId
-                first.eventId != null
+            PatronEvent.OverdueCheckoutRegistered second = events.get(1) as PatronEvent.OverdueCheckoutRegistered
 
-                PatronEvent.OverdueCheckoutRegistered second = it.get(1) as PatronEvent.OverdueCheckoutRegistered
-
-                second.patronId == anotherPatronId.patronId
-                second.bookId == anotherBookId.bookId
-                second.libraryBranchId == anotherLibraryBranchId.libraryBranchId
-                second.eventId != null
-            }
+            second.patronId == anotherPatronId.patronId
+            second.bookId == anotherBookId.bookId
+            second.libraryBranchId == anotherLibraryBranchId.libraryBranchId
+            second.eventId != null
     }
 
     private CheckoutsToOverdueSheet sheet(PatronId patronId, PatronId anotherPatronId, BookId bookId, BookId anotherBookId, LibraryBranchId libraryBranchId, LibraryBranchId anotherBranchId) {

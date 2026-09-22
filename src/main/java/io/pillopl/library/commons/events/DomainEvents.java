@@ -1,12 +1,12 @@
 package io.pillopl.library.commons.events;
 
-import io.vavr.collection.List;
+import java.util.List;
 
 public interface DomainEvents {
 
-    void publish(DomainEvent event);
+  void publish(DomainEvent event);
 
-    default void publish(List<DomainEvent> events) {
-        events.forEach(this::publish);
-    }
+  default void publish(List<DomainEvent> events) {
+    events.forEach(this::publish);
+  }
 }
