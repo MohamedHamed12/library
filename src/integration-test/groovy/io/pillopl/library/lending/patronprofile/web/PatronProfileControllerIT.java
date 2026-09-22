@@ -22,7 +22,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.MediaTypes;
@@ -580,7 +579,6 @@ public class PatronProfileControllerIT {
         .andExpect(jsonPath("$.message", is("The patron cannot place this book on hold.")));
   }
 
-  @TestConfiguration(proxyBeanMethods = false)
   @EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL_FORMS)
   static class HypermediaTestConfiguration {
 
