@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import io.pillopl.library.commons.events.DomainEvents;
 import io.pillopl.library.commons.events.publisher.DomainEventsConfig;
@@ -24,8 +23,10 @@ public class CatalogueConfiguration {
   }
 
   @Bean
-  CatalogueDatabase catalogueDatabase(JdbcTemplate jdbcTemplate) {
-    return new CatalogueDatabase(jdbcTemplate);
+  CatalogueDatabase catalogueDatabase(
+      CatalogueBookJpaRepository bookRepository,
+      CatalogueBookInstanceJpaRepository bookInstanceRepository) {
+    return new CatalogueDatabase(bookRepository, bookInstanceRepository);
   }
 
   @Profile("local")
