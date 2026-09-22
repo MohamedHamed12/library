@@ -1,5 +1,6 @@
 package io.pillopl.library;
 
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -12,6 +13,7 @@ import io.pillopl.library.lending.patronprofile.infrastructure.PatronProfileConf
 import io.pillopl.library.lending.patronprofile.web.WebConfiguration;
 
 @Configuration
+@EnableAutoConfiguration
 @EnableScheduling
 @Import({
   LendingDatabaseConfig.class,

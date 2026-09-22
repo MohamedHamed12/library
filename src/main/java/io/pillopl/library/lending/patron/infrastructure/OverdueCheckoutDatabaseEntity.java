@@ -1,35 +1,46 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import java.util.Objects;
 import java.util.UUID;
 
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "overdue_checkout_database_entity")
 class OverdueCheckoutDatabaseEntity {
 
-  @Id Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "patron_database_entity", nullable = false)
+  private PatronDatabaseEntity patron;
+
+  @Column(name = "patron_id", nullable = false)
   UUID patronId;
+
+  @Column(name = "book_id", nullable = false)
   UUID bookId;
+
+  @Column(name = "library_branch_id", nullable = false)
   UUID libraryBranchId;
 
-  OverdueCheckoutDatabaseEntity() {}
+  protected OverdueCheckoutDatabaseEntity() {}
 
-  OverdueCheckoutDatabaseEntity(UUID bookId, UUID patronId, UUID libraryBranchId) {
+  OverdueCheckoutDatabaseEntity(
+      PatronDatabaseEntity patron, UUID bookId, UUID patronId, UUID libraryBranchId) {
+    this.patron = patron;
     this.bookId = bookId;
     this.patronId = patronId;
     this.libraryBranchId = libraryBranchId;
-  }
-
-  Long getId() {
-    return id;
-  }
-
-  UUID getPatronId() {
-    return patronId;
-  }
-
-  UUID getBookId() {
-    return bookId;
   }
 
   UUID getLibraryBranchId() {
@@ -40,24 +51,5 @@ class OverdueCheckoutDatabaseEntity {
     return this.patronId.equals(patronId)
         && this.bookId.equals(bookId)
         && this.libraryBranchId.equals(libraryBranchId);
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (this == other) {
-      return true;
-    }
-    if (!(other instanceof OverdueCheckoutDatabaseEntity that)) {
-      return false;
-    }
-    return Objects.equals(id, that.id)
-        && Objects.equals(patronId, that.patronId)
-        && Objects.equals(bookId, that.bookId)
-        && Objects.equals(libraryBranchId, that.libraryBranchId);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, patronId, bookId, libraryBranchId);
   }
 }

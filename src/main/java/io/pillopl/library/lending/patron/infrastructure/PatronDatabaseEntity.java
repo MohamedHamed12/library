@@ -1,10 +1,19 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.PatronEvent;
@@ -28,27 +37,43 @@ import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.PatronStatus;
 import io.pillopl.library.lending.patron.model.PatronType;
 
+@Entity
+@Table(name = "patron_database_entity")
 class PatronDatabaseEntity {
 
-  @Id Long id;
-  UUID patronId;
-  PatronType patronType;
-  String emailAddress;
-  String status;
-  String suspensionReason;
-  Set<HoldDatabaseEntity> booksOnHold;
-  Set<OverdueCheckoutDatabaseEntity> checkouts;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-  PatronDatabaseEntity() {}
+  @Column(name = "patron_id", unique = true)
+  UUID patronId;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "patron_type", nullable = false, length = 100)
+  PatronType patronType;
+
+  @Column(name = "email_address", nullable = false, unique = true, length = 254)
+  String emailAddress;
+
+  @Column(name = "status", nullable = false, length = 32)
+  String status;
+
+  @Column(name = "suspension_reason", length = 1024)
+  String suspensionReason;
+
+  @OneToMany(mappedBy = "patron", cascade = CascadeType.ALL, orphanRemoval = true)
+  List<HoldDatabaseEntity> booksOnHold = new ArrayList<>();
+
+  @OneToMany(mappedBy = "patron", cascade = CascadeType.ALL, orphanRemoval = true)
+  List<OverdueCheckoutDatabaseEntity> checkouts = new ArrayList<>();
+
+  protected PatronDatabaseEntity() {}
 
   PatronDatabaseEntity(PatronId patronId, PatronType patronType, EmailAddress emailAddress) {
     this.patronId = patronId.getPatronId();
     this.patronType = patronType;
     this.emailAddress = emailAddress.value();
     this.status = PatronStatus.ACTIVE.name();
-    this.suspensionReason = null;
-    this.booksOnHold = new HashSet<>();
-    this.checkouts = new HashSet<>();
   }
 
   PatronDatabaseEntity handle(PatronEvent event) {
@@ -80,6 +105,7 @@ class PatronDatabaseEntity {
   private PatronDatabaseEntity handle(BookPlacedOnHold event) {
     booksOnHold.add(
         new HoldDatabaseEntity(
+            this,
             event.getBookId(),
             event.getPatronId(),
             event.getLibraryBranchId(),
@@ -117,7 +143,7 @@ class PatronDatabaseEntity {
   private PatronDatabaseEntity handle(OverdueCheckoutRegistered event) {
     checkouts.add(
         new OverdueCheckoutDatabaseEntity(
-            event.getBookId(), event.getPatronId(), event.getLibraryBranchId()));
+            this, event.getBookId(), event.getPatronId(), event.getLibraryBranchId()));
     return this;
   }
 
@@ -127,32 +153,26 @@ class PatronDatabaseEntity {
   }
 
   private PatronDatabaseEntity handle(PatronSuspended event) {
-    this.status = PatronStatus.SUSPENDED.name();
-    this.suspensionReason = event.getReason();
+    status = PatronStatus.SUSPENDED.name();
+    suspensionReason = event.getReason();
     return this;
   }
 
   private PatronDatabaseEntity handle(PatronReactivated event) {
-    this.status = PatronStatus.ACTIVE.name();
-    this.suspensionReason = null;
+    status = PatronStatus.ACTIVE.name();
+    suspensionReason = null;
     return this;
   }
 
   private PatronDatabaseEntity removeHoldIfPresent(
       UUID patronId, UUID bookId, UUID libraryBranchId) {
-    booksOnHold.stream()
-        .filter(entity -> entity.is(patronId, bookId, libraryBranchId))
-        .findAny()
-        .ifPresent(booksOnHold::remove);
+    booksOnHold.removeIf(entity -> entity.is(patronId, bookId, libraryBranchId));
     return this;
   }
 
   private PatronDatabaseEntity removeOverdueCheckoutIfPresent(
       UUID patronId, UUID bookId, UUID libraryBranchId) {
-    checkouts.stream()
-        .filter(entity -> entity.is(patronId, bookId, libraryBranchId))
-        .findAny()
-        .ifPresent(checkouts::remove);
+    checkouts.removeIf(entity -> entity.is(patronId, bookId, libraryBranchId));
     return this;
   }
 }

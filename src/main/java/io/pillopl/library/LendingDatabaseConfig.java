@@ -11,17 +11,14 @@ import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.jdbc.autoconfigure.JdbcConnectionDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.aggregates.Version;
@@ -36,7 +33,9 @@ import io.pillopl.library.lending.patron.model.PatronId;
 import io.pillopl.library.lending.patron.model.Patrons;
 
 @Configuration
-class LendingDatabaseConfig extends AbstractJdbcConfiguration {
+@EntityScan(basePackages = "io.pillopl.library.lending")
+@EnableJpaRepositories(basePackages = "io.pillopl.library.lending")
+class LendingDatabaseConfig {
 
   private static final org.slf4j.Logger log =
       org.slf4j.LoggerFactory.getLogger(LendingDatabaseConfig.class);
@@ -45,18 +44,6 @@ class LendingDatabaseConfig extends AbstractJdbcConfiguration {
   @DependsOn("lendingFlyway")
   JdbcTemplate jdbcTemplate(DataSource dataSource) {
     return new JdbcTemplate(dataSource);
-  }
-
-  @Bean
-  @DependsOn("lendingFlyway")
-  NamedParameterJdbcOperations operations(DataSource dataSource) {
-    return new NamedParameterJdbcTemplate(dataSource);
-  }
-
-  @Bean
-  @DependsOn("lendingFlyway")
-  PlatformTransactionManager transactionManager(DataSource dataSource) {
-    return new DataSourceTransactionManager(dataSource);
   }
 
   @Bean(initMethod = "migrate")
