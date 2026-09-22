@@ -1,6 +1,8 @@
 package io.pillopl.library.lending.patron.infrastructure;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,16 +10,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.data.jdbc.repository.query.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.events.DomainEvents;
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
-import io.pillopl.library.lending.patron.model.*;
+import io.pillopl.library.lending.patron.model.EmailAddress;
+import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
+import io.pillopl.library.lending.patron.model.Patron;
+import io.pillopl.library.lending.patron.model.PatronEvent;
 import io.pillopl.library.lending.patron.model.PatronEvent.PatronCreated;
+import io.pillopl.library.lending.patron.model.PatronFactory;
+import io.pillopl.library.lending.patron.model.PatronHoldSnapshot;
+import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patron.model.PatronStatus;
+import io.pillopl.library.lending.patron.model.Patrons;
 
 class PatronsDatabaseRepository implements Patrons {
 
@@ -35,17 +44,21 @@ class PatronsDatabaseRepository implements Patrons {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public Optional<Patron> findBy(PatronId patronId) {
-    return Optional.ofNullable(patronEntityRepository.findByPatronId(patronId.getPatronId()))
+    return patronEntityRepository
+        .findByPatronId(patronId.getPatronId())
         .map(domainModelMapper::map);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public boolean existsBy(EmailAddress emailAddress) {
     return patronEntityRepository.existsByEmailAddress(emailAddress.value());
   }
 
   @Override
+  @Transactional
   public Patron publish(PatronEvent domainEvent) {
     Patron result =
         domainEvent instanceof PatronCreated patronCreated
@@ -58,35 +71,36 @@ class PatronsDatabaseRepository implements Patrons {
   private Patron createNewPatron(PatronCreated domainEvent) {
     try {
       PatronDatabaseEntity entity =
-          patronEntityRepository.save(
+          patronEntityRepository.saveAndFlush(
               new PatronDatabaseEntity(
                   domainEvent.patronId(),
                   domainEvent.getPatronType(),
                   domainEvent.getEmailAddress()));
       return domainModelMapper.map(entity);
-    } catch (DuplicateKeyException exception) {
+    } catch (DataIntegrityViolationException exception) {
       throw new EmailAddressAlreadyRegistered(domainEvent.getEmailAddress());
     }
   }
 
   private Patron handleNextEvent(PatronEvent domainEvent) {
     PatronDatabaseEntity entity =
-        patronEntityRepository.findByPatronId(domainEvent.patronId().getPatronId());
-    entity = entity.handle(domainEvent);
-    entity = patronEntityRepository.save(entity);
+        patronEntityRepository
+            .findByPatronId(domainEvent.patronId().getPatronId())
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Patron not found: " + domainEvent.patronId().getPatronId()));
+    entity.handle(domainEvent);
+    patronEntityRepository.flush();
     return domainModelMapper.map(entity);
   }
 }
 
-interface PatronEntityRepository extends CrudRepository<PatronDatabaseEntity, Long> {
+interface PatronEntityRepository extends JpaRepository<PatronDatabaseEntity, Long> {
 
-  @Query("SELECT p.* FROM patron_database_entity p where p.patron_id = :patronId")
-  PatronDatabaseEntity findByPatronId(@Param("patronId") UUID patronId);
+  Optional<PatronDatabaseEntity> findByPatronId(UUID patronId);
 
-  @Query(
-      "SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END "
-          + "FROM patron_database_entity WHERE email_address = :emailAddress")
-  boolean existsByEmailAddress(@Param("emailAddress") String emailAddress);
+  boolean existsByEmailAddress(String emailAddress);
 }
 
 class DomainModelMapper {
@@ -120,7 +134,7 @@ class DomainModelMapper {
                     new LibraryBranchId(entry.getKey()),
                 entry ->
                     entry.getValue().stream()
-                        .map(entity -> (new BookId(entity.bookId)))
+                        .map(entity -> new BookId(entity.bookId))
                         .collect(toSet())));
   }
 

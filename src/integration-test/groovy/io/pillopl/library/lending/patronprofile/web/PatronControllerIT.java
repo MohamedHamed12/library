@@ -21,7 +21,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.patron.application.patron.ReactivatingPatron;
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
 import io.pillopl.library.lending.patron.application.patron.SuspendingPatron;
@@ -29,9 +28,10 @@ import io.pillopl.library.lending.patron.model.EmailAddress;
 import io.pillopl.library.lending.patron.model.EmailAddressAlreadyRegistered;
 import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
+import io.pillopl.library.lending.patronprofile.web.error.RestExceptionHandler;
 
 @WebMvcTest(PatronController.class)
-@ContextConfiguration(classes = {LendingTestContext.class})
+@ContextConfiguration(classes = {PatronController.class, RestExceptionHandler.class})
 public class PatronControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();

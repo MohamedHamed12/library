@@ -19,7 +19,6 @@ import static io.pillopl.library.lending.librarybranch.model.LibraryBranchFixtur
 import static io.pillopl.library.lending.patron.model.HoldDuration.closeEnded
 import static io.pillopl.library.lending.patron.model.PatronFixture.anyPatronId
 import static io.pillopl.library.lending.patron.model.PatronType.Regular
-import static java.util.Collections.emptyList
 
 class PatronEntityToDomainModelMappingTest extends Specification {
 
@@ -34,17 +33,23 @@ class PatronEntityToDomainModelMappingTest extends Specification {
 
     def 'should map patron holds including expiration and extension count'() {
         given:
+            PatronDatabaseEntity entity = patronEntity(patronId, Regular)
             HoldDatabaseEntity first =
                     new HoldDatabaseEntity(
-                            bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId, anyDate)
+                            entity,
+                            bookId.bookId,
+                            patronId.patronId,
+                            libraryBranchId.libraryBranchId,
+                            anyDate)
             first.extensionCount = 1
-            PatronDatabaseEntity entity = patronEntity(patronId, Regular, [
-                    first,
+            entity.booksOnHold.add(first)
+            entity.booksOnHold.add(
                     new HoldDatabaseEntity(
+                            entity,
                             anotherBookId.bookId,
                             patronId.patronId,
                             anotherBranchId.libraryBranchId,
-                            anyDate)])
+                            anyDate))
         when:
             Set<PatronHoldSnapshot> patronHolds = domainModelMapper.mapPatronHolds(entity)
         then:
@@ -55,11 +60,19 @@ class PatronEntityToDomainModelMappingTest extends Specification {
 
     def 'should map patron overdue checkouts'() {
         given:
-            PatronDatabaseEntity entity = patronEntity(patronId, Regular, [], [
+            PatronDatabaseEntity entity = patronEntity(patronId, Regular)
+            entity.checkouts.add(
                     new OverdueCheckoutDatabaseEntity(
-                            bookId.bookId, patronId.patronId, libraryBranchId.libraryBranchId),
+                            entity,
+                            bookId.bookId,
+                            patronId.patronId,
+                            libraryBranchId.libraryBranchId))
+            entity.checkouts.add(
                     new OverdueCheckoutDatabaseEntity(
-                            anotherBookId.bookId, patronId.patronId, anotherBranchId.libraryBranchId)])
+                            entity,
+                            anotherBookId.bookId,
+                            patronId.patronId,
+                            anotherBranchId.libraryBranchId))
         when:
             Map<LibraryBranchId, Set<BookId>> overdueCheckouts =
                     domainModelMapper.mapPatronOverdueCheckouts(entity)
@@ -70,7 +83,7 @@ class PatronEntityToDomainModelMappingTest extends Specification {
 
     def 'should reconstruct suspended patron who rejects holds after mapping'() {
         given:
-            PatronDatabaseEntity entity = patronEntity(patronId, Regular, [], [])
+            PatronDatabaseEntity entity = patronEntity(patronId, Regular)
             entity.status = PatronStatus.SUSPENDED.name()
             entity.suspensionReason = "Policy violation"
         when:
@@ -83,16 +96,8 @@ class PatronEntityToDomainModelMappingTest extends Specification {
             result.rejection().isPresent()
     }
 
-    PatronDatabaseEntity patronEntity(
-            PatronId patronId,
-            PatronType type,
-            List<HoldDatabaseEntity> holds = emptyList(),
-            List<OverdueCheckoutDatabaseEntity> overdueCheckouts = emptyList()) {
-        PatronDatabaseEntity entity =
-                new PatronDatabaseEntity(
-                        patronId, type, EmailAddress.of("mapped@example.test"))
-        entity.booksOnHold = holds as Set
-        entity.checkouts = overdueCheckouts as Set
-        return entity
+    PatronDatabaseEntity patronEntity(PatronId patronId, PatronType type) {
+        return new PatronDatabaseEntity(
+                patronId, type, EmailAddress.of("mapped@example.test"))
     }
 }

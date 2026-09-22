@@ -15,13 +15,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.config.EnableHypermediaSupport;
+import org.springframework.hateoas.mediatype.hal.forms.HalFormsConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,7 +34,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.pillopl.library.catalogue.BookId;
-import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.book.model.BookFixture;
 import io.pillopl.library.lending.patron.application.hold.BookNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
@@ -46,9 +50,15 @@ import io.pillopl.library.lending.patronprofile.model.Hold;
 import io.pillopl.library.lending.patronprofile.model.HoldsView;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
+import io.pillopl.library.lending.patronprofile.web.error.RestExceptionHandler;
 
 @WebMvcTest(PatronProfileController.class)
-@ContextConfiguration(classes = {LendingTestContext.class})
+@ContextConfiguration(
+    classes = {
+      PatronProfileController.class,
+      RestExceptionHandler.class,
+      PatronProfileControllerIT.HypermediaTestConfiguration.class
+    })
 public class PatronProfileControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();
@@ -70,6 +80,13 @@ public class PatronProfileControllerIT {
   @MockitoBean private ExtendingHold extendingHold;
 
   @MockitoBean private MeterRegistry meterRegistry;
+
+  @MockitoBean private Clock clock;
+
+  @BeforeEach
+  public void setUp() {
+    given(clock.instant()).willReturn(Instant.parse("2026-01-01T00:00:00Z"));
+  }
 
   @Test
   public void shouldReturnPatronProfileSummaryWithCountsAndLinks() throws Exception {
@@ -560,5 +577,14 @@ public class PatronProfileControllerIT {
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code", is("HOLD_NOT_ALLOWED")))
         .andExpect(jsonPath("$.message", is("The patron cannot place this book on hold.")));
+  }
+
+  @EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL_FORMS)
+  static class HypermediaTestConfiguration {
+
+    @Bean
+    HalFormsConfiguration halFormsConfiguration() {
+      return new HalFormsConfiguration().withDefaultSingleTemplate(true);
+    }
   }
 }

@@ -16,10 +16,8 @@ import io.pillopl.library.lending.patronprofile.model.PatronProfile
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 
-import javax.sql.DataSource
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -46,21 +44,15 @@ class FindingPatronProfileInDatabaseIT extends Specification {
     static final Instant TOMORROW = now().plus(Duration.ofDays(1)).truncatedTo(ChronoUnit.MICROS)
 
     @Autowired
-    DataSource dataSource
-
-    @Autowired
     DailySheet dailySheet
-
-    @Autowired
-    DataSource jdbcTemplate
 
     @Autowired
     Patrons patronRepo
 
-    PatronProfiles patronProfiles;
+    @Autowired
+    PatronProfiles patronProfiles
 
     def setup() {
-        patronProfiles = new PatronProfileReadModel(new JdbcTemplate(dataSource))
         patronRepo.publish(PatronCreated.createdAt(now(), patronId, Regular, emailAddressFor(patronId)))
     }
 

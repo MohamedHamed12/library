@@ -4,7 +4,6 @@ import java.time.Clock;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 
 import io.pillopl.library.commons.events.DomainEvents;
 import io.pillopl.library.lending.book.FindAvailableBook;
@@ -22,7 +21,6 @@ import io.pillopl.library.lending.patron.model.PatronFactory;
 import io.pillopl.library.lending.patron.model.Patrons;
 
 @Configuration
-@EnableJdbcRepositories
 public class PatronConfiguration {
 
   @Bean

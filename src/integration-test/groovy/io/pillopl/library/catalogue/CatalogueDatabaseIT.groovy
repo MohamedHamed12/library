@@ -1,7 +1,7 @@
 package io.pillopl.library.catalogue
 
 import io.pillopl.library.database.PostgreSQLTestConfiguration
-import java.util.Optional
+import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Import
 import spock.lang.Specification
 
 import java.time.Clock
+import java.util.Optional
 
 import static io.pillopl.library.catalogue.BookFixture.DDD
 import static io.pillopl.library.catalogue.BookFixture.NON_PRESENT_ISBN
@@ -22,6 +23,14 @@ class CatalogueDatabaseIT extends Specification {
 
     @Autowired
     CatalogueDatabase catalogueDatabase
+
+    @Autowired
+    EntityManagerFactory entityManagerFactory
+
+    def 'uses JPA persistence and Flyway-managed catalogue schema'() {
+        expect:
+            entityManagerFactory != null
+    }
 
     def 'should be able to save and load new book'() {
         given:

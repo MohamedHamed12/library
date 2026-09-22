@@ -1,30 +1,32 @@
 package io.pillopl.library.lending.book.infrastructure;
 
+import java.time.Clock;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import io.pillopl.library.commons.events.DomainEvents;
 import io.pillopl.library.lending.book.application.CreateAvailableBookOnInstanceAddedEventHandler;
 import io.pillopl.library.lending.book.application.PatronEventsHandler;
 import io.pillopl.library.lending.book.model.BookRepository;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.time.Clock;
 
 @Configuration
 public class BookConfiguration {
 
-    @Bean
-    CreateAvailableBookOnInstanceAddedEventHandler createAvailableBookOnInstanceAddedEventHandler(BookRepository bookRepository) {
-        return new CreateAvailableBookOnInstanceAddedEventHandler(bookRepository);
-    }
+  @Bean
+  CreateAvailableBookOnInstanceAddedEventHandler createAvailableBookOnInstanceAddedEventHandler(
+      BookRepository bookRepository) {
+    return new CreateAvailableBookOnInstanceAddedEventHandler(bookRepository);
+  }
 
-    @Bean
-    PatronEventsHandler bookEventsHandler(BookRepository bookRepository, DomainEvents domainEvents, Clock clock) {
-        return new PatronEventsHandler(bookRepository, domainEvents, clock);
-    }
+  @Bean
+  PatronEventsHandler bookEventsHandler(
+      BookRepository bookRepository, DomainEvents domainEvents, Clock clock) {
+    return new PatronEventsHandler(bookRepository, domainEvents, clock);
+  }
 
-    @Bean
-    BookDatabaseRepository bookDatabaseRepository(JdbcTemplate jdbcTemplate) {
-        return new BookDatabaseRepository(jdbcTemplate);
-    }
+  @Bean
+  BookDatabaseRepository bookDatabaseRepository(BookJpaRepository repository) {
+    return new BookDatabaseRepository(repository);
+  }
 }
