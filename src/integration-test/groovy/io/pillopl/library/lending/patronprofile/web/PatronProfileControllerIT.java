@@ -22,8 +22,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.config.EnableHypermediaSupport;
+import org.springframework.hateoas.mediatype.hal.forms.HalFormsConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -50,7 +54,12 @@ import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 import io.pillopl.library.lending.patronprofile.web.error.RestExceptionHandler;
 
 @WebMvcTest(PatronProfileController.class)
-@ContextConfiguration(classes = {PatronProfileController.class, RestExceptionHandler.class})
+@ContextConfiguration(
+    classes = {
+      PatronProfileController.class,
+      RestExceptionHandler.class,
+      PatronProfileControllerIT.HypermediaTestConfiguration.class
+    })
 public class PatronProfileControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();
@@ -570,4 +579,14 @@ public class PatronProfileControllerIT {
         .andExpect(jsonPath("$.code", is("HOLD_NOT_ALLOWED")))
         .andExpect(jsonPath("$.message", is("The patron cannot place this book on hold.")));
   }
+  @TestConfiguration(proxyBeanMethods = false)
+  @EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL_FORMS)
+  static class HypermediaTestConfiguration {
+
+    @Bean
+    HalFormsConfiguration halFormsConfiguration() {
+      return new HalFormsConfiguration().withDefaultSingleTemplate(true);
+    }
+  }
+
 }
