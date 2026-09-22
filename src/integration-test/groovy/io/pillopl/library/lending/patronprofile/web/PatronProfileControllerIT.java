@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -44,8 +45,10 @@ import io.pillopl.library.lending.patronprofile.model.Hold;
 import io.pillopl.library.lending.patronprofile.model.HoldsView;
 import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
+import io.pillopl.library.lending.patronprofile.web.error.RestExceptionHandler;
 
 @WebMvcTest(PatronProfileController.class)
+@ContextConfiguration(classes = {PatronProfileController.class, RestExceptionHandler.class})
 public class PatronProfileControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();
