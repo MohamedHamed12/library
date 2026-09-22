@@ -15,9 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -70,6 +72,13 @@ public class PatronProfileControllerIT {
   @MockitoBean private ExtendingHold extendingHold;
 
   @MockitoBean private MeterRegistry meterRegistry;
+
+  @MockitoBean private Clock clock;
+
+  @BeforeEach
+  public void setUp() {
+    given(clock.instant()).willReturn(Instant.parse("2026-01-01T00:00:00Z"));
+  }
 
   @Test
   public void shouldReturnPatronProfileSummaryWithCountsAndLinks() throws Exception {
