@@ -1,220 +1,119 @@
 package io.pillopl.library.lending.dailysheet.infrastructure;
 
-import static java.sql.Timestamp.from;
-
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.context.event.EventListener;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.core.ColumnMapRowMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.lending.dailysheet.model.CheckoutsToOverdueSheet;
 import io.pillopl.library.lending.dailysheet.model.DailySheet;
-import io.pillopl.library.lending.dailysheet.model.ExpiredHold;
 import io.pillopl.library.lending.dailysheet.model.HoldsToExpireSheet;
-import io.pillopl.library.lending.dailysheet.model.OverdueCheckout;
-import io.pillopl.library.lending.librarybranch.model.LibraryBranchId;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookCheckedOut;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldCanceled;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExpired;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookHoldExtended;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookPlacedOnHold;
 import io.pillopl.library.lending.patron.model.PatronEvent.BookReturned;
-import io.pillopl.library.lending.patron.model.PatronId;
 
 class SheetsReadModel implements DailySheet {
 
-  private final JdbcTemplate sheets;
+  private final HoldSheetJpaRepository holds;
+  private final CheckoutSheetJpaRepository checkouts;
 
-  SheetsReadModel(JdbcTemplate sheets) {
-    this.sheets = sheets;
+  SheetsReadModel(HoldSheetJpaRepository holds, CheckoutSheetJpaRepository checkouts) {
+    this.holds = holds;
+    this.checkouts = checkouts;
   }
 
   @Override
+  @Transactional(readOnly = true)
   public HoldsToExpireSheet queryForHoldsToExpireSheet(Instant processingTime) {
     return new HoldsToExpireSheet(
-        findHoldsToExpire(processingTime).stream().map(this::toExpiredHold).toList());
-  }
-
-  private List<Map<String, Object>> findHoldsToExpire(Instant processingTime) {
-    return sheets.query(
-        "SELECT h.book_id, h.hold_by_patron_id, h.hold_at_branch FROM holds_sheet h WHERE h.status = 'ACTIVE' and h.hold_till <= ?",
-        new ColumnMapRowMapper(),
-        from(processingTime));
-  }
-
-  private ExpiredHold toExpiredHold(Map<String, Object> map) {
-    return new ExpiredHold(
-        new BookId((UUID) map.get("BOOK_ID")),
-        new PatronId((UUID) map.get("HOLD_BY_PATRON_ID")),
-        new LibraryBranchId((UUID) map.get("HOLD_AT_BRANCH")));
+        holds.findByStatusAndHoldTillLessThanEqual(HoldSheetEntity.ACTIVE, processingTime).stream()
+            .map(HoldSheetEntity::toExpiredHold)
+            .toList());
   }
 
   @Override
+  @Transactional(readOnly = true)
   public CheckoutsToOverdueSheet queryForCheckoutsToOverdue(Instant processingTime) {
     return new CheckoutsToOverdueSheet(
-        findCheckoutsToOverdue(processingTime).stream().map(this::toOverdueCheckout).toList());
-  }
-
-  private List<Map<String, Object>> findCheckoutsToOverdue(Instant processingTime) {
-    return sheets.query(
-        "SELECT c.book_id, c.checked_out_by_patron_id, c.checked_out_at_branch FROM checkouts_sheet c WHERE c.status = 'CHECKEDOUT' and c.checkout_till <= ?",
-        new ColumnMapRowMapper(),
-        from(processingTime));
-  }
-
-  private OverdueCheckout toOverdueCheckout(Map<String, Object> map) {
-    return new OverdueCheckout(
-        new BookId((UUID) map.get("BOOK_ID")),
-        new PatronId((UUID) map.get("CHECKED_OUT_BY_PATRON_ID")),
-        new LibraryBranchId((UUID) map.get("CHECKED_OUT_AT_BRANCH")));
+        checkouts
+            .findByStatusAndCheckoutTillLessThanEqual(
+                CheckoutSheetEntity.CHECKED_OUT, processingTime)
+            .stream()
+            .map(CheckoutSheetEntity::toOverdueCheckout)
+            .toList());
   }
 
   @Override
   @Transactional
   @EventListener
   public void handle(BookPlacedOnHold event) {
-    try {
-      createNewHold(event);
-    } catch (DuplicateKeyException ex) {
-      // idempotent operation
+    if (!holds.existsByHoldEventId(event.getEventId())) {
+      holds.saveAndFlush(HoldSheetEntity.from(event));
     }
   }
 
-  private void createNewHold(BookPlacedOnHold event) {
-    sheets.update(
-        """
-                INSERT INTO holds_sheet (
-                    book_id,
-                    status,
-                    hold_event_id,
-                    hold_by_patron_id,
-                    hold_at,
-                    hold_till,
-                    expired_at,
-                    canceled_at,
-                    hold_at_branch,
-                    checked_out_at
-                ) VALUES (?, ?, ?, ?, ?, ?, null, null, ?, null)
-                """,
-        event.getBookId(),
-        "ACTIVE",
-        event.getEventId(),
-        event.getPatronId(),
-        from(event.getWhen()),
-        event.getHoldTill() == null ? null : Timestamp.from(event.getHoldTill()),
-        event.getLibraryBranchId());
-  }
-
   @Override
+  @Transactional
   @EventListener
   public void handle(BookHoldExtended event) {
-    sheets.update(
-        "UPDATE holds_sheet SET hold_till = ? WHERE status = 'ACTIVE' AND book_id = ? AND hold_by_patron_id = ? AND hold_at_branch = ?",
-        from(event.getHoldTill()),
-        event.getBookId(),
-        event.getPatronId(),
-        event.getLibraryBranchId());
+    holds
+        .findByStatusAndBookIdAndHoldByPatronIdAndHoldAtBranch(
+            HoldSheetEntity.ACTIVE,
+            event.getBookId(),
+            event.getPatronId(),
+            event.getLibraryBranchId())
+        .forEach(hold -> hold.extendTo(event.getHoldTill()));
   }
 
   @Override
+  @Transactional
   public void handle(BookHoldCanceled event) {
-    sheets.update(
-        "UPDATE holds_sheet SET canceled_at = ?, status = 'CANCELED' WHERE canceled_at IS NULL AND book_id = ? AND hold_by_patron_id = ?",
-        from(event.getWhen()),
-        event.getBookId(),
-        event.getPatronId());
+    holds
+        .findByCanceledAtIsNullAndBookIdAndHoldByPatronId(
+            event.getBookId(), event.getPatronId())
+        .forEach(hold -> hold.cancelAt(event.getWhen()));
   }
 
   @Override
+  @Transactional
   @EventListener
   public void handle(BookHoldExpired event) {
-    sheets.update(
-        "UPDATE holds_sheet SET expired_at = ?, status = 'EXPIRED' WHERE expired_at IS NULL AND book_id = ? AND hold_by_patron_id = ?",
-        from(event.getWhen()),
-        event.getBookId(),
-        event.getPatronId());
+    holds
+        .findByExpiredAtIsNullAndBookIdAndHoldByPatronId(event.getBookId(), event.getPatronId())
+        .forEach(hold -> hold.expireAt(event.getWhen()));
   }
 
   @Override
+  @Transactional
   @EventListener
   public void handle(BookCheckedOut event) {
-    try {
-      createNewCheckout(event);
-    } catch (DuplicateKeyException ex) {
-      // idempotent operation
+    if (checkouts.existsByCheckoutEventId(event.getEventId())) {
+      return;
     }
-  }
 
-  private void createNewCheckout(BookCheckedOut event) {
-    sheets.update(
-        """
-                INSERT INTO checkouts_sheet (
-                    book_id,
-                    status,
-                    checkout_event_id,
-                    checked_out_by_patron_id,
-                    checked_out_at,
-                    checkout_till,
-                    checked_out_at_branch,
-                    returned_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, null)
-                """,
-        event.getBookId(),
-        "CHECKEDOUT",
-        event.getEventId(),
-        event.getPatronId(),
-        from(event.getWhen()),
-        from(event.getTill()),
-        event.getLibraryBranchId());
-    sheets.update(
-        "UPDATE holds_sheet SET checked_out_at = ?, status = 'CHECKEDOUT' WHERE checked_out_at IS NULL AND book_id = ? AND hold_by_patron_id = ?",
-        from(event.getWhen()),
-        event.getBookId(),
-        event.getPatronId());
+    checkouts.saveAndFlush(CheckoutSheetEntity.from(event));
+    holds
+        .findByCheckedOutAtIsNullAndBookIdAndHoldByPatronId(
+            event.getBookId(), event.getPatronId())
+        .forEach(hold -> hold.checkOutAt(event.getWhen()));
   }
 
   @Override
+  @Transactional
   @EventListener
   public void handle(BookReturned event) {
-    int results = markAsReturned(event);
-    if (results == 0) {
-      insertAsReturnedWithCheckedOutEventMissing(event);
+    var activeCheckouts =
+        checkouts.findByReturnedAtIsNullAndBookIdAndCheckedOutByPatronId(
+            event.getBookId(), event.getPatronId());
+
+    if (activeCheckouts.isEmpty()) {
+      checkouts.save(CheckoutSheetEntity.returnedWithoutCheckout(event));
+      return;
     }
-  }
 
-  private int markAsReturned(BookReturned event) {
-    return sheets.update(
-        "UPDATE checkouts_sheet SET returned_at = ?, status = 'RETURNED' WHERE returned_at IS NULL AND book_id = ? AND checked_out_by_patron_id = ?",
-        from(event.getWhen()),
-        event.getBookId(),
-        event.getPatronId());
-  }
-
-  private void insertAsReturnedWithCheckedOutEventMissing(BookReturned event) {
-    sheets.update(
-        """
-                INSERT INTO checkouts_sheet (
-                    book_id,
-                    status,
-                    checkout_event_id,
-                    checked_out_by_patron_id,
-                    checked_out_at,
-                    checkout_till,
-                    returned_at
-                ) VALUES (?, ?, ?, ?, null, null, ?)
-                """,
-        event.getBookId(),
-        "CHECKEDOUT",
-        event.getEventId(),
-        event.getPatronId(),
-        from(event.getWhen()));
+    activeCheckouts.forEach(checkout -> checkout.returnAt(event.getWhen()));
   }
 }

@@ -4,7 +4,6 @@ import java.time.Clock;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import io.pillopl.library.lending.dailysheet.application.ExpiringHolds;
 import io.pillopl.library.lending.dailysheet.application.RegisteringOverdueCheckout;
@@ -15,8 +14,9 @@ import io.pillopl.library.lending.patron.model.Patrons;
 public class DailySheetConfiguration {
 
   @Bean
-  DailySheet sheetsReadModel(JdbcTemplate jdbcTemplate) {
-    return new SheetsReadModel(jdbcTemplate);
+  DailySheet sheetsReadModel(
+      HoldSheetJpaRepository holds, CheckoutSheetJpaRepository checkouts) {
+    return new SheetsReadModel(holds, checkouts);
   }
 
   @Bean
