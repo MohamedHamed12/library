@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 interface HoldSheetJpaRepository extends JpaRepository<HoldSheetEntity, Long> {
 
+  boolean existsByHoldEventId(UUID holdEventId);
+
   List<HoldSheetEntity> findByStatusAndHoldTillLessThanEqual(String status, Instant holdTill);
 
   List<HoldSheetEntity> findByStatusAndBookIdAndHoldByPatronIdAndHoldAtBranch(
@@ -24,6 +26,8 @@ interface HoldSheetJpaRepository extends JpaRepository<HoldSheetEntity, Long> {
 }
 
 interface CheckoutSheetJpaRepository extends JpaRepository<CheckoutSheetEntity, Long> {
+
+  boolean existsByCheckoutEventId(UUID checkoutEventId);
 
   List<CheckoutSheetEntity> findByStatusAndCheckoutTillLessThanEqual(
       String status, Instant checkoutTill);

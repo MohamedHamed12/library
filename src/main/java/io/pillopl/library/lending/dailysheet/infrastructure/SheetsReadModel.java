@@ -3,7 +3,6 @@ package io.pillopl.library.lending.dailysheet.infrastructure;
 import java.time.Instant;
 
 import org.springframework.context.event.EventListener;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.pillopl.library.lending.dailysheet.model.CheckoutsToOverdueSheet;
@@ -51,10 +50,8 @@ class SheetsReadModel implements DailySheet {
   @Transactional
   @EventListener
   public void handle(BookPlacedOnHold event) {
-    try {
+    if (!holds.existsByHoldEventId(event.getEventId())) {
       holds.saveAndFlush(HoldSheetEntity.from(event));
-    } catch (DataIntegrityViolationException exception) {
-      // Duplicate event: the unique event id makes this operation idempotent.
     }
   }
 
@@ -92,13 +89,11 @@ class SheetsReadModel implements DailySheet {
   @Transactional
   @EventListener
   public void handle(BookCheckedOut event) {
-    try {
-      checkouts.saveAndFlush(CheckoutSheetEntity.from(event));
-    } catch (DataIntegrityViolationException exception) {
-      // Duplicate event: the unique event id makes this operation idempotent.
+    if (checkouts.existsByCheckoutEventId(event.getEventId())) {
       return;
     }
 
+    checkouts.saveAndFlush(CheckoutSheetEntity.from(event));
     holds
         .findByCheckedOutAtIsNullAndBookIdAndHoldByPatronId(event.getBookId(), event.getPatronId())
         .forEach(hold -> hold.checkOutAt(event.getWhen()));
