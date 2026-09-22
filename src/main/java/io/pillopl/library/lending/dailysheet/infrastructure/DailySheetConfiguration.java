@@ -14,8 +14,7 @@ import io.pillopl.library.lending.patron.model.Patrons;
 public class DailySheetConfiguration {
 
   @Bean
-  DailySheet sheetsReadModel(
-      HoldSheetJpaRepository holds, CheckoutSheetJpaRepository checkouts) {
+  DailySheet sheetsReadModel(HoldSheetJpaRepository holds, CheckoutSheetJpaRepository checkouts) {
     return new SheetsReadModel(holds, checkouts);
   }
 

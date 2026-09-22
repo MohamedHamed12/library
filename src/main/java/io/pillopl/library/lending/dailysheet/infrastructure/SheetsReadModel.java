@@ -72,8 +72,7 @@ class SheetsReadModel implements DailySheet {
   @Transactional
   public void handle(BookHoldCanceled event) {
     holds
-        .findByCanceledAtIsNullAndBookIdAndHoldByPatronId(
-            event.getBookId(), event.getPatronId())
+        .findByCanceledAtIsNullAndBookIdAndHoldByPatronId(event.getBookId(), event.getPatronId())
         .forEach(hold -> hold.cancelAt(event.getWhen()));
   }
 
@@ -96,8 +95,7 @@ class SheetsReadModel implements DailySheet {
 
     checkouts.saveAndFlush(CheckoutSheetEntity.from(event));
     holds
-        .findByCheckedOutAtIsNullAndBookIdAndHoldByPatronId(
-            event.getBookId(), event.getPatronId())
+        .findByCheckedOutAtIsNullAndBookIdAndHoldByPatronId(event.getBookId(), event.getPatronId())
         .forEach(hold -> hold.checkOutAt(event.getWhen()));
   }
 

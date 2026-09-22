@@ -18,8 +18,7 @@ import io.pillopl.library.lending.patronprofile.model.Checkout;
 @Table(name = "checkouts_sheet")
 class PatronCheckoutViewEntity {
 
-  @Id
-  private Long id;
+  @Id private Long id;
 
   @Column(name = "book_id")
   private UUID bookId;

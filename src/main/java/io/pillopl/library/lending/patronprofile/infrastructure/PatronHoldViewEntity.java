@@ -18,8 +18,7 @@ import io.pillopl.library.lending.patronprofile.model.Hold;
 @Table(name = "holds_sheet")
 class PatronHoldViewEntity {
 
-  @Id
-  private Long id;
+  @Id private Long id;
 
   @Column(name = "book_id")
   private UUID bookId;

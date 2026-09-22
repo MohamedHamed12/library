@@ -16,8 +16,7 @@ import io.pillopl.library.lending.patron.model.PatronStatus;
 @Table(name = "patron_database_entity")
 class PatronStatusViewEntity {
 
-  @Id
-  private Long id;
+  @Id private Long id;
 
   @Column(name = "patron_id")
   private UUID patronId;

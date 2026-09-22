@@ -43,11 +43,7 @@ class HoldDatabaseEntity {
   protected HoldDatabaseEntity() {}
 
   HoldDatabaseEntity(
-      PatronDatabaseEntity patron,
-      UUID bookId,
-      UUID patronId,
-      UUID libraryBranchId,
-      Instant till) {
+      PatronDatabaseEntity patron, UUID bookId, UUID patronId, UUID libraryBranchId, Instant till) {
     this.patron = patron;
     this.bookId = bookId;
     this.patronId = patronId;

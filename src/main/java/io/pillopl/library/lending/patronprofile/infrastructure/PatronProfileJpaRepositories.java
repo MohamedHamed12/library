@@ -18,8 +18,7 @@ interface PatronHoldViewJpaRepository extends JpaRepository<PatronHoldViewEntity
           UUID holdByPatronId);
 }
 
-interface PatronCheckoutViewJpaRepository
-    extends JpaRepository<PatronCheckoutViewEntity, Long> {
+interface PatronCheckoutViewJpaRepository extends JpaRepository<PatronCheckoutViewEntity, Long> {
 
   List<PatronCheckoutViewEntity> findByCheckedOutByPatronIdAndReturnedAtIsNull(
       UUID checkedOutByPatronId);

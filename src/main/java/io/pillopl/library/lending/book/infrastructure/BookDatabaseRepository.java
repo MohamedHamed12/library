@@ -54,8 +54,7 @@ class BookDatabaseRepository implements BookRepository, FindAvailableBook, FindB
   }
 
   private AggregateRootIsStale stale(Book book) {
-    return new AggregateRootIsStale(
-        "Someone has updated book in the meantime, book: " + book);
+    return new AggregateRootIsStale("Someone has updated book in the meantime, book: " + book);
   }
 
   @Override
