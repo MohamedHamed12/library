@@ -15,10 +15,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.jdbc.autoconfigure.JdbcConnectionDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import io.pillopl.library.catalogue.BookId;
 import io.pillopl.library.commons.aggregates.Version;
@@ -39,12 +37,6 @@ class LendingDatabaseConfig {
 
   private static final org.slf4j.Logger log =
       org.slf4j.LoggerFactory.getLogger(LendingDatabaseConfig.class);
-
-  @Bean
-  @DependsOn("lendingFlyway")
-  JdbcTemplate jdbcTemplate(DataSource dataSource) {
-    return new JdbcTemplate(dataSource);
-  }
 
   @Bean(initMethod = "migrate")
   Flyway lendingFlyway(DataSource dataSource) {

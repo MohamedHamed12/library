@@ -9,10 +9,8 @@ import io.pillopl.library.lending.patron.model.PatronId
 import io.pillopl.library.lending.patron.model.PatronType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Specification
 
-import javax.sql.DataSource
 import java.time.Duration
 import java.time.Instant
 
@@ -34,13 +32,7 @@ class FindingHoldsInDailySheetDatabaseIT extends Specification {
     static final Instant TIME_OF_EXPIRE_CHECK = now()
 
     @Autowired
-    DataSource dataSource
-
-    SheetsReadModel readModel
-
-    def setup() {
-        readModel = new SheetsReadModel(new JdbcTemplate(dataSource))
-    }
+    io.pillopl.library.lending.dailysheet.model.DailySheet readModel
 
     def 'should find expired holds'() {
         given:
