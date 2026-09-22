@@ -23,13 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.pillopl.library.catalogue.BookId;
-import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.book.model.BookFixture;
 import io.pillopl.library.lending.patron.application.hold.BookNotFoundException;
 import io.pillopl.library.lending.patron.application.hold.CancelingHold;
@@ -48,7 +46,6 @@ import io.pillopl.library.lending.patronprofile.model.PatronProfile;
 import io.pillopl.library.lending.patronprofile.model.PatronProfiles;
 
 @WebMvcTest(PatronProfileController.class)
-@ContextConfiguration(classes = {LendingTestContext.class})
 public class PatronProfileControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();

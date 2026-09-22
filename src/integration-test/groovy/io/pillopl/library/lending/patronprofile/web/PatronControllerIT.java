@@ -16,12 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.pillopl.library.lending.LendingTestContext;
 import io.pillopl.library.lending.patron.application.patron.ReactivatingPatron;
 import io.pillopl.library.lending.patron.application.patron.RegisteringPatron;
 import io.pillopl.library.lending.patron.application.patron.SuspendingPatron;
@@ -31,7 +29,6 @@ import io.pillopl.library.lending.patron.model.PatronFixture;
 import io.pillopl.library.lending.patron.model.PatronId;
 
 @WebMvcTest(PatronController.class)
-@ContextConfiguration(classes = {LendingTestContext.class})
 public class PatronControllerIT {
 
   private final PatronId patronId = PatronFixture.anyPatronId();
