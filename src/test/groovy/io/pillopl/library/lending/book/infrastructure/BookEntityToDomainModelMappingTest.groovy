@@ -4,6 +4,8 @@ package io.pillopl.library.lending.book.infrastructure
 import io.pillopl.library.lending.book.model.AvailableBook
 import io.pillopl.library.lending.book.model.Book
 import io.pillopl.library.catalogue.BookId
+import io.pillopl.library.commons.aggregates.Version
+import io.pillopl.library.lending.PatronReference
 import io.pillopl.library.lending.book.model.BookOnHold
 import io.pillopl.library.lending.book.model.CheckedOutBook
 import io.pillopl.library.lending.librarybranch.model.LibraryBranchId
@@ -74,16 +76,27 @@ class BookEntityToDomainModelMappingTest extends Specification {
     }
 
     BookDatabaseEntity bookEntity(BookState state) {
-        new BookDatabaseEntity(
-                bookId.bookId,
-                Circulating,
-                state,
-                libraryBranchId.libraryBranchId,
-                anotherBranchId.libraryBranchId,
-                patronId.patronId,
-                holdTill,
-                yetAnotherBranchId.libraryBranchId,
-                anotherPatronId.patronId,
-                0)
+        switch (state) {
+            case Available:
+                return BookDatabaseEntity.from(
+                        new AvailableBook(bookId, Circulating, libraryBranchId, new Version(0)))
+            case OnHold:
+                return BookDatabaseEntity.from(
+                        new BookOnHold(
+                                bookId,
+                                Circulating,
+                                anotherBranchId,
+                                PatronReference.of(patronId.patronId),
+                                holdTill,
+                                new Version(0)))
+            case CheckedOut:
+                return BookDatabaseEntity.from(
+                        new CheckedOutBook(
+                                bookId,
+                                Circulating,
+                                yetAnotherBranchId,
+                                PatronReference.of(anotherPatronId.patronId),
+                                new Version(0)))
+        }
     }
 }
